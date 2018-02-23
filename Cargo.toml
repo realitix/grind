@@ -1,6 +1,16 @@
 [package]
-name = "grind-kernel"
-version = "0.1.0"
-authors = ["Bevilacqua Jean-Sebastien <realitix@gmail.com>"]
+name        = "grind-kernel"
+version     = "0.1.0"
+authors     = ["Bevilacqua Jean-Sebastien <realitix@gmail.com>"]
+publish     = false
+description = "OpenGL X to Vulkan"
+readme      = "README.md"
+
+[lib]
+name        = "grindkernel"
+crate-type  = ["staticlib", "cdylib"]
+
+[features]
+foo = []
 
 [dependencies]
