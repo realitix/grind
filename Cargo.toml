@@ -11,6 +11,6 @@ name        = "grindkernel"
 crate-type  = ["staticlib", "cdylib"]
 
 [features]
-foo = []
+egl = []
 
 [dependencies]
