@@ -1,2 +1,2 @@
 [workspace]
-members = ["proxy_egl"]
+members = ["grind-kernel", "grind-egl"]

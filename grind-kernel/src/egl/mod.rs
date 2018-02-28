@@ -235,12 +235,16 @@ pub const EGL_ALPHA_FORMAT_PRE: EGLint = EGL_VG_ALPHA_FORMAT_PRE;
 // FUNCTIONS
 // -------------------------------------------------------------------------------------------------
 
+#[no_mangle]
+pub extern "C" fn gk_eglTest() -> i32 {
+    42
+}
 
 // ----------
 // Configuration Management
 // ----------
 #[no_mangle]
-pub extern "C" fn eglGetConfigs(
+pub extern "C" fn gk_eglGetConfigs(
     dpy: EGLDisplay,
     configs: EGLConfig,
     config_size: EGLint,
@@ -251,7 +255,7 @@ pub extern "C" fn eglGetConfigs(
 }
 
 #[no_mangle]
-pub extern "C" fn eglGetConfigAttrib(
+pub extern "C" fn gk_eglGetConfigAttrib(
     dpy: EGLDisplay,
     config: EGLConfig,
     attribute: EGLint,
