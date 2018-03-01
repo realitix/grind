@@ -235,11 +235,6 @@ pub const EGL_ALPHA_FORMAT_PRE: EGLint = EGL_VG_ALPHA_FORMAT_PRE;
 // FUNCTIONS
 // -------------------------------------------------------------------------------------------------
 
-#[no_mangle]
-pub extern "C" fn gk_eglTest() -> i32 {
-    42
-}
-
 // ----------
 // Configuration Management
 // ----------
@@ -266,7 +261,7 @@ pub extern "C" fn gk_eglGetConfigAttrib(
 }
 
 #[no_mangle]
-pub extern "C" fn eglChooseConfig(
+pub extern "C" fn gk_eglChooseConfig(
     dpy: EGLDisplay,
     attrib_list: *const EGLint,
     configs: *mut EGLConfig,
@@ -282,7 +277,7 @@ pub extern "C" fn eglChooseConfig(
 // Rendering Surfaces
 // ----------
 #[no_mangle]
-pub extern "C" fn eglCreateWindowSurface(
+pub extern "C" fn gk_eglCreateWindowSurface(
     dpy: EGLDisplay,
     config: EGLConfig,
     win: EGLNativeWindowType,
@@ -293,7 +288,7 @@ pub extern "C" fn eglCreateWindowSurface(
 }
 
 #[no_mangle]
-pub extern "C" fn eglCreatePbufferSurface(
+pub extern "C" fn gk_eglCreatePbufferSurface(
     dpy: EGLDisplay,
     config: EGLConfig,
     attrib_list: *const EGLint,
@@ -303,7 +298,7 @@ pub extern "C" fn eglCreatePbufferSurface(
 }
 
 #[no_mangle]
-pub extern "C" fn eglCreatePbufferFromClientBuffer(
+pub extern "C" fn gk_eglCreatePbufferFromClientBuffer(
     dpy: EGLDisplay,
     buftype: EGLenum,
     buffer: EGLClientBuffer,
@@ -315,13 +310,13 @@ pub extern "C" fn eglCreatePbufferFromClientBuffer(
 }
 
 #[no_mangle]
-pub extern "C" fn eglDestroySurface(dpy: EGLDisplay, surface: EGLSurface) -> EGLBoolean {
+pub extern "C" fn gk_eglDestroySurface(dpy: EGLDisplay, surface: EGLSurface) -> EGLBoolean {
     println!("Grind-Kernel: FN not implemented: eglDestroySurface");
     EGL_FALSE
 }
 
 #[no_mangle]
-pub extern "C" fn eglCreatePixmapSurface(
+pub extern "C" fn gk_eglCreatePixmapSurface(
     dpy: EGLDisplay,
     config: EGLConfig,
     pixmap: EGLNativePixmapType,
@@ -332,7 +327,7 @@ pub extern "C" fn eglCreatePixmapSurface(
 }
 
 #[no_mangle]
-pub extern "C" fn eglSurfaceAttrib(
+pub extern "C" fn gk_eglSurfaceAttrib(
     dpy: EGLDisplay,
     surface: EGLSurface,
     attribute: EGLint,
@@ -343,7 +338,7 @@ pub extern "C" fn eglSurfaceAttrib(
 }
 
 #[no_mangle]
-pub extern "C" fn eglQuerySurface(
+pub extern "C" fn gk_eglQuerySurface(
     dpy: EGLDisplay,
     surface: EGLSurface,
     attribute: EGLint,
@@ -358,19 +353,19 @@ pub extern "C" fn eglQuerySurface(
 // Rendering Contexts
 // ----------
 #[no_mangle]
-pub extern "C" fn eglBindAPI(api: EGLenum) -> EGLBoolean {
+pub extern "C" fn gk_eglBindAPI(api: EGLenum) -> EGLBoolean {
     println!("Grind-Kernel: FN not implemented: eglBindAPI");
     EGL_FALSE
 }
 
 #[no_mangle]
-pub extern "C" fn eglQueryAPI() -> EGLenum {
+pub extern "C" fn gk_eglQueryAPI() -> EGLenum {
     println!("Grind-Kernel: FN not implemented: eglQueryAPI");
     EGL_OPENGL_ES_API
 }
 
 #[no_mangle]
-pub extern "C" fn eglCreateContext(
+pub extern "C" fn gk_eglCreateContext(
     dpy: EGLDisplay,
     config: EGLConfig,
     share_context: EGLContext,
@@ -381,13 +376,13 @@ pub extern "C" fn eglCreateContext(
 }
 
 #[no_mangle]
-pub extern "C" fn eglDestroyContext(dpy: EGLDisplay, ctx: EGLContext) -> EGLBoolean {
+pub extern "C" fn gk_eglDestroyContext(dpy: EGLDisplay, ctx: EGLContext) -> EGLBoolean {
     println!("Grind-Kernel: FN not implemented: eglDestroyContext");
     EGL_FALSE
 }
 
 #[no_mangle]
-pub extern "C" fn eglMakeCurrent(
+pub extern "C" fn gk_eglMakeCurrent(
     dpy: EGLDisplay,
     draw: EGLSurface,
     read: EGLSurface,
@@ -398,25 +393,25 @@ pub extern "C" fn eglMakeCurrent(
 }
 
 #[no_mangle]
-pub extern "C" fn eglGetCurrentContext() -> EGLContext {
+pub extern "C" fn gk_eglGetCurrentContext() -> EGLContext {
     println!("Grind-Kernel: FN not implemented: eglGetCurrentContext");
     EGL_NO_CONTEXT
 }
 
 #[no_mangle]
-pub extern "C" fn eglGetCurrentSurface(readdraw: EGLint) -> EGLSurface {
+pub extern "C" fn gk_eglGetCurrentSurface(readdraw: EGLint) -> EGLSurface {
     println!("Grind-Kernel: FN not implemented: eglGetCurrentContext");
     EGL_NO_SURFACE
 }
 
 #[no_mangle]
-pub extern "C" fn eglGetCurrentDisplay() -> EGLDisplay {
+pub extern "C" fn gk_eglGetCurrentDisplay() -> EGLDisplay {
     println!("Grind-Kernel: FN not implemented: eglGetCurrentDisplay");
     EGL_NO_DISPLAY
 }
 
 #[no_mangle]
-pub extern "C" fn eglQueryContext(
+pub extern "C" fn gk_eglQueryContext(
     dpy: EGLDisplay,
     ctx: EGLContext,
     attribute: EGLint,
@@ -431,13 +426,13 @@ pub extern "C" fn eglQueryContext(
 // Initialization and Terminating
 // ----------
 #[no_mangle]
-pub extern "C" fn eglGetDisplay(display_id: EGLNativeDisplayType) -> EGLDisplay {
+pub extern "C" fn gk_eglGetDisplay(display_id: EGLNativeDisplayType) -> EGLDisplay {
     println!("Grind-Kernel: FN not implemented: eglGetDisplay");
     EGL_NO_DISPLAY
 }
 
 #[no_mangle]
-pub extern "C" fn eglInitialize(
+pub extern "C" fn gk_eglInitialize(
     dpy: EGLDisplay,
     major: *mut EGLint,
     minor: *mut EGLint,
@@ -447,20 +442,20 @@ pub extern "C" fn eglInitialize(
 }
 
 #[no_mangle]
-pub extern "C" fn eglTerminate(dpy: EGLDisplay) -> EGLBoolean {
+pub extern "C" fn gk_eglTerminate(dpy: EGLDisplay) -> EGLBoolean {
     println!("Grind-Kernel: FN not implemented: eglTerminate");
     EGL_FALSE
 }
 
 /*I don't know hot to convert to c_char right now
  * #[no_mangle]
-pub extern "C" fn eglQueryString(dpy: EGLDisplay, name: EGLint) -> *const c_char {
+pub extern "C" fn gk_eglQueryString(dpy: EGLDisplay, name: EGLint) -> *const c_char {
     println!("Grind-Kernel: FN not implemented: eglQueryString");
     "test"
 }*/
 
 #[no_mangle]
-pub extern "C" fn eglReleaseThread() -> EGLBoolean {
+pub extern "C" fn gk_eglReleaseThread() -> EGLBoolean {
     println!("Grind-Kernel: FN not implemented: eglReleaseThread");
     EGL_FALSE
 }
@@ -470,19 +465,19 @@ pub extern "C" fn eglReleaseThread() -> EGLBoolean {
 // Synchronization Primitives
 // ----------
 #[no_mangle]
-pub extern "C" fn eglWaitClient() -> EGLBoolean {
+pub extern "C" fn gk_eglWaitClient() -> EGLBoolean {
     println!("Grind-Kernel: FN not implemented: eglWaitClient");
     EGL_FALSE
 }
 
 #[no_mangle]
-pub extern "C" fn eglWaitGL() -> EGLBoolean {
+pub extern "C" fn gk_eglWaitGL() -> EGLBoolean {
     println!("Grind-Kernel: FN not implemented: eglWaitGL");
     EGL_FALSE
 }
 
 #[no_mangle]
-pub extern "C" fn eglWaitNative(engine: EGLint) -> EGLBoolean {
+pub extern "C" fn gk_eglWaitNative(engine: EGLint) -> EGLBoolean {
     println!("Grind-Kernel: FN not implemented: eglWaitNative");
     EGL_FALSE
 }
@@ -492,13 +487,13 @@ pub extern "C" fn eglWaitNative(engine: EGLint) -> EGLBoolean {
 // Posting the Color Buffer
 // ----------
 #[no_mangle]
-pub extern "C" fn eglSwapBuffers(dpy: EGLDisplay, surface: EGLSurface) -> EGLBoolean {
+pub extern "C" fn gk_eglSwapBuffers(dpy: EGLDisplay, surface: EGLSurface) -> EGLBoolean {
     println!("Grind-Kernel: FN not implemented: eglSwapBuffers");
     EGL_FALSE
 }
 
 #[no_mangle]
-pub extern "C" fn eglCopyBuffers(
+pub extern "C" fn gk_eglCopyBuffers(
     dpy: EGLDisplay,
     surface: EGLSurface,
     target: EGLNativePixmapType,
@@ -508,7 +503,7 @@ pub extern "C" fn eglCopyBuffers(
 }
 
 #[no_mangle]
-pub extern "C" fn eglSwapInterval(dpy: EGLDisplay, interval: EGLint) -> EGLBoolean {
+pub extern "C" fn gk_eglSwapInterval(dpy: EGLDisplay, interval: EGLint) -> EGLBoolean {
     println!("Grind-Kernel: FN not implemented: eglSwapInterval");
     EGL_FALSE
 }
@@ -518,7 +513,7 @@ pub extern "C" fn eglSwapInterval(dpy: EGLDisplay, interval: EGLint) -> EGLBoole
 // Render to Textures
 // ----------
 #[no_mangle]
-pub extern "C" fn eglBindTexImage(
+pub extern "C" fn gk_eglBindTexImage(
     dpy: EGLDisplay,
     surface: EGLSurface,
     buffer: EGLint,
@@ -528,7 +523,7 @@ pub extern "C" fn eglBindTexImage(
 }
 
 #[no_mangle]
-pub extern "C" fn eglReleaseTexImage(
+pub extern "C" fn gk_eglReleaseTexImage(
     dpy: EGLDisplay,
     surface: EGLSurface,
     buffer: EGLint,
@@ -542,7 +537,7 @@ pub extern "C" fn eglReleaseTexImage(
 // Obtain Extension Function Pointers
 // ----------
 #[no_mangle]
-pub extern "C" fn eglGetProcAddress(procname: *const c_char) -> *const() {
+pub extern "C" fn gk_eglGetProcAddress(procname: *const c_char) -> *const() {
     println!("Grind-Kernel: FN not implemented: eglReleaseTexImage");
     eglGetError  as *const()
 }
@@ -552,7 +547,7 @@ pub extern "C" fn eglGetProcAddress(procname: *const c_char) -> *const() {
 // Errors
 // ----------
 #[no_mangle]
-pub extern "C" fn eglGetError() -> EGLint {
+pub extern "C" fn gk_eglGetError() -> EGLint {
     println!("Grind-Kernel: FN not implemented: eglGetError");
     EGL_DONT_CARE
 }

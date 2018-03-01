@@ -3,9 +3,7 @@ name = "grind-egl"
 version = "0.1.0"
 authors = ["Jean-Sebastien BEVILACQUA <realitix@gmail.com>", "Robert KING"]
 publish = false
-description = "EGL proxy fro Grind"
-links = "grindkernel"
-build = "build.rs"
+description = "EGL proxy for Grind"
 
 [lib]
 name = "EGL"
