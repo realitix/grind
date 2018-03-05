@@ -539,7 +539,7 @@ pub extern "C" fn gk_eglReleaseTexImage(
 #[no_mangle]
 pub extern "C" fn gk_eglGetProcAddress(procname: *const c_char) -> *const() {
     println!("Grind-Kernel: FN not implemented: eglReleaseTexImage");
-    eglGetError  as *const()
+    gk_eglGetError  as *const()
 }
 
 

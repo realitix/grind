@@ -60,7 +60,7 @@ extern {
     fn gk_eglGetDisplay(display_id: EGLNativeDisplayType) -> EGLDisplay;
     fn gk_eglInitialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EGLBoolean;
     fn gk_eglTerminate(dpy: EGLDisplay) -> EGLBoolean;
-    fn gk_eglQueryString(dpy: EGLDisplay, name: EGLint) -> *const c_char;
+    //fn gk_eglQueryString(dpy: EGLDisplay, name: EGLint) -> *const c_char;
     fn gk_eglReleaseThread() -> EGLBoolean;
     fn gk_eglWaitClient() -> EGLBoolean;
     fn gk_eglWaitGL() -> EGLBoolean;
@@ -267,10 +267,10 @@ pub extern "C" fn eglTerminate(dpy: EGLDisplay) -> EGLBoolean {
     unsafe { gk_eglTerminate(dpy) }
 }
 
-#[no_mangle]
+/*#[no_mangle]
 pub extern "C" fn eglQueryString(dpy: EGLDisplay, name: EGLint) -> *const c_char {
     unsafe { gk_eglQueryString(dpy, name) }
-}
+}*/
 
 #[no_mangle]
 pub extern "C" fn eglReleaseThread() -> EGLBoolean {
