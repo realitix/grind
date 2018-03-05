@@ -1,5 +1,15 @@
 # Grind Test
 
+## How to use
+
+Install `pytest`, `cffi` and just run:
+
+```
+pytest
+```
+
+## Context
+
 This module allows to test and validate Grind behavior.
 This module is in Python and uses PyTest. Why ?
 
