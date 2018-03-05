@@ -11,7 +11,7 @@ Let's compare pro and con for each of them.
 
 - Same language as the code = this is the **best point**
 - Managed directly by Cargo and integrated in the Rust ecosystem
-- If we use `extern crate`, we don't need to rebin to EGL/OpenGL library -> Faster
+- If we use `extern crate`, we don't need to rebind to EGL/OpenGL library -> Faster
 - **BUT** in the same time, we don't test the library from an external point of view
 
 ## Python tests
