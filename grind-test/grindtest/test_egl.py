@@ -1,4 +1,5 @@
-import pytest
+from wrapper import egl
+
 
 def test_yolo():
-    assert 1 == 2
+    display = egl.eglGetDisplay(egl.EGL_DEFAULT_DISPLAY)
