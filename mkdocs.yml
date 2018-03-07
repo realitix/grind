@@ -22,3 +22,4 @@ pages:
         - 'Ideas': 'research/ideas.md'
         - 'SDL Init': 'research/sdl.md'
         - 'Functional tests': 'research/test.md'
+        - 'GL Context': 'research/glcontext.md'
