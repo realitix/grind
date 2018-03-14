@@ -12,3 +12,5 @@ crate-type = ["cdylib"]
 [dependencies]
 khronos = "*"
 libc = "*"
+lazy_static = "*"
+vulkano = "*"
