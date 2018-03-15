@@ -6,14 +6,11 @@ use egl::display::is_available;
 
 use kernel::vulkan::VulkanDriver;
 
-
 thread_local!(static CONTEXT: RefCell<Context> = RefCell::new(Context::new()));
 
-
 struct Context {
-    display: Option<Display>
+    display: Option<Display>,
 }
-
 
 impl Context {
     pub fn new() -> Context {
@@ -25,10 +22,7 @@ impl Context {
     }
 }
 
-
-pub struct EGL {
-}
-
+pub struct EGL {}
 
 impl EGL {
     pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
@@ -37,6 +31,8 @@ impl EGL {
             true => {
                 CONTEXT.with(|c| {
                     c.borrow_mut().init();
+                    // Note: I don't manage to send the Display pointer so I send the Context
+                    // pointer. It should be the same.
                     &(*c.borrow()) as *const Context as EGLDisplay
                 })
             }

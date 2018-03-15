@@ -7,6 +7,5 @@ extern crate lazy_static;
 #[macro_use]
 extern crate vulkano;
 
-
 pub mod egl;
 mod kernel;
