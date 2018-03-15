@@ -120,7 +120,7 @@ extern "C" {
     fn gk_eglSwapInterval(dpy: EGLDisplay, interval: EGLint) -> EGLBoolean;
     fn gk_eglBindTexImage(dpy: EGLDisplay, surface: EGLSurface, buffer: EGLint) -> EGLBoolean;
     fn gk_eglReleaseTexImage(dpy: EGLDisplay, surface: EGLSurface, buffer: EGLint) -> EGLBoolean;
-    fn gk_eglGetProcAddress(procname: *const c_char) -> extern "C" fn();
+    //fn gk_eglGetProcAddress(procname: *const c_char) -> extern "C" fn();
     fn gk_eglGetError() -> EGLint;
 }
 
@@ -386,10 +386,10 @@ pub extern "C" fn eglReleaseTexImage(
 // ----------
 // Obtain Extension Function Pointers
 // ----------
-#[no_mangle]
-pub extern "C" fn eglGetProcAddress(procname: *const c_char) -> extern "C" fn() {
-    unsafe { gk_eglGetProcAddress(procname) }
-}
+//#[no_mangle]
+//pub extern "C" fn eglGetProcAddress(procname: *const c_char) -> extern "C" fn() {
+//    unsafe { gk_eglGetProcAddress(procname) }
+//}
 
 // ----------
 // Errors
