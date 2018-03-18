@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::sync::Mutex;
 
 use egl::types::*;
 use egl::display::Display;
@@ -6,7 +7,13 @@ use egl::display::is_available;
 
 use kernel::vulkan::VulkanDriver;
 
-thread_local!(static CONTEXT: RefCell<Context> = RefCell::new(Context::new()));
+lazy_static! {
+    static ref DISPLAYS: Mutex<Vec<Display>> = Mutex::new(Vec::new());
+}
+
+thread_local! {
+    static DISPLAY: RefCell<Option<Display>> = RefCell::new(None);
+}
 
 struct Context {
     display: Option<Display>,
@@ -29,12 +36,8 @@ impl EGL {
         match is_available() {
             false => EGL_NO_DISPLAY,
             true => {
-                CONTEXT.with(|c| {
-                    c.borrow_mut().init();
-                    // Note: I don't manage to send the Display pointer so I send the Context
-                    // pointer. It should be the same.
-                    &(*c.borrow()) as *const Context as EGLDisplay
-                })
+                DISPLAYS.lock().unwrap().push(Display::new());
+                0 as EGLDisplay
             }
         }
     }

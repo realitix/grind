@@ -23,3 +23,5 @@ pages:
         - 'SDL Init': 'research/sdl.md'
         - 'Functional tests': 'research/test.md'
         - 'GL Context': 'research/glcontext.md'
+        - 'Display EGL Object': 'research/display.md'
+        - 'Display Server': 'research/display_server.md'
