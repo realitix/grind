@@ -1,2 +1,2 @@
 [workspace]
-members = ["grind-kernel", "grind-egl"]
+members = ["grind-kernel", "grind-egl", "grind-wayland-egl"]

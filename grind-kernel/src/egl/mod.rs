@@ -5,6 +5,8 @@ mod display;
 use egl::types::*;
 use egl::context::EGL;
 
+pub mod wayland;
+
 // ----------
 // Configuration Management
 // ----------

@@ -15,6 +15,7 @@ thread_local! {
     static DISPLAY: RefCell<Option<Display>> = RefCell::new(None);
 }
 
+/* TODELETE
 struct Context {
     display: Option<Display>,
 }
@@ -28,6 +29,7 @@ impl Context {
         self.display = Some(Display::new());
     }
 }
+*/
 
 pub struct EGL {}
 
@@ -36,9 +38,25 @@ impl EGL {
         match is_available() {
             false => EGL_NO_DISPLAY,
             true => {
-                DISPLAYS.lock().unwrap().push(Display::new());
-                0 as EGLDisplay
+                let d = Display::new();
+                { DISPLAYS.lock().unwrap().push(d); }
+                { DISPLAYS.lock().unwrap().last().unwrap() as *const Display as EGLDisplay }
             }
         }
+    }
+
+    pub fn test_current(display: EGLDisplay) {
+        DISPLAY.with(|d| {
+            let mut lock = DISPLAYS.lock().unwrap();
+            let mut target: i32 = -1;
+            for (i, elem) in lock.iter().enumerate() {
+                if elem as *const Display as EGLDisplay == display {
+                    target = i as i32;
+                }
+            }
+            if target >= 0 {
+                *d.borrow_mut() = Some(lock.remove(target as usize));
+            }
+        });
     }
 }

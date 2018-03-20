@@ -1,0 +1,14 @@
+[package]
+name = "grind-wayland-egl"
+version = "0.1.0"
+authors = ["Jean-Sebastien BEVILACQUA <realitix@gmail.com>", "Robert KING"]
+publish = false
+description = "Wayland EGL proxy for Grind"
+
+[lib]
+name = "waylandegl"
+crate-type = ["cdylib"]
+
+[dependencies]
+grind-kernel = { path = "../grind-kernel" }
+libc = "*"
