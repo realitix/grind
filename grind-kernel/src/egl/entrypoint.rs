@@ -18,39 +18,41 @@ lazy_static! {
 
 thread_local! {
     static CONTEXT: RefCell<Option<Context>> = RefCell::new(None);
+    static LAST_EGL_CALL: RefCell<EGLint> = RefCell::new(EGL_SUCCESS);
 }
 
-pub struct EGL {}
 
-impl EGL {
-    pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
-        match is_available() {
-            false => EGL_NO_DISPLAY,
-            true => {
-                let d = Display::new(WaylandDisplay::new(display_id), VulkanDriver::new());
-                {
-                    DISPLAYS.lock().unwrap().push(d);
-                }
-                {
-                    DISPLAYS.lock().unwrap().last().unwrap() as *const Display as EGLDisplay
-                }
+pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
+    match is_available() {
+        false => EGL_NO_DISPLAY,
+        true => {
+            let d = Display::new(WaylandDisplay::new(display_id), VulkanDriver::new());
+            {
+                DISPLAYS.lock().unwrap().push(d);
+            }
+            {
+                DISPLAYS.lock().unwrap().last().unwrap() as *const Display as EGLDisplay
             }
         }
     }
+}
 
-    pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
-        CONTEXT.with(|c| {
-            let mut lock = CONTEXTS.lock().unwrap();
-            let mut target: Option<usize> = None;
-            for (i, elem) in lock.iter().enumerate() {
-                if elem as *const Context as EGLContext == ctx {
-                    target = Some(i);
-                }
-            }
+pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EGLBoolean {
+    EGL_FALSE
+}
 
-            if target.is_some() {
-                *c.borrow_mut() = Some(lock.remove(target.unwrap()));
+pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
+    CONTEXT.with(|c| {
+        let mut lock = CONTEXTS.lock().unwrap();
+        let mut target: Option<usize> = None;
+        for (i, elem) in lock.iter().enumerate() {
+            if elem as *const Context as EGLContext == ctx {
+                target = Some(i);
             }
-        });
-    }
+        }
+
+        if target.is_some() {
+            *c.borrow_mut() = Some(lock.remove(target.unwrap()));
+        }
+    });
 }

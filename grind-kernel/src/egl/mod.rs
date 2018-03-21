@@ -3,10 +3,10 @@ mod context;
 mod display;
 mod entrypoint;
 
-use egl::types::*;
-use egl::entrypoint::EGL;
-
 pub mod wayland;
+
+use egl::types::*;
+
 
 // ----------
 // Configuration Management
@@ -197,7 +197,7 @@ pub extern "C" fn gk_eglQueryContext(
 // ----------
 #[no_mangle]
 pub extern "C" fn gk_eglGetDisplay(display_id: EGLNativeDisplayType) -> EGLDisplay {
-    EGL::get_display(display_id)
+    entrypoint::get_display(display_id)
 }
 
 #[no_mangle]
@@ -206,8 +206,7 @@ pub extern "C" fn gk_eglInitialize(
     major: *mut EGLint,
     minor: *mut EGLint,
 ) -> EGLBoolean {
-    println!("Grind-Kernel: FN not implemented: eglInitialize");
-    EGL_FALSE
+    entrypoint::initialize(dpy, major, minor)
 }
 
 #[no_mangle]

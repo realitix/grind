@@ -1,28 +1,27 @@
 use std::ptr::Unique;
 use libc::{c_int, c_void};
 
-use egl::types::EGLNativeDisplayType;
-
 // ----------
 // GLOBAL TYPES
 // ----------
-type EglWindow = *const c_void;
-type Surface = *const c_void;
+type WlDisplay = *mut c_void;
+type WlEglWindow = *mut c_void;
+type WlSurface = *mut c_void;
 
 // ----------
 // EXPORTED FUNCTIONS
 // ----------
 #[no_mangle]
-pub fn gk_wl_egl_window_create(surface: Surface, width: c_int, height: c_int) -> EglWindow {
-    surface as EglWindow
+pub fn gk_wl_egl_window_create(surface: WlSurface, width: c_int, height: c_int) -> WlEglWindow {
+    surface as WlEglWindow
 }
 
 #[no_mangle]
-pub fn gk_wl_egl_window_destroy(egl_window: EglWindow) {}
+pub fn gk_wl_egl_window_destroy(egl_window: WlEglWindow) {}
 
 #[no_mangle]
 pub fn gk_wl_egl_window_resize(
-    egl_window: EglWindow,
+    egl_window: WlEglWindow,
     width: c_int,
     height: c_int,
     dx: c_int,
@@ -32,7 +31,7 @@ pub fn gk_wl_egl_window_resize(
 
 #[no_mangle]
 pub fn gk_wl_egl_window_get_attached_size(
-    egl_window: EglWindow,
+    egl_window: WlEglWindow,
     width: *mut c_int,
     height: *mut c_int,
 ) {
@@ -46,7 +45,7 @@ pub struct WaylandDisplay {
 }
 
 impl WaylandDisplay {
-    pub fn new(display_id: EGLNativeDisplayType) -> WaylandDisplay {
+    pub fn new(display_id: WlDisplay) -> WaylandDisplay {
         WaylandDisplay {
             display_id: Unique::new(display_id).unwrap(),
         }
