@@ -1,3 +1,5 @@
+#![feature(ptr_internals)]
+
 extern crate khronos;
 extern crate libc;
 

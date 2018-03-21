@@ -1,9 +1,10 @@
 mod types;
 mod context;
 mod display;
+mod entrypoint;
 
 use egl::types::*;
-use egl::context::EGL;
+use egl::entrypoint::EGL;
 
 pub mod wayland;
 
