@@ -7,7 +7,6 @@ pub mod wayland;
 
 use egl::types::*;
 
-
 // ----------
 // Configuration Management
 // ----------

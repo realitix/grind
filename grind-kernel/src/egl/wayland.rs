@@ -47,7 +47,8 @@ pub struct WaylandDisplay {
 impl WaylandDisplay {
     pub fn new(display_id: WlDisplay) -> WaylandDisplay {
         WaylandDisplay {
-            display_id: Unique::new(display_id).unwrap(),
+            display_id: Unique::new(display_id)
+                .expect("You must pass a valid pointer for wayland display"),
         }
     }
 }
