@@ -73,6 +73,12 @@ pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EG
     }
 }
 
+pub fn get_error() -> EGLint {
+    LAST_EGL_CALL.with(|c| {
+        *c.borrow()
+    })
+}
+
 pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
     CONTEXT.with(|c| {
         let mut lock = CONTEXTS.lock().unwrap();

@@ -25,3 +25,5 @@ pages:
         - 'GL Context': 'research/glcontext.md'
         - 'Display EGL Object': 'research/display.md'
         - 'Display Server': 'research/display_server.md'
+    - EGL:
+        - 'eglGetConfig': 'egl/egl_get_config.md'

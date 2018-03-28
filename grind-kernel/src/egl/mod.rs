@@ -310,6 +310,5 @@ pub extern "C" fn gk_eglReleaseTexImage(
 // ----------
 #[no_mangle]
 pub extern "C" fn gk_eglGetError() -> EGLint {
-    println!("Grind-Kernel: FN not implemented: eglGetError");
-    EGL_DONT_CARE
+    entrypoint::get_error()
 }
