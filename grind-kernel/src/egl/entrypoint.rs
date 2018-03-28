@@ -22,7 +22,7 @@ thread_local! {
     static LAST_EGL_CALL: RefCell<EGLint> = RefCell::new(EGL_SUCCESS);
 }
 
-fn with_display<F>(egl_display: EGLDisplay, f: F) -> bool
+fn with_display<F>(egl_display: EGLDisplay, f: F) -> EGLBoolean
 where
     F: FnOnce(&Display) -> bool,
 {
@@ -36,8 +36,13 @@ where
     }
 
     match current_display {
-        Some(d) => f(d),
-        None => false,
+        Some(d) => {
+            match f(d) {
+                true => EGL_TRUE,
+                false => EGL_FALSE
+            }
+        },
+        None => EGL_FALSE,
     }
 }
 
@@ -57,7 +62,7 @@ pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
 }
 
 pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EGLBoolean {
-    match with_display(dpy, |d| {
+    with_display(dpy, |d| {
         unsafe {
             if !major.is_null() {
                 *major = EGL_VERSION_MAJOR;
@@ -67,10 +72,7 @@ pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EG
             }
         }
         true
-    }) {
-        false => EGL_FALSE,
-        true => EGL_TRUE,
-    }
+    })
 }
 
 pub fn get_error() -> EGLint {
