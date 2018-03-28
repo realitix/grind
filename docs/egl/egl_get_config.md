@@ -49,8 +49,9 @@ Les swapchain (ou framebuffer en offscreen) sont créés par la fonction eglCrea
 Ces surfaces sont ensuites associés à un context avec eglMakeCurrent
 
 Dans l'ordre:
-1 - eglGetDisplay
-2 - eglInitialize
-3 - eglCreateWindowSurface or eglCreatePBufferSurface -> Création des swapchains ou framebuffer
-4 - eglCreateContext -> Création du context
-5 - eglMakeCurrent -> Liaison entre surface et context + context dans le thread
+1 - eglGetDisplay -> Création du display et génération des configurations associées au display
+2 - eglInitialize -> Génère les configurations du Display + Renvoie la version EGL
+3 - eglChooseConfig/eglGetConfig -> Renvoie les configurations associées au display
+4 - eglCreateWindowSurface or eglCreatePBufferSurface -> Création des swapchains ou framebuffer
+5 - eglCreateContext -> Création du context
+6 - eglMakeCurrent -> Liaison entre surface et context + context dans le thread
