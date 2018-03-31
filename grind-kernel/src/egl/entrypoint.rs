@@ -48,29 +48,17 @@ where
     }
 
     match current_display {
-        Some(d) => f(d),
+        Some(d) => {
+            if d.configs.len() == 0 {
+                return set_result(EGL_NOT_INITIALIZED);
+            }
+
+            f(d)
+        },
         None => set_result(EGL_BAD_DISPLAY),
     }
 }
 
-fn with_mutable_display<F>(egl_display: EGLDisplay, f: F) -> EGLBoolean
-where
-    F: FnOnce(&mut Display) -> EGLBoolean,
-{
-    let mut lock = DISPLAYS.write().unwrap();
-    let mut current_display: Option<&mut Display> = None;
-
-    for display in lock.iter_mut() {
-        if display as *const Display as EGLDisplay == egl_display {
-            current_display = Some(display);
-        }
-    }
-
-    match current_display {
-        Some(d) => f(d),
-        None => set_result(EGL_BAD_DISPLAY),
-    }
-}
 
 pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
     match is_available() {
@@ -87,22 +75,32 @@ pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
     }
 }
 
-pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EGLBoolean {
-    with_mutable_display(dpy, |d| {
-        d.initialize();
-        EGL_TRUE
-    });
 
-    unsafe {
-        if !major.is_null() {
-            *major = EGL_VERSION_MAJOR;
-        }
-        if !minor.is_null() {
-            *minor = EGL_VERSION_MINOR;
+pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EGLBoolean {
+    let mut lock = DISPLAYS.write().unwrap();
+    let mut current_display: Option<&mut Display> = None;
+
+    for display in lock.iter_mut() {
+        if display as *const Display as EGLDisplay == dpy {
+            current_display = Some(display);
         }
     }
 
-    set_result(EGL_SUCCESS)
+    match current_display {
+        None => set_result(EGL_BAD_DISPLAY),
+        Some(d) => {
+            d.initialize();
+            unsafe {
+                if !major.is_null() {
+                    *major = EGL_VERSION_MAJOR;
+                }
+                if !minor.is_null() {
+                    *minor = EGL_VERSION_MINOR;
+                }
+            }
+            set_result(EGL_SUCCESS)
+        }
+    }
 }
 
 pub fn get_error() -> EGLint {
@@ -116,11 +114,6 @@ pub fn get_configs(
     num_config: *mut EGLint,
 ) -> EGLBoolean {
     with_display(dpy, |d| {
-        // Check display initialized
-        if d.configs.len() == 0 {
-            return set_result(EGL_NOT_INITIALIZED);
-        }
-
         // Check num_config not NULL
         let ptr = unsafe { num_config.as_ref() };
         if ptr.is_none() {
@@ -152,6 +145,7 @@ pub fn get_configs(
     })
 }
 
+
 pub fn get_config_attrib(
     dpy: EGLDisplay,
     egl_config: EGLConfig,
@@ -159,11 +153,6 @@ pub fn get_config_attrib(
     value: *mut EGLint,
 ) -> EGLBoolean {
     with_display(dpy, |d| {
-        // Check display initialized
-        if d.configs.len() == 0 {
-            return set_result(EGL_NOT_INITIALIZED);
-        }
-
         let attr = d.get_config_attrib(egl_config, attribute);
 
         match attr {
@@ -177,6 +166,50 @@ pub fn get_config_attrib(
         }
     })
 }
+
+
+pub fn choose_config(
+    dpy: EGLDisplay,
+    attrib_list: *const EGLint,
+    configs: *mut EGLConfig,
+    config_size: EGLint,
+    num_config: *mut EGLint
+) -> EGLBoolean {
+    with_display(dpy, |d| {
+        // TODO: Currently just a copy of get_configs
+        // because it's just for the POC
+        //
+        // Check num_config not NULL
+        let ptr = unsafe { num_config.as_ref() };
+        if ptr.is_none() {
+            return set_result(EGL_BAD_PARAMETER);
+        }
+
+        // Fill config if config is not NULL
+        let ptr = unsafe { configs.as_ref() };
+        if !ptr.is_none() {
+            let max_config_size = {
+                match config_size as usize > d.configs.len() {
+                    true => d.configs.len() as isize,
+                    false => config_size as isize,
+                }
+            };
+
+            for i in 0..max_config_size {
+                unsafe {
+                    *configs.offset(i) = &d.configs[i as usize] as *const Config as EGLConfig;
+                }
+            }
+        }
+
+        unsafe {
+            *num_config = d.configs.len() as EGLint;
+        }
+
+        set_result(EGL_SUCCESS)
+    })
+}
+
 
 pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
     CONTEXT.with(|c| {

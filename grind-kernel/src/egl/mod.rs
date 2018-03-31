@@ -39,8 +39,7 @@ pub extern "C" fn gk_eglChooseConfig(
     config_size: EGLint,
     num_config: *mut EGLint,
 ) -> EGLBoolean {
-    println!("Grind-Kernel: FN not implemented: eglChooseConfig");
-    EGL_FALSE
+    entrypoint::choose_config(dpy, attrib_list, configs, config_size, num_config)
 }
 
 // ----------
