@@ -1,3 +1,5 @@
+use egl::types::EGLint;
+
 pub struct Config {
     pub alpha_size: i32,
     pub alpha_mask_size: i32,
@@ -30,5 +32,11 @@ pub struct Config {
     pub transparent_type: i32,
     pub transparent_red_value: i32,
     pub transparent_green_value: i32,
-    pub transparent_blue_value: i32
+    pub transparent_blue_value: i32,
+}
+
+impl Config {
+    pub fn get_attrib(&self, attribute: EGLint) -> EGLint {
+        2
+    }
 }

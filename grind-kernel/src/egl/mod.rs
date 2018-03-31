@@ -28,8 +28,7 @@ pub extern "C" fn gk_eglGetConfigAttrib(
     attribute: EGLint,
     value: *mut EGLint,
 ) -> EGLBoolean {
-    println!("Grind-Kernel: FN not implemented: eglGetConfigAttrib");
-    EGL_FALSE
+    entrypoint::get_config_attrib(dpy, config, attribute, value)
 }
 
 #[no_mangle]

@@ -23,17 +23,20 @@ thread_local! {
     static LAST_EGL_CALL: RefCell<EGLint> = RefCell::new(EGL_SUCCESS);
 }
 
-
-fn set_result(code: EGLint) {
+fn set_result(code: EGLint) -> EGLBoolean {
     LAST_EGL_CALL.with(|r| {
         *r.borrow_mut() = code;
     });
-}
 
+    match code {
+        EGL_SUCCESS => EGL_TRUE,
+        _ => EGL_FALSE,
+    }
+}
 
 fn with_display<F>(egl_display: EGLDisplay, f: F) -> EGLBoolean
 where
-    F: FnOnce(&Display) -> bool,
+    F: FnOnce(&Display) -> EGLBoolean,
 {
     let lock = DISPLAYS.read().unwrap();
     let mut current_display: Option<&Display> = None;
@@ -45,23 +48,14 @@ where
     }
 
     match current_display {
-        Some(d) => {
-            match f(d) {
-                true => EGL_TRUE,
-                false => EGL_FALSE
-            }
-        },
-        None => {
-            set_result(EGL_BAD_DISPLAY);
-            EGL_FALSE
-        }
+        Some(d) => f(d),
+        None => set_result(EGL_BAD_DISPLAY),
     }
 }
 
-
 fn with_mutable_display<F>(egl_display: EGLDisplay, f: F) -> EGLBoolean
 where
-    F: FnOnce(&mut Display) -> bool,
+    F: FnOnce(&mut Display) -> EGLBoolean,
 {
     let mut lock = DISPLAYS.write().unwrap();
     let mut current_display: Option<&mut Display> = None;
@@ -73,19 +67,10 @@ where
     }
 
     match current_display {
-        Some(d) => {
-            match f(d) {
-                true => EGL_TRUE,
-                false => EGL_FALSE
-            }
-        },
-        None => {
-            set_result(EGL_BAD_DISPLAY);
-            EGL_FALSE
-        }
+        Some(d) => f(d),
+        None => set_result(EGL_BAD_DISPLAY),
     }
 }
-
 
 pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
     match is_available() {
@@ -102,11 +87,10 @@ pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
     }
 }
 
-
 pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EGLBoolean {
     with_mutable_display(dpy, |d| {
         d.initialize();
-        true
+        EGL_TRUE
     });
 
     unsafe {
@@ -118,30 +102,29 @@ pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EG
         }
     }
 
-    EGL_TRUE
+    set_result(EGL_SUCCESS)
 }
-
 
 pub fn get_error() -> EGLint {
-    LAST_EGL_CALL.with(|c| {
-        *c.borrow()
-    })
+    LAST_EGL_CALL.with(|c| *c.borrow())
 }
 
-
-pub fn get_configs(dpy: EGLDisplay, configs: *mut EGLConfig, config_size: EGLint, num_config: *mut EGLint) -> EGLBoolean {
+pub fn get_configs(
+    dpy: EGLDisplay,
+    configs: *mut EGLConfig,
+    config_size: EGLint,
+    num_config: *mut EGLint,
+) -> EGLBoolean {
     with_display(dpy, |d| {
         // Check display initialized
         if d.configs.len() == 0 {
-            set_result(EGL_NOT_INITIALIZED);
-            return false;
+            return set_result(EGL_NOT_INITIALIZED);
         }
 
         // Check num_config not NULL
         let ptr = unsafe { num_config.as_ref() };
         if ptr.is_none() {
-            set_result(EGL_BAD_PARAMETER);
-            return false;
+            return set_result(EGL_BAD_PARAMETER);
         }
 
         // Fill config if config is not NULL
@@ -150,7 +133,7 @@ pub fn get_configs(dpy: EGLDisplay, configs: *mut EGLConfig, config_size: EGLint
             let max_config_size = {
                 match config_size as usize > d.configs.len() {
                     true => d.configs.len() as isize,
-                    false => config_size as isize
+                    false => config_size as isize,
                 }
             };
 
@@ -161,13 +144,39 @@ pub fn get_configs(dpy: EGLDisplay, configs: *mut EGLConfig, config_size: EGLint
             }
         }
 
-        unsafe { *num_config = d.configs.len() as EGLint; }
-        set_result(EGL_SUCCESS);
+        unsafe {
+            *num_config = d.configs.len() as EGLint;
+        }
 
-        true
+        set_result(EGL_SUCCESS)
     })
 }
 
+pub fn get_config_attrib(
+    dpy: EGLDisplay,
+    egl_config: EGLConfig,
+    attribute: EGLint,
+    value: *mut EGLint,
+) -> EGLBoolean {
+    with_display(dpy, |d| {
+        // Check display initialized
+        if d.configs.len() == 0 {
+            return set_result(EGL_NOT_INITIALIZED);
+        }
+
+        let attr = d.get_config_attrib(egl_config, attribute);
+
+        match attr {
+            None => set_result(EGL_BAD_CONFIG),
+            Some(a) => {
+                unsafe {
+                    *value = a as EGLint;
+                }
+                set_result(EGL_SUCCESS)
+            }
+        }
+    })
+}
 
 pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
     CONTEXT.with(|c| {

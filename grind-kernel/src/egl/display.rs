@@ -6,7 +6,6 @@ use egl::wayland::WaylandDisplay;
 use egl::config::Config;
 use egl::types::*;
 
-
 pub fn is_available() -> bool {
     vulkan_is_available()
 }
@@ -14,7 +13,7 @@ pub fn is_available() -> bool {
 pub struct Display {
     native_display: WaylandDisplay,
     kernel: VulkanDriver,
-    pub configs: Vec<Config>
+    pub configs: Vec<Config>,
 }
 
 impl Display {
@@ -22,7 +21,7 @@ impl Display {
         Display {
             native_display,
             kernel,
-            configs: Vec::new()
+            configs: Vec::new(),
         }
     }
 
@@ -59,7 +58,22 @@ impl Display {
             transparent_type: EGL_NONE,
             transparent_red_value: 0,
             transparent_green_value: 0,
-            transparent_blue_value: 0
+            transparent_blue_value: 0,
         });
+    }
+
+    pub fn get_config_attrib(&self, egl_config: EGLConfig, attribute: EGLint) -> Option<EGLint> {
+        let mut current_config: Option<&Config> = None;
+
+        for config in self.configs.iter() {
+            if config as *const Config as EGLConfig == egl_config {
+                current_config = Some(config);
+            }
+        }
+
+        match current_config {
+            None => None,
+            Some(c) => Some(c.get_attrib(attribute)),
+        }
     }
 }
