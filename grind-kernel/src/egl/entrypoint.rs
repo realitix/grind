@@ -54,11 +54,10 @@ where
             }
 
             f(d)
-        },
+        }
         None => set_result(EGL_BAD_DISPLAY),
     }
 }
-
 
 pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
     match is_available() {
@@ -74,7 +73,6 @@ pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
         }
     }
 }
-
 
 pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EGLBoolean {
     let mut lock = DISPLAYS.write().unwrap();
@@ -145,7 +143,6 @@ pub fn get_configs(
     })
 }
 
-
 pub fn get_config_attrib(
     dpy: EGLDisplay,
     egl_config: EGLConfig,
@@ -167,13 +164,12 @@ pub fn get_config_attrib(
     })
 }
 
-
 pub fn choose_config(
     dpy: EGLDisplay,
     attrib_list: *const EGLint,
     configs: *mut EGLConfig,
     config_size: EGLint,
-    num_config: *mut EGLint
+    num_config: *mut EGLint,
 ) -> EGLBoolean {
     with_display(dpy, |d| {
         // TODO: Currently just a copy of get_configs
@@ -209,7 +205,6 @@ pub fn choose_config(
         set_result(EGL_SUCCESS)
     })
 }
-
 
 pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
     CONTEXT.with(|c| {
