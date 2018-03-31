@@ -2,6 +2,7 @@ mod types;
 mod context;
 mod display;
 mod entrypoint;
+mod config;
 
 pub mod wayland;
 
@@ -13,12 +14,11 @@ use egl::types::*;
 #[no_mangle]
 pub extern "C" fn gk_eglGetConfigs(
     dpy: EGLDisplay,
-    configs: EGLConfig,
+    configs: *mut EGLConfig,
     config_size: EGLint,
     num_config: *mut EGLint,
 ) -> EGLBoolean {
-    println!("Grind-Kernel: FN not implemented: eglGetConfigs");
-    EGL_FALSE
+    entrypoint::get_configs(dpy, configs, config_size, num_config)
 }
 
 #[no_mangle]

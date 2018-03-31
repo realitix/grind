@@ -6,6 +6,7 @@ use kernel::vulkan::VulkanDriver;
 
 use egl::types::*;
 use egl::display::{is_available, Display};
+use egl::config::Config;
 use egl::context::Context;
 use egl::wayland::WaylandDisplay;
 
@@ -21,6 +22,14 @@ thread_local! {
     static CONTEXT: RefCell<Option<Context>> = RefCell::new(None);
     static LAST_EGL_CALL: RefCell<EGLint> = RefCell::new(EGL_SUCCESS);
 }
+
+
+fn set_result(code: EGLint) {
+    LAST_EGL_CALL.with(|r| {
+        *r.borrow_mut() = code;
+    });
+}
+
 
 fn with_display<F>(egl_display: EGLDisplay, f: F) -> EGLBoolean
 where
@@ -42,9 +51,41 @@ where
                 false => EGL_FALSE
             }
         },
-        None => EGL_FALSE,
+        None => {
+            set_result(EGL_BAD_DISPLAY);
+            EGL_FALSE
+        }
     }
 }
+
+
+fn with_mutable_display<F>(egl_display: EGLDisplay, f: F) -> EGLBoolean
+where
+    F: FnOnce(&mut Display) -> bool,
+{
+    let mut lock = DISPLAYS.write().unwrap();
+    let mut current_display: Option<&mut Display> = None;
+
+    for display in lock.iter_mut() {
+        if display as *const Display as EGLDisplay == egl_display {
+            current_display = Some(display);
+        }
+    }
+
+    match current_display {
+        Some(d) => {
+            match f(d) {
+                true => EGL_TRUE,
+                false => EGL_FALSE
+            }
+        },
+        None => {
+            set_result(EGL_BAD_DISPLAY);
+            EGL_FALSE
+        }
+    }
+}
+
 
 pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
     match is_available() {
@@ -61,25 +102,72 @@ pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
     }
 }
 
+
 pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EGLBoolean {
-    with_display(dpy, |d| {
-        unsafe {
-            if !major.is_null() {
-                *major = EGL_VERSION_MAJOR;
-            }
-            if !minor.is_null() {
-                *minor = EGL_VERSION_MINOR;
-            }
-        }
+    with_mutable_display(dpy, |d| {
+        d.initialize();
         true
-    })
+    });
+
+    unsafe {
+        if !major.is_null() {
+            *major = EGL_VERSION_MAJOR;
+        }
+        if !minor.is_null() {
+            *minor = EGL_VERSION_MINOR;
+        }
+    }
+
+    EGL_TRUE
 }
+
 
 pub fn get_error() -> EGLint {
     LAST_EGL_CALL.with(|c| {
         *c.borrow()
     })
 }
+
+
+pub fn get_configs(dpy: EGLDisplay, configs: *mut EGLConfig, config_size: EGLint, num_config: *mut EGLint) -> EGLBoolean {
+    with_display(dpy, |d| {
+        // Check display initialized
+        if d.configs.len() == 0 {
+            set_result(EGL_NOT_INITIALIZED);
+            return false;
+        }
+
+        // Check num_config not NULL
+        let ptr = unsafe { num_config.as_ref() };
+        if ptr.is_none() {
+            set_result(EGL_BAD_PARAMETER);
+            return false;
+        }
+
+        // Fill config if config is not NULL
+        let ptr = unsafe { configs.as_ref() };
+        if !ptr.is_none() {
+            let max_config_size = {
+                match config_size as usize > d.configs.len() {
+                    true => d.configs.len() as isize,
+                    false => config_size as isize
+                }
+            };
+
+            for i in 0..max_config_size {
+                unsafe {
+                    *configs.offset(i) = &d.configs[i as usize] as *const Config as EGLConfig;
+                }
+            }
+        }
+
+        unsafe { *num_config = d.configs.len() as EGLint; }
+        set_result(EGL_SUCCESS);
+
+        true
+    })
+}
+
 
 pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
     CONTEXT.with(|c| {
