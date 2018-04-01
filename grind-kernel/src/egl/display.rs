@@ -5,6 +5,8 @@ use kernel::vulkan::is_available as vulkan_is_available;
 use egl::wayland::WaylandDisplay;
 use egl::config::Config;
 use egl::types::*;
+use egl::global::EGL_RESULT;
+
 
 pub fn is_available() -> bool {
     vulkan_is_available()
@@ -62,7 +64,9 @@ impl Display {
         });
     }
 
-    pub fn get_config_attrib(&self, egl_config: EGLConfig, attribute: EGLint) -> Option<EGLint> {
+    pub fn with_config<F>(&self, egl_config: EGLConfig, f: F) -> EGLBoolean
+        where F: FnOnce(&Config) -> EGLBoolean
+    {
         let mut current_config: Option<&Config> = None;
 
         for config in self.configs.iter() {
@@ -72,8 +76,8 @@ impl Display {
         }
 
         match current_config {
-            None => None,
-            Some(c) => Some(c.get_attrib(attribute)),
+            None => EGL_RESULT(EGL_BAD_CONFIG),
+            Some(c) => f(c)
         }
     }
 }

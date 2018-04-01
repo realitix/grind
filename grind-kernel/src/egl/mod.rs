@@ -1,4 +1,6 @@
+mod global;
 mod types;
+mod surface;
 mod context;
 mod display;
 mod entrypoint;
@@ -52,8 +54,7 @@ pub extern "C" fn gk_eglCreateWindowSurface(
     win: EGLNativeWindowType,
     attrib_list: *const EGLint,
 ) -> EGLSurface {
-    println!("Grind-Kernel: FN not implemented: eglCreateWindowSurface");
-    EGL_NO_SURFACE
+    entrypoint::create_window_surface(dpy, config, win, attrib_list)
 }
 
 #[no_mangle]

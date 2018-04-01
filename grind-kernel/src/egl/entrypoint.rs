@@ -1,38 +1,16 @@
-use std::cell::RefCell;
-use std::sync::Mutex;
-use std::sync::RwLock;
-
 use kernel::vulkan::VulkanDriver;
 
 use egl::types::*;
+use egl::global::*;
 use egl::display::{is_available, Display};
 use egl::config::Config;
 use egl::context::Context;
+use egl::surface::Surface;
 use egl::wayland::WaylandDisplay;
 
 static EGL_VERSION_MAJOR: EGLint = 1;
 static EGL_VERSION_MINOR: EGLint = 4;
 
-lazy_static! {
-    static ref DISPLAYS: RwLock<Vec<Display>> = RwLock::new(Vec::new());
-    static ref CONTEXTS: Mutex<Vec<Context>> = Mutex::new(Vec::new());
-}
-
-thread_local! {
-    static CONTEXT: RefCell<Option<Context>> = RefCell::new(None);
-    static LAST_EGL_CALL: RefCell<EGLint> = RefCell::new(EGL_SUCCESS);
-}
-
-fn set_result(code: EGLint) -> EGLBoolean {
-    LAST_EGL_CALL.with(|r| {
-        *r.borrow_mut() = code;
-    });
-
-    match code {
-        EGL_SUCCESS => EGL_TRUE,
-        _ => EGL_FALSE,
-    }
-}
 
 fn with_display<F>(egl_display: EGLDisplay, f: F) -> EGLBoolean
 where
@@ -50,14 +28,15 @@ where
     match current_display {
         Some(d) => {
             if d.configs.len() == 0 {
-                return set_result(EGL_NOT_INITIALIZED);
+                return EGL_RESULT(EGL_NOT_INITIALIZED);
             }
 
             f(d)
         }
-        None => set_result(EGL_BAD_DISPLAY),
+        None => EGL_RESULT(EGL_BAD_DISPLAY),
     }
 }
+
 
 pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
     match is_available() {
@@ -85,7 +64,7 @@ pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EG
     }
 
     match current_display {
-        None => set_result(EGL_BAD_DISPLAY),
+        None => EGL_RESULT(EGL_BAD_DISPLAY),
         Some(d) => {
             d.initialize();
             unsafe {
@@ -96,7 +75,7 @@ pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EG
                     *minor = EGL_VERSION_MINOR;
                 }
             }
-            set_result(EGL_SUCCESS)
+            EGL_RESULT(EGL_SUCCESS)
         }
     }
 }
@@ -115,7 +94,7 @@ pub fn get_configs(
         // Check num_config not NULL
         let ptr = unsafe { num_config.as_ref() };
         if ptr.is_none() {
-            return set_result(EGL_BAD_PARAMETER);
+            return EGL_RESULT(EGL_BAD_PARAMETER);
         }
 
         // Fill config if config is not NULL
@@ -139,7 +118,7 @@ pub fn get_configs(
             *num_config = d.configs.len() as EGLint;
         }
 
-        set_result(EGL_SUCCESS)
+        EGL_RESULT(EGL_SUCCESS)
     })
 }
 
@@ -150,17 +129,18 @@ pub fn get_config_attrib(
     value: *mut EGLint,
 ) -> EGLBoolean {
     with_display(dpy, |d| {
-        let attr = d.get_config_attrib(egl_config, attribute);
-
-        match attr {
-            None => set_result(EGL_BAD_CONFIG),
-            Some(a) => {
-                unsafe {
-                    *value = a as EGLint;
+        d.with_config(egl_config, |c| {
+            let res = c.get_attrib(attribute);
+            match res {
+                None => EGL_RESULT(EGL_BAD_CONFIG),
+                Some(a) => {
+                    unsafe {
+                        *value = a as EGLint;
+                    }
+                    EGL_RESULT(EGL_SUCCESS)
                 }
-                set_result(EGL_SUCCESS)
             }
-        }
+        })
     })
 }
 
@@ -178,7 +158,7 @@ pub fn choose_config(
         // Check num_config not NULL
         let ptr = unsafe { num_config.as_ref() };
         if ptr.is_none() {
-            return set_result(EGL_BAD_PARAMETER);
+            return EGL_RESULT(EGL_BAD_PARAMETER);
         }
 
         // Fill config if config is not NULL
@@ -202,9 +182,25 @@ pub fn choose_config(
             *num_config = d.configs.len() as EGLint;
         }
 
-        set_result(EGL_SUCCESS)
+        EGL_RESULT(EGL_SUCCESS)
     })
 }
+
+
+pub fn create_window_surface(
+    dpy: EGLDisplay,
+    config: EGLConfig,
+    win: EGLNativeWindowType,
+    attrib_list: *const EGLint,
+) -> EGLSurface {
+    with_display(dpy, |d| {
+        //let surface = Surface::new();
+        let mut lock = SURFACES.write().unwrap();
+        EGL_TRUE
+    });
+    EGL_NO_SURFACE
+}
+
 
 pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
     CONTEXT.with(|c| {

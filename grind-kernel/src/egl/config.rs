@@ -36,7 +36,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn get_attrib(&self, attribute: EGLint) -> EGLint {
-        2
+    pub fn get_attrib(&self, attribute: EGLint) -> Option<EGLint> {
+        Some(2)
     }
 }
