@@ -189,14 +189,16 @@ pub fn choose_config(
 
 pub fn create_window_surface(
     dpy: EGLDisplay,
-    config: EGLConfig,
+    egl_config: EGLConfig,
     win: EGLNativeWindowType,
     attrib_list: *const EGLint,
 ) -> EGLSurface {
     with_display(dpy, |d| {
-        //let surface = Surface::new();
-        let mut lock = SURFACES.write().unwrap();
-        EGL_TRUE
+        d.with_config(egl_config, |c| {
+            let surface = Surface::new(d, c);
+            let mut lock = SURFACES.write().unwrap();
+            EGL_TRUE
+        })
     });
     EGL_NO_SURFACE
 }
