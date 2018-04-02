@@ -7,6 +7,7 @@ pub struct Surface {
 
 
 impl Surface {
-    pub fn new(display: &Display, config: &Config) {
+    pub fn new(display: &Display, config: &Config) -> Option<Surface> {
+        None
     }
 }

@@ -43,12 +43,11 @@ pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
         false => EGL_NO_DISPLAY,
         true => {
             let d = Display::new(WaylandDisplay::new(display_id), VulkanDriver::new());
+            let r = &d as *const Display as EGLDisplay;
             {
                 DISPLAYS.write().unwrap().push(d);
             }
-            {
-                DISPLAYS.read().unwrap().last().unwrap() as *const Display as EGLDisplay
-            }
+            r
         }
     }
 }
@@ -193,14 +192,25 @@ pub fn create_window_surface(
     win: EGLNativeWindowType,
     attrib_list: *const EGLint,
 ) -> EGLSurface {
+    let mut surface_pointer: Option<EGLSurface> = None;
     with_display(dpy, |d| {
         d.with_config(egl_config, |c| {
             let surface = Surface::new(d, c);
-            let mut lock = SURFACES.write().unwrap();
-            EGL_TRUE
+            match surface {
+                None => EGL_FALSE,
+                Some(s) => {
+                    surface_pointer = Some(&s as *const Surface as EGLSurface);
+                    SURFACES.write().unwrap().push(s);
+                    EGL_TRUE
+                }
+            }
         })
     });
-    EGL_NO_SURFACE
+
+    match surface_pointer {
+        Some(p) => p,
+        None => EGL_NO_SURFACE
+    }
 }
 
 
