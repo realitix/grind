@@ -41,7 +41,7 @@ pub fn gk_wl_egl_window_get_attached_size(
 // Display
 // ----------
 pub struct WaylandDisplay {
-    display_id: Unique<c_void>,
+    pub display_id: Unique<c_void>,
 }
 
 impl WaylandDisplay {

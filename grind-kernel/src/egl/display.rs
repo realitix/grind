@@ -1,5 +1,4 @@
 use kernel::Kernel;
-use kernel::vulkan::VulkanDriver;
 use kernel::vulkan::is_available as vulkan_is_available;
 
 use egl::wayland::WaylandDisplay;
@@ -13,21 +12,19 @@ pub fn is_available() -> bool {
 }
 
 pub struct Display {
-    native_display: WaylandDisplay,
-    kernel: VulkanDriver,
+    pub native_display: WaylandDisplay,
     pub configs: Vec<Config>,
 }
 
 impl Display {
-    pub fn new(native_display: WaylandDisplay, kernel: VulkanDriver) -> Display {
+    pub fn new(native_display: WaylandDisplay) -> Display {
         Display {
             native_display,
-            kernel,
             configs: Vec::new(),
         }
     }
 
-    pub fn initialize(&mut self) {
+    pub fn initialize(&mut self) -> bool {
         self.configs.push(Config {
             red_size: 8,
             green_size: 8,
@@ -62,6 +59,8 @@ impl Display {
             transparent_green_value: 0,
             transparent_blue_value: 0,
         });
+
+        return true;
     }
 
     pub fn with_config<F>(&self, egl_config: EGLConfig, f: F) -> EGLBoolean
