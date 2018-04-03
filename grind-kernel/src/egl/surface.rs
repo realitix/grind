@@ -4,11 +4,9 @@ use egl::types::EGLNativeWindowType;
 
 use kernel::vulkan::VulkanDriver;
 
-
 pub struct Surface {
-    kernel: VulkanDriver
+    kernel: VulkanDriver,
 }
-
 
 impl Surface {
     pub fn new(display: &Display, config: &Config, win: EGLNativeWindowType) -> Surface {

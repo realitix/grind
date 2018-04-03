@@ -6,7 +6,6 @@ use egl::config::Config;
 use egl::types::*;
 use egl::global::EGL_RESULT;
 
-
 pub fn is_available() -> bool {
     vulkan_is_available()
 }
@@ -64,7 +63,8 @@ impl Display {
     }
 
     pub fn with_config<F>(&self, egl_config: EGLConfig, f: F) -> EGLBoolean
-        where F: FnOnce(&Config) -> EGLBoolean
+    where
+        F: FnOnce(&Config) -> EGLBoolean,
     {
         let mut current_config: Option<&Config> = None;
 
@@ -76,7 +76,7 @@ impl Display {
 
         match current_config {
             None => EGL_RESULT(EGL_BAD_CONFIG),
-            Some(c) => f(c)
+            Some(c) => f(c),
         }
     }
 }

@@ -11,7 +11,6 @@ use egl::wayland::WaylandDisplay;
 static EGL_VERSION_MAJOR: EGLint = 1;
 static EGL_VERSION_MINOR: EGLint = 4;
 
-
 fn with_display<F>(egl_display: EGLDisplay, f: F) -> EGLBoolean
 where
     F: FnOnce(&Display) -> EGLBoolean,
@@ -36,7 +35,6 @@ where
         None => EGL_RESULT(EGL_BAD_DISPLAY),
     }
 }
-
 
 pub fn get_display(display_id: EGLNativeDisplayType) -> EGLDisplay {
     match is_available() {
@@ -183,7 +181,6 @@ pub fn choose_config(
     })
 }
 
-
 pub fn create_window_surface(
     dpy: EGLDisplay,
     egl_config: EGLConfig,
@@ -204,10 +201,9 @@ pub fn create_window_surface(
 
     match surface_pointer {
         Some(p) => p,
-        None => EGL_NO_SURFACE
+        None => EGL_NO_SURFACE,
     }
 }
-
 
 pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
     CONTEXT.with(|c| {
