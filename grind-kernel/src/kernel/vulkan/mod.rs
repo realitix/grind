@@ -6,6 +6,13 @@ use vulkano::device::Device;
 use vulkano::instance::DeviceExtensions;
 use vulkano::instance::Features;
 use vulkano::swapchain::Surface;
+use vulkano::swapchain::Swapchain;
+use vulkano::swapchain::PresentMode;
+use vulkano::swapchain::SurfaceTransform;
+use vulkano::pipeline::GraphicsPipeline;
+use vulkano::framebuffer::Subpass;
+use vulkano::framebuffer::Framebuffer;
+
 
 pub fn is_available() -> bool {
     match Instance::new(None, &InstanceExtensions::none(), None) {
@@ -42,7 +49,7 @@ impl VulkanDriver {
             .expect("no device available");
 
         // Surface
-        let surface = unsafe { Surface::from_wayland(instance.clone(), display, surface, display) };
+        let surface = unsafe { Surface::from_wayland(instance.clone(), display, surface, display) }.unwrap();
 
         // Logical device
         let (device, mut queues) = {
@@ -61,15 +68,16 @@ impl VulkanDriver {
 
         // Create swapchain
         let (mut swapchain, mut images) = {
-            let caps = window
-                .capabilities(physical)
+            let caps = surface
+                .capabilities(physical_device)
                 .expect("failed to get surface capabilities");
 
             let alpha = caps.supported_composite_alpha.iter().next().unwrap();
             let format = caps.supported_formats[0].0;
+            let dimensions = [100, 100];
             Swapchain::new(
                 device.clone(),
-                window.clone(),
+                surface.clone(),
                 caps.min_image_count,
                 format,
                 dimensions,
@@ -98,25 +106,22 @@ impl VulkanDriver {
             pass: {
                 color: [color],
                 depth_stencil: {}
-            }
-        ).unwrap(),
+            }).unwrap(),
         );
 
         // Create pipeline
-        let pipeline = Arc::new(
+        /*let pipeline = Arc::new(
             GraphicsPipeline::start()
                 .vertex_input_single_buffer()
-                .vertex_shader(vs.main_entry_point(), ())
                 .triangle_list()
                 .viewports_dynamic_scissors_irrelevant(1)
-                .fragment_shader(fs.main_entry_point(), ())
                 .render_pass(Subpass::from(render_pass.clone(), 0).unwrap())
                 .build(device.clone())
                 .unwrap(),
-        );
+        );*/
 
         // Create framebuffers
-        let mut framebuffers: Option<Vec<Arc<vulkano::framebuffer::Framebuffer<_, _>>>> = None;
+        //let mut framebuffers: Option<Vec<Arc<Framebuffer<_, _>>>> = None;
 
         VulkanDriver { device }
     }
