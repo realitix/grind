@@ -1,4 +1,9 @@
+mod renderer;
+
+
 use std::sync::Arc;
+use std::ptr::Unique;
+use libc::c_void;
 
 use vulkano::instance::{Instance, InstanceExtensions};
 use vulkano::instance::PhysicalDevice;
@@ -13,6 +18,8 @@ use vulkano::pipeline::GraphicsPipeline;
 use vulkano::framebuffer::Subpass;
 use vulkano::framebuffer::Framebuffer;
 
+use kernel::vulkan::renderer::Renderer;
+
 
 pub fn is_available() -> bool {
     match Instance::new(None, &InstanceExtensions::none(), None) {
@@ -22,11 +29,11 @@ pub fn is_available() -> bool {
 }
 
 pub struct VulkanDriver {
-    device: Arc<Device>,
+    renderer: Renderer,
 }
 
 impl VulkanDriver {
-    pub fn from_wayland<D, S>(display: *const D, surface: *const S) -> VulkanDriver {
+    pub fn from_wayland(display: *mut c_void, surface: *mut c_void) -> VulkanDriver {
         // Instance
         let ideal = InstanceExtensions {
             khr_surface: true,
@@ -49,7 +56,7 @@ impl VulkanDriver {
             .expect("no device available");
 
         // Surface
-        let surface = unsafe { Surface::from_wayland(instance.clone(), display, surface, display) }.unwrap();
+        let surface = unsafe { Surface::from_wayland(instance.clone(), display, surface, Unique::new(display).unwrap()) }.unwrap();
 
         // Logical device
         let (device, mut queues) = {
@@ -92,8 +99,12 @@ impl VulkanDriver {
             ).expect("failed to create swapchain")
         };
 
+        let renderer = Renderer {
+            device, surface, queue, swapchain
+        };
+
         // Create renderpass
-        let render_pass = Arc::new(
+        /*let render_pass = Arc::new(
             single_pass_renderpass!(device.clone(),
             attachments: {
                 color: {
@@ -107,7 +118,7 @@ impl VulkanDriver {
                 color: [color],
                 depth_stencil: {}
             }).unwrap(),
-        );
+        );*/
 
         // Create pipeline
         /*let pipeline = Arc::new(
@@ -123,6 +134,6 @@ impl VulkanDriver {
         // Create framebuffers
         //let mut framebuffers: Option<Vec<Arc<Framebuffer<_, _>>>> = None;
 
-        VulkanDriver { device }
+        VulkanDriver { renderer }
     }
 }
