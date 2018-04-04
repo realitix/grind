@@ -1,6 +1,5 @@
 mod renderer;
 
-
 use std::sync::Arc;
 use std::ptr::Unique;
 use libc::c_void;
@@ -19,7 +18,6 @@ use vulkano::framebuffer::Subpass;
 use vulkano::framebuffer::Framebuffer;
 
 use kernel::vulkan::renderer::Renderer;
-
 
 pub fn is_available() -> bool {
     match Instance::new(None, &InstanceExtensions::none(), None) {
@@ -56,7 +54,14 @@ impl VulkanDriver {
             .expect("no device available");
 
         // Surface
-        let surface = unsafe { Surface::from_wayland(instance.clone(), display, surface, Unique::new(display).unwrap()) }.unwrap();
+        let surface = unsafe {
+            Surface::from_wayland(
+                instance.clone(),
+                display,
+                surface,
+                Unique::new(display).unwrap(),
+            )
+        }.unwrap();
 
         // Logical device
         let (device, mut queues) = {
@@ -100,7 +105,10 @@ impl VulkanDriver {
         };
 
         let renderer = Renderer {
-            device, surface, queue, swapchain
+            device,
+            surface,
+            queue,
+            swapchain,
         };
 
         // Create renderpass
