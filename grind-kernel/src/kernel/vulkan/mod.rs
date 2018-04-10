@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::ptr::Unique;
 use libc::c_void;
 
-use vulkano::instance::{Instance, InstanceExtensions};
+use vulkano::instance::{layers_list, Instance, InstanceExtensions};
 use vulkano::instance::PhysicalDevice;
 use vulkano::device::Device;
 use vulkano::instance::DeviceExtensions;
@@ -46,7 +46,10 @@ impl VulkanDriver {
             }
         };
 
-        let instance = Instance::new(None, &extensions, None).unwrap();
+        // DEBUG with layer
+        let layer = "VK_LAYER_LUNARG_standard_validation";
+        let layers = vec![&layer];
+        let instance = Instance::new(None, &extensions, layers).expect("Can't create Instance");
 
         // Physical device
         let physical_device = PhysicalDevice::enumerate(&instance)
@@ -61,15 +64,36 @@ impl VulkanDriver {
                 surface,
                 Unique::new(display).unwrap(),
             )
-        }.unwrap();
+        }.expect("Can't create surface");
+
+        // Queue family
+        let queue_family = {
+            let mut qr = None;
+            for qf in physical_device.queue_families() {
+                if surface.is_supported(qf).unwrap() {
+                    qr = Some(qf);
+                }
+            }
+            if qr.is_none() {
+                panic!("No queue family available");
+            } else {
+                qr.unwrap()
+            }
+        };
 
         // Logical device
         let (device, mut queues) = {
-            let queue_family = physical_device.queue_families().next().unwrap();
-            let features = Features::none();
-            let ext = DeviceExtensions::none();
+            let device_ext = DeviceExtensions {
+                khr_swapchain: true,
+                ..DeviceExtensions::none()
+            };
 
-            match Device::new(physical_device, &features, &ext, Some((queue_family, 1.0))) {
+            match Device::new(
+                physical_device,
+                physical_device.supported_features(),
+                &device_ext,
+                Some((queue_family, 1.0)),
+            ) {
                 Ok(d) => d,
                 Err(err) => panic!("Couldn't build device: {:?}", err),
             }

@@ -1,5 +1,11 @@
-use egl::display::Display;
+use egl::surface::Surface;
 
 pub struct Context {
-    display: Option<Display>,
+    surface: Option<Surface>,
+}
+
+impl Context {
+    pub fn new(surface: Option<Surface>) -> Context {
+        Context { surface }
+    }
 }

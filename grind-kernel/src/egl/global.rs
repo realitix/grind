@@ -8,7 +8,7 @@ use std::sync::RwLock;
 
 lazy_static! {
     pub static ref DISPLAYS: RwLock<Vec<Display>> = RwLock::new(Vec::new());
-    pub static ref SURFACES: RwLock<Vec<Surface>> = RwLock::new(Vec::new());
+    pub static ref SURFACES: Mutex<Vec<Surface>> = Mutex::new(Vec::new());
     pub static ref CONTEXTS: Mutex<Vec<Context>> = Mutex::new(Vec::new());
 }
 

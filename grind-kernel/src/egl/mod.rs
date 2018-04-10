@@ -140,8 +140,7 @@ pub extern "C" fn gk_eglCreateContext(
     share_context: EGLContext,
     attrib_list: *const EGLint,
 ) -> EGLContext {
-    println!("Grind-Kernel: FN not implemented: eglCreateContext");
-    EGL_NO_CONTEXT
+    entrypoint::create_context(dpy, config, share_context, attrib_list)
 }
 
 #[no_mangle]

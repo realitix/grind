@@ -183,15 +183,15 @@ pub fn choose_config(
 
 pub fn create_window_surface(
     dpy: EGLDisplay,
-    egl_config: EGLConfig,
+    config: EGLConfig,
     win: EGLNativeWindowType,
     attrib_list: *const EGLint,
 ) -> EGLSurface {
     let mut surface_pointer: Option<EGLSurface> = None;
     with_display(dpy, |d| {
-        d.with_config(egl_config, |c| {
+        d.with_config(config, |c| {
             let surface = Surface::new(d, c, win);
-            let mut lock = SURFACES.write().unwrap();
+            let mut lock = SURFACES.lock().unwrap();
             lock.push(surface);
             surface_pointer = Some(lock.last().unwrap() as *const Surface as EGLSurface);
             EGL_TRUE
@@ -203,6 +203,24 @@ pub fn create_window_surface(
         Some(p) => p,
         None => EGL_NO_SURFACE,
     }
+}
+
+pub fn create_context(
+    dpy: EGLDisplay,
+    config: EGLConfig,
+    share_context: EGLContext,
+    attrib_list: *const EGLint,
+) -> EGLContext {
+    with_display(dpy, |d| {
+        d.with_config(config, |c| {
+            let context = Context::new(None);
+            CONTEXT.with(|cell| {
+                *cell.borrow_mut() = Some(context);
+            });
+            EGL_TRUE
+        })
+    });
+    EGL_NO_CONTEXT
 }
 
 pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
