@@ -253,8 +253,8 @@ pub fn make_current(
 
     // Get read and draw surfaces
     // We have to loop again because the index change after the first update
+    // TODO: Curerntly, we don't manage read surface
     let draw_surface;
-    let read_surface;
     {
         let mut lock = SURFACES.lock().unwrap();
         let mut current_draw = None;
@@ -276,6 +276,7 @@ pub fn make_current(
 
         draw_surface = lock.remove(current_draw.unwrap());
 
+        /*
         // Re-loop for read
         for (i, surface) in lock.iter().enumerate() {
             if surface as *const Surface as EGLSurface == read {
@@ -284,10 +285,11 @@ pub fn make_current(
         }
 
         read_surface = lock.remove(current_read.unwrap());
+        */
     };
 
     // Put surfaces in context
-    context.set_surfaces(draw_surface, read_surface);
+    context.set_surfaces(Some(draw_surface), None);
 
     // Put context in local thread
     CONTEXT.with(|c| {

@@ -19,8 +19,8 @@ impl Context {
         }
     }
 
-    pub fn set_surfaces(&mut self, draw: Surface, read: Surface) {
-        self.read_surface = Some(read);
-        self.draw_surface = Some(draw);
+    pub fn set_surfaces(&mut self, draw: Option<Surface>, read: Option<Surface>) {
+        self.read_surface = read;
+        self.draw_surface = draw;
     }
 }
