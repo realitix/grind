@@ -253,8 +253,8 @@ pub fn make_current(
 
     // Get read and draw surfaces
     // We have to loop again because the index change after the first update
-    // TODO: Curerntly, we don't manage read surface
     let draw_surface;
+    let read_surface;
     {
         let mut lock = SURFACES.lock().unwrap();
         let mut current_draw = None;
@@ -274,28 +274,35 @@ pub fn make_current(
             return EGL_FALSE;
         }
 
-        draw_surface = lock.remove(current_draw.unwrap());
+        draw_surface = Some(lock.remove(current_draw.unwrap()));
 
-        /*
-        // Re-loop for read
-        for (i, surface) in lock.iter().enumerate() {
-            if surface as *const Surface as EGLSurface == read {
-                current_read = Some(i);
-            }
+        if current_draw.unwrap() == current_read.unwrap() {
+            read_surface = None;
         }
+        else {
+            for (i, surface) in lock.iter().enumerate() {
+                if surface as *const Surface as EGLSurface == read {
+                    current_read = Some(i);
+                }
+            }
 
-        read_surface = lock.remove(current_read.unwrap());
-        */
+            read_surface = Some(lock.remove(current_read.unwrap()));
+        }
     };
 
     // Put surfaces in context
-    context.set_surfaces(Some(draw_surface), None);
+    context.set_surfaces(draw_surface, read_surface);
 
     // Put context in local thread
     CONTEXT.with(|c| {
         *c.borrow_mut() = Some(context);
     });
 
+    EGL_TRUE
+}
+
+pub fn swap_buffers(dpy: EGLDisplay, surface: EGLSurface) -> EGLBoolean {
+    unsafe { *(surface as *const Surface as Surface).swap_buffers() };
     EGL_TRUE
 }
 

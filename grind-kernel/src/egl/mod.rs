@@ -250,8 +250,7 @@ pub extern "C" fn gk_eglWaitNative(engine: EGLint) -> EGLBoolean {
 // ----------
 #[no_mangle]
 pub extern "C" fn gk_eglSwapBuffers(dpy: EGLDisplay, surface: EGLSurface) -> EGLBoolean {
-    println!("Grind-Kernel: FN not implemented: eglSwapBuffers");
-    EGL_FALSE
+    entrypoint::swap_buffers(dpy, surface)
 }
 
 #[no_mangle]

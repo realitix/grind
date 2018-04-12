@@ -19,4 +19,7 @@ impl Surface {
         let kernel = VulkanDriver::from_wayland(display.native_display.display_id.as_ptr(), win);
         Surface { kernel }
     }
+
+    pub fn swap_buffers(&self) {
+    }
 }

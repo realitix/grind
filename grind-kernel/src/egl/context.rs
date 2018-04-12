@@ -1,6 +1,7 @@
 use egl::surface::Surface;
 
 pub struct Context {
+    // if read surface is none, it's the same as draw surface
     read_surface: Option<Surface>,
     draw_surface: Option<Surface>,
 }
