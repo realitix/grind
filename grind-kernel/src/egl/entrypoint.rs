@@ -207,20 +207,94 @@ pub fn create_window_surface(
 
 pub fn create_context(
     dpy: EGLDisplay,
-    config: EGLConfig,
+    egl_config: EGLConfig,
     share_context: EGLContext,
     attrib_list: *const EGLint,
 ) -> EGLContext {
+    let mut context_pointer: Option<EGLContext> = None;
     with_display(dpy, |d| {
-        d.with_config(config, |c| {
-            let context = Context::new(None);
-            CONTEXT.with(|cell| {
-                *cell.borrow_mut() = Some(context);
-            });
+        d.with_config(egl_config, |config| {
+            let context = Context::new();
+            let mut lock = CONTEXTS.lock().unwrap();
+            lock.push(context);
+            context_pointer = Some(lock.last().unwrap() as *const Context as EGLContext);
             EGL_TRUE
         })
     });
-    EGL_NO_CONTEXT
+
+    match context_pointer {
+        Some(p) => p,
+        None => EGL_NO_CONTEXT,
+    }
+}
+
+pub fn make_current(
+    dpy: EGLDisplay,
+    draw: EGLSurface,
+    read: EGLSurface,
+    ctx: EGLContext,
+) -> EGLBoolean {
+    // Get context
+    let mut context = {
+        let mut lock = CONTEXTS.lock().unwrap();
+        let mut current_context = None;
+        for (i, context) in lock.iter().enumerate() {
+            if context as *const Context as EGLContext == ctx {
+                current_context = Some(i);
+            }
+        }
+
+        if current_context.is_none() {
+            return EGL_FALSE;
+        }
+
+        lock.remove(current_context.unwrap())
+    };
+
+    // Get read and draw surfaces
+    // We have to loop again because the index change after the first update
+    let draw_surface;
+    let read_surface;
+    {
+        let mut lock = SURFACES.lock().unwrap();
+        let mut current_draw = None;
+        let mut current_read = None;
+
+        for (i, surface) in lock.iter().enumerate() {
+            if surface as *const Surface as EGLSurface == draw {
+                current_draw = Some(i);
+            }
+
+            if surface as *const Surface as EGLSurface == read {
+                current_read = Some(i);
+            }
+        }
+
+        if current_draw.is_none() || current_read.is_none() {
+            return EGL_FALSE;
+        }
+
+        draw_surface = lock.remove(current_draw.unwrap());
+
+        // Re-loop for read
+        for (i, surface) in lock.iter().enumerate() {
+            if surface as *const Surface as EGLSurface == read {
+                current_read = Some(i);
+            }
+        }
+
+        read_surface = lock.remove(current_read.unwrap());
+    };
+
+    // Put surfaces in context
+    context.set_surfaces(draw_surface, read_surface);
+
+    // Put context in local thread
+    CONTEXT.with(|c| {
+        *c.borrow_mut() = Some(context);
+    });
+
+    EGL_TRUE
 }
 
 pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {

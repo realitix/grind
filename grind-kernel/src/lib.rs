@@ -1,4 +1,5 @@
 #![feature(ptr_internals)]
+#![feature(vec_remove_item)]
 
 extern crate khronos;
 extern crate libc;

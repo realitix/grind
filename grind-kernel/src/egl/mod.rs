@@ -156,8 +156,7 @@ pub extern "C" fn gk_eglMakeCurrent(
     read: EGLSurface,
     ctx: EGLContext,
 ) -> EGLBoolean {
-    println!("Grind-Kernel: FN not implemented: eglMakeCurrent");
-    EGL_FALSE
+    entrypoint::make_current(dpy, draw, read, ctx)
 }
 
 #[no_mangle]
