@@ -20,6 +20,5 @@ impl Surface {
         Surface { kernel }
     }
 
-    pub fn swap_buffers(&self) {
-    }
+    pub fn swap_buffers(&self) {}
 }

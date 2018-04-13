@@ -5,6 +5,8 @@ use egl::wayland::WaylandDisplay;
 use egl::config::Config;
 use egl::types::*;
 use egl::global::EGL_RESULT;
+use egl::surface::Surface;
+use egl::context::Context;
 
 pub fn is_available() -> bool {
     vulkan_is_available()
@@ -13,6 +15,8 @@ pub fn is_available() -> bool {
 pub struct Display {
     pub native_display: WaylandDisplay,
     pub configs: Vec<Config>,
+    surfaces: Vec<Surface>,
+    contexts: Vec<Context>,
 }
 
 impl Display {
@@ -20,6 +24,8 @@ impl Display {
         Display {
             native_display,
             configs: Vec::new(),
+            surfaces: Vec::new(),
+            contexts: Vec::new(),
         }
     }
 
@@ -62,6 +68,15 @@ impl Display {
         return true;
     }
 
+    pub fn get_config(&self, egl_config: EGLConfig) -> &Config {
+        for config in self.configs.iter() {
+            if config as *const Config as EGLConfig == egl_config {
+                return config;
+            }
+        }
+        panic!("Can't get config");
+    }
+
     pub fn with_config<F>(&self, egl_config: EGLConfig, f: F) -> EGLBoolean
     where
         F: FnOnce(&Config) -> EGLBoolean,
@@ -77,6 +92,53 @@ impl Display {
         match current_config {
             None => EGL_RESULT(EGL_BAD_CONFIG),
             Some(c) => f(c),
+        }
+    }
+
+    pub fn add_surface(&mut self, surface: Surface) -> EGLSurface {
+        self.surfaces.push(surface);
+        self.surfaces.last().unwrap() as *const Surface as EGLSurface
+    }
+
+    pub fn add_context(&mut self, context: Context) -> EGLContext {
+        self.contexts.push(context);
+        self.contexts.last().unwrap() as *const Context as EGLContext
+    }
+
+    pub fn drain_context(&mut self, egl_context: EGLContext) -> Context {
+        let mut selected_context = None;
+        for (i, context) in self.contexts.iter().enumerate() {
+            if context as *const Context as EGLContext == egl_context {
+                selected_context = Some(i);
+            }
+        }
+
+        match selected_context {
+            Some(id_context) => self.contexts.remove(id_context),
+            None => panic!("Can't get context"),
+        }
+    }
+
+    pub fn is_surface(&self, egl_surface: EGLSurface) -> bool {
+        for surface in self.surfaces.iter() {
+            if surface as *const Surface as EGLSurface == egl_surface {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn drain_surface(&mut self, egl_surface: EGLSurface) -> Surface {
+        let mut selected_surface = None;
+        for (i, surface) in self.surfaces.iter().enumerate() {
+            if surface as *const Surface as EGLSurface == egl_surface {
+                selected_surface = Some(i);
+            }
+        }
+
+        match selected_surface {
+            Some(id_surface) => self.surfaces.remove(id_surface),
+            None => panic!("Can't get surface"),
         }
     }
 }
