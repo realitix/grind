@@ -24,4 +24,8 @@ impl Context {
         self.read_surface = read;
         self.draw_surface = draw;
     }
+
+    pub fn swap_buffers(&self) {
+        self.draw_surface.as_ref().unwrap().swap_buffers();
+    }
 }

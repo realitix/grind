@@ -101,7 +101,7 @@ pub fn initialize(dpy: EGLDisplay, major: *mut EGLint, minor: *mut EGLint) -> EG
 }
 
 pub fn get_error() -> EGLint {
-    LAST_EGL_CALL
+    LAST_EGL_CALL.with(|c| *c.borrow())
 }
 
 pub fn get_configs(
@@ -272,14 +272,17 @@ pub fn make_current(
         context.set_surfaces(draw_surface, read_surface);
 
         // Put context in local thread
-        unsafe { CONTEXT = Some(context) };
+        CONTEXT.with(|c| {
+            *c.borrow_mut() = Some(context);
+        });
 
         EGL_TRUE
     })
 }
 
 pub fn swap_buffers(dpy: EGLDisplay, surface: EGLSurface) -> EGLBoolean {
-    //unsafe { *(surface as *const Surface as Surface).swap_buffers() };
+    // Currently, I don't use the provided surface, I take the one from the current context
+    //CONTEXT.unwrap().swap_buffers();
     EGL_TRUE
 }
 
