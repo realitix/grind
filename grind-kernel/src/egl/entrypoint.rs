@@ -282,7 +282,10 @@ pub fn make_current(
 
 pub fn swap_buffers(dpy: EGLDisplay, surface: EGLSurface) -> EGLBoolean {
     // Currently, I don't use the provided surface, I take the one from the current context
-    //CONTEXT.unwrap().swap_buffers();
+    CONTEXT.with(|c| {
+        c.borrow().as_ref().unwrap().swap_buffers();
+    });
+
     EGL_TRUE
 }
 
