@@ -1,9 +1,12 @@
+use opengl::gles2::ContextGlES2;
+
 use egl::surface::Surface;
 
 pub struct Context {
     // if read surface is none, it's the same as draw surface
     read_surface: Option<Surface>,
     draw_surface: Option<Surface>,
+    gl_context: ContextGlES2,
 }
 
 impl PartialEq for Context {
@@ -17,7 +20,12 @@ impl Context {
         Context {
             read_surface: None,
             draw_surface: None,
+            gl_context: ContextGlES2::new(),
         }
+    }
+
+    pub fn get_gl_context(&mut self) -> &mut ContextGlES2 {
+        &mut self.gl_context
     }
 
     pub fn set_surfaces(&mut self, draw: Option<Surface>, read: Option<Surface>) {

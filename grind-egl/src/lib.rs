@@ -4,7 +4,7 @@ extern crate khronos;
 extern crate libc;
 
 use khronos::khronos_int32_t;
-use libc::{c_char, c_uint, c_void};
+use libc::{c_uint, c_void};
 
 // ----------
 // GLOBAL TYPES

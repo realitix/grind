@@ -1,4 +1,6 @@
 mod types;
+mod entrypoint;
+pub mod gles2;
 
 use opengl::types::*;
 
@@ -105,7 +107,7 @@ pub extern "C" fn gk_glClear(mask: GLbitfield) {
 
 #[no_mangle]
 pub extern "C" fn gk_glClearColor(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf) {
-    println!("GrindKernel: Fn not implemented: glClearColor");
+    entrypoint::clear_color(red, green, blue, alpha)
 }
 
 #[no_mangle]
