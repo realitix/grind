@@ -3,67 +3,67 @@ mod types;
 use opengl::types::*;
 
 #[no_mangle]
-pub extern "C" fn glActiveTexture(texture: GLenum) {
+pub extern "C" fn gk_glActiveTexture(texture: GLenum) {
     println!("GrindKernel: Fn not implemented: glActiveTexture");
 }
 
 #[no_mangle]
-pub extern "C" fn glAttachShader(program: GLuint, shader: GLuint) {
+pub extern "C" fn gk_glAttachShader(program: GLuint, shader: GLuint) {
     println!("GrindKernel: Fn not implemented: glAttachShader");
 }
 
 #[no_mangle]
-pub extern "C" fn glBindAttribLocation(program: GLuint, index: GLuint, name: *const GLchar) {
+pub extern "C" fn gk_glBindAttribLocation(program: GLuint, index: GLuint, name: *const GLchar) {
     println!("GrindKernel: Fn not implemented: glBindAttribLocation");
 }
 
 #[no_mangle]
-pub extern "C" fn glBindBuffer(target: GLenum, buffer: GLuint) {
+pub extern "C" fn gk_glBindBuffer(target: GLenum, buffer: GLuint) {
     println!("GrindKernel: Fn not implemented: glBindBuffer");
 }
 
 #[no_mangle]
-pub extern "C" fn glBindFramebuffer(target: GLenum, framebuffer: GLuint) {
+pub extern "C" fn gk_glBindFramebuffer(target: GLenum, framebuffer: GLuint) {
     println!("GrindKernel: Fn not implemented: glBindFramebuffer");
 }
 
 #[no_mangle]
-pub extern "C" fn glBindRenderbuffer(target: GLenum, renderbuffer: GLuint) {
+pub extern "C" fn gk_glBindRenderbuffer(target: GLenum, renderbuffer: GLuint) {
     println!("GrindKernel: Fn not implemented: glBindRenderbuffer");
 }
 
 #[no_mangle]
-pub extern "C" fn glBindTexture(target: GLenum, texture: GLuint) {
+pub extern "C" fn gk_glBindTexture(target: GLenum, texture: GLuint) {
     println!("GrindKernel: Fn not implemented: glBindTexture");
 }
 
 #[no_mangle]
-pub extern "C" fn glBindVertexArray(array: GLuint) {
+pub extern "C" fn gk_glBindVertexArray(array: GLuint) {
     println!("GrindKernel: Fn not implemented: glBindVertexArray");
 }
 
 #[no_mangle]
-pub extern "C" fn glBlendColor(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf) {
+pub extern "C" fn gk_glBlendColor(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf) {
     println!("GrindKernel: Fn not implemented: glBlendColor");
 }
 
 #[no_mangle]
-pub extern "C" fn glBlendEquation(mode: GLenum) {
+pub extern "C" fn gk_glBlendEquation(mode: GLenum) {
     println!("GrindKernel: Fn not implemented: glBlendEquation");
 }
 
 #[no_mangle]
-pub extern "C" fn glBlendEquationSeparate(modeRGB: GLenum, modeAlpha: GLenum) {
+pub extern "C" fn gk_glBlendEquationSeparate(modeRGB: GLenum, modeAlpha: GLenum) {
     println!("GrindKernel: Fn not implemented: glBlendEquationSeparate");
 }
 
 #[no_mangle]
-pub extern "C" fn glBlendFunc(sfactor: GLenum, dfactor: GLenum) {
+pub extern "C" fn gk_glBlendFunc(sfactor: GLenum, dfactor: GLenum) {
     println!("GrindKernel: Fn not implemented: glBlendFunc");
 }
 
 #[no_mangle]
-pub extern "C" fn glBlendFuncSeparate(
+pub extern "C" fn gk_glBlendFuncSeparate(
     srcRGB: GLenum,
     dstRGB: GLenum,
     srcAlpha: GLenum,
@@ -73,7 +73,7 @@ pub extern "C" fn glBlendFuncSeparate(
 }
 
 #[no_mangle]
-pub extern "C" fn glBufferData(
+pub extern "C" fn gk_glBufferData(
     target: GLenum,
     size: GLsizeiptr,
     data: *const GLvoid,
@@ -83,7 +83,7 @@ pub extern "C" fn glBufferData(
 }
 
 #[no_mangle]
-pub extern "C" fn glBufferSubData(
+pub extern "C" fn gk_glBufferSubData(
     target: GLenum,
     offset: GLintptr,
     size: GLsizeiptr,
@@ -93,43 +93,48 @@ pub extern "C" fn glBufferSubData(
 }
 
 #[no_mangle]
-pub extern "C" fn glCheckFramebufferStatus(target: GLenum) -> GLenum {
+pub extern "C" fn gk_glCheckFramebufferStatus(target: GLenum) -> GLenum {
     println!("GrindKernel: Fn not implemented: glCheckFramebufferStatus");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glClear(mask: GLbitfield) {
+pub extern "C" fn gk_glClear(mask: GLbitfield) {
     println!("GrindKernel: Fn not implemented: glClear");
 }
 
 #[no_mangle]
-pub extern "C" fn glClearColor(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf) {
+pub extern "C" fn gk_glClearColor(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf) {
     println!("GrindKernel: Fn not implemented: glClearColor");
 }
 
 #[no_mangle]
-pub extern "C" fn glClearDepthf(depth: GLclampf) {
+pub extern "C" fn gk_glClearDepthf(depth: GLclampf) {
     println!("GrindKernel: Fn not implemented: glClearDepthf");
 }
 
 #[no_mangle]
-pub extern "C" fn glClearStencil(s: GLint) {
+pub extern "C" fn gk_glClearStencil(s: GLint) {
     println!("GrindKernel: Fn not implemented: glClearStencil");
 }
 
 #[no_mangle]
-pub extern "C" fn glColorMask(red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean) {
+pub extern "C" fn gk_glColorMask(
+    red: GLboolean,
+    green: GLboolean,
+    blue: GLboolean,
+    alpha: GLboolean,
+) {
     println!("GrindKernel: Fn not implemented: glColorMask");
 }
 
 #[no_mangle]
-pub extern "C" fn glCompileShader(shader: GLuint) {
+pub extern "C" fn gk_glCompileShader(shader: GLuint) {
     println!("GrindKernel: Fn not implemented: glCompileShader");
 }
 
 #[no_mangle]
-pub extern "C" fn glCompressedTexImage2D(
+pub extern "C" fn gk_glCompressedTexImage2D(
     target: GLenum,
     level: GLint,
     internalformat: GLenum,
@@ -143,7 +148,7 @@ pub extern "C" fn glCompressedTexImage2D(
 }
 
 #[no_mangle]
-pub extern "C" fn glCompressedTexSubImage2D(
+pub extern "C" fn gk_glCompressedTexSubImage2D(
     target: GLenum,
     level: GLint,
     xoffset: GLint,
@@ -158,7 +163,7 @@ pub extern "C" fn glCompressedTexSubImage2D(
 }
 
 #[no_mangle]
-pub extern "C" fn glCopyTexImage2D(
+pub extern "C" fn gk_glCopyTexImage2D(
     target: GLenum,
     level: GLint,
     internalformat: GLenum,
@@ -172,7 +177,7 @@ pub extern "C" fn glCopyTexImage2D(
 }
 
 #[no_mangle]
-pub extern "C" fn glCopyTexSubImage2D(
+pub extern "C" fn gk_glCopyTexSubImage2D(
     target: GLenum,
     level: GLint,
     xoffset: GLint,
@@ -186,89 +191,89 @@ pub extern "C" fn glCopyTexSubImage2D(
 }
 
 #[no_mangle]
-pub extern "C" fn glCreateProgram() -> GLuint {
+pub extern "C" fn gk_glCreateProgram() -> GLuint {
     println!("GrindKernel: Fn not implemented: glCreateProgram");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glCreateShader(_type: GLenum) -> GLuint {
+pub extern "C" fn gk_glCreateShader(_type: GLenum) -> GLuint {
     println!("GrindKernel: Fn not implemented: glCreateShader");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glCullFace(mode: GLenum) {
+pub extern "C" fn gk_glCullFace(mode: GLenum) {
     println!("GrindKernel: Fn not implemented: glCullFace");
 }
 
 #[no_mangle]
-pub extern "C" fn glDeleteBuffers(n: GLsizei, buffers: *const GLuint) {
+pub extern "C" fn gk_glDeleteBuffers(n: GLsizei, buffers: *const GLuint) {
     println!("GrindKernel: Fn not implemented: glDeleteBuffers");
 }
 
 #[no_mangle]
-pub extern "C" fn glDeleteFramebuffers(n: GLsizei, framebuffers: *const GLuint) {
+pub extern "C" fn gk_glDeleteFramebuffers(n: GLsizei, framebuffers: *const GLuint) {
     println!("GrindKernel: Fn not implemented: glDeleteFramebuffers");
 }
 
 #[no_mangle]
-pub extern "C" fn glDeleteProgram(program: GLuint) {
+pub extern "C" fn gk_glDeleteProgram(program: GLuint) {
     println!("GrindKernel: Fn not implemented: glDeleteProgram");
 }
 
 #[no_mangle]
-pub extern "C" fn glDeleteRenderbuffers(n: GLsizei, renderbuffers: *const GLuint) {
+pub extern "C" fn gk_glDeleteRenderbuffers(n: GLsizei, renderbuffers: *const GLuint) {
     println!("GrindKernel: Fn not implemented: glDeleteRenderbuffers");
 }
 
 #[no_mangle]
-pub extern "C" fn glDeleteShader(shader: GLuint) {
+pub extern "C" fn gk_glDeleteShader(shader: GLuint) {
     println!("GrindKernel: Fn not implemented: glDeleteShader");
 }
 
 #[no_mangle]
-pub extern "C" fn glDeleteTextures(n: GLsizei, textures: *const GLuint) {
+pub extern "C" fn gk_glDeleteTextures(n: GLsizei, textures: *const GLuint) {
     println!("GrindKernel: Fn not implemented: glDeleteTextures");
 }
 
 #[no_mangle]
-pub extern "C" fn glDepthFunc(func: GLenum) {
+pub extern "C" fn gk_glDepthFunc(func: GLenum) {
     println!("GrindKernel: Fn not implemented: glDepthFunc");
 }
 
 #[no_mangle]
-pub extern "C" fn glDepthMask(flag: GLboolean) {
+pub extern "C" fn gk_glDepthMask(flag: GLboolean) {
     println!("GrindKernel: Fn not implemented: glDepthMask");
 }
 
 #[no_mangle]
-pub extern "C" fn glDepthRangef(zNear: GLclampf, zFar: GLclampf) {
+pub extern "C" fn gk_glDepthRangef(zNear: GLclampf, zFar: GLclampf) {
     println!("GrindKernel: Fn not implemented: glDepthRangef");
 }
 
 #[no_mangle]
-pub extern "C" fn glDetachShader(program: GLuint, shader: GLuint) {
+pub extern "C" fn gk_glDetachShader(program: GLuint, shader: GLuint) {
     println!("GrindKernel: Fn not implemented: glDetachShader");
 }
 
 #[no_mangle]
-pub extern "C" fn glDisable(cap: GLenum) {
+pub extern "C" fn gk_glDisable(cap: GLenum) {
     println!("GrindKernel: Fn not implemented: glDisable");
 }
 
 #[no_mangle]
-pub extern "C" fn glDisableVertexAttribArray(index: GLuint) {
+pub extern "C" fn gk_glDisableVertexAttribArray(index: GLuint) {
     println!("GrindKernel: Fn not implemented: glDisableVertexAttribArray");
 }
 
 #[no_mangle]
-pub extern "C" fn glDrawArrays(mode: GLenum, first: GLint, count: GLsizei) {
+pub extern "C" fn gk_glDrawArrays(mode: GLenum, first: GLint, count: GLsizei) {
     println!("GrindKernel: Fn not implemented: glDrawArrays");
 }
 
 #[no_mangle]
-pub extern "C" fn glDrawElements(
+pub extern "C" fn gk_glDrawElements(
     mode: GLenum,
     count: GLsizei,
     _type: GLenum,
@@ -278,7 +283,7 @@ pub extern "C" fn glDrawElements(
 }
 
 #[no_mangle]
-pub extern "C" fn glDrawArraysInstanced(
+pub extern "C" fn gk_glDrawArraysInstanced(
     mode: GLenum,
     first: GLint,
     count: GLsizei,
@@ -288,7 +293,7 @@ pub extern "C" fn glDrawArraysInstanced(
 }
 
 #[no_mangle]
-pub extern "C" fn glDrawElementsInstanced(
+pub extern "C" fn gk_glDrawElementsInstanced(
     mode: GLenum,
     count: GLsizei,
     _type: GLenum,
@@ -299,27 +304,27 @@ pub extern "C" fn glDrawElementsInstanced(
 }
 
 #[no_mangle]
-pub extern "C" fn glEnable(cap: GLenum) {
+pub extern "C" fn gk_glEnable(cap: GLenum) {
     println!("GrindKernel: Fn not implemented: glEnable");
 }
 
 #[no_mangle]
-pub extern "C" fn glEnableVertexAttribArray(index: GLuint) {
+pub extern "C" fn gk_glEnableVertexAttribArray(index: GLuint) {
     println!("GrindKernel: Fn not implemented: glEnableVertexAttribArray");
 }
 
 #[no_mangle]
-pub extern "C" fn glFinish() {
+pub extern "C" fn gk_glFinish() {
     println!("GrindKernel: Fn not implemented: glFinish");
 }
 
 #[no_mangle]
-pub extern "C" fn glFlush() {
+pub extern "C" fn gk_glFlush() {
     println!("GrindKernel: Fn not implemented: glFlush");
 }
 
 #[no_mangle]
-pub extern "C" fn glFramebufferRenderbuffer(
+pub extern "C" fn gk_glFramebufferRenderbuffer(
     target: GLenum,
     attachment: GLenum,
     renderbuffertarget: GLenum,
@@ -329,7 +334,7 @@ pub extern "C" fn glFramebufferRenderbuffer(
 }
 
 #[no_mangle]
-pub extern "C" fn glFramebufferTexture2D(
+pub extern "C" fn gk_glFramebufferTexture2D(
     target: GLenum,
     attachment: GLenum,
     textarget: GLenum,
@@ -340,42 +345,42 @@ pub extern "C" fn glFramebufferTexture2D(
 }
 
 #[no_mangle]
-pub extern "C" fn glFrontFace(mode: GLenum) {
+pub extern "C" fn gk_glFrontFace(mode: GLenum) {
     println!("GrindKernel: Fn not implemented: glFrontFace");
 }
 
 #[no_mangle]
-pub extern "C" fn glGenBuffers(n: GLsizei, buffers: *mut GLuint) {
+pub extern "C" fn gk_glGenBuffers(n: GLsizei, buffers: *mut GLuint) {
     println!("GrindKernel: Fn not implemented: glGenBuffers");
 }
 
 #[no_mangle]
-pub extern "C" fn glGenerateMipmap(target: GLenum) {
+pub extern "C" fn gk_glGenerateMipmap(target: GLenum) {
     println!("GrindKernel: Fn not implemented: glGenerateMipmap");
 }
 
 #[no_mangle]
-pub extern "C" fn glGenFramebuffers(n: GLsizei, framebuffers: *mut GLuint) {
+pub extern "C" fn gk_glGenFramebuffers(n: GLsizei, framebuffers: *mut GLuint) {
     println!("GrindKernel: Fn not implemented: glGenFramebuffers");
 }
 
 #[no_mangle]
-pub extern "C" fn glGenRenderbuffers(n: GLsizei, renderbuffers: *mut GLuint) {
+pub extern "C" fn gk_glGenRenderbuffers(n: GLsizei, renderbuffers: *mut GLuint) {
     println!("GrindKernel: Fn not implemented: glGenRenderbuffers");
 }
 
 #[no_mangle]
-pub extern "C" fn glGenTextures(n: GLsizei, textures: *mut GLuint) {
+pub extern "C" fn gk_glGenTextures(n: GLsizei, textures: *mut GLuint) {
     println!("GrindKernel: Fn not implemented: glGenTextures");
 }
 
 #[no_mangle]
-pub extern "C" fn glGenVertexArrays(n: GLsizei, arrays: *mut GLuint) {
+pub extern "C" fn gk_glGenVertexArrays(n: GLsizei, arrays: *mut GLuint) {
     println!("GrindKernel: Fn not implemented: glGenVertexArrays");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetActiveAttrib(
+pub extern "C" fn gk_glGetActiveAttrib(
     program: GLuint,
     index: GLuint,
     bufsize: GLsizei,
@@ -388,7 +393,7 @@ pub extern "C" fn glGetActiveAttrib(
 }
 
 #[no_mangle]
-pub extern "C" fn glGetActiveUniform(
+pub extern "C" fn gk_glGetActiveUniform(
     program: GLuint,
     index: GLuint,
     bufsize: GLsizei,
@@ -401,7 +406,7 @@ pub extern "C" fn glGetActiveUniform(
 }
 
 #[no_mangle]
-pub extern "C" fn glGetAttachedShaders(
+pub extern "C" fn gk_glGetAttachedShaders(
     program: GLuint,
     maxcount: GLsizei,
     count: *mut GLsizei,
@@ -411,34 +416,34 @@ pub extern "C" fn glGetAttachedShaders(
 }
 
 #[no_mangle]
-pub extern "C" fn glGetAttribLocation(program: GLuint, name: *const GLchar) -> GLint {
+pub extern "C" fn gk_glGetAttribLocation(program: GLuint, name: *const GLchar) -> GLint {
     println!("GrindKernel: Fn not implemented: glGetAttribLocation");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glGetBooleanv(pname: GLenum, params: *mut GLboolean) {
+pub extern "C" fn gk_glGetBooleanv(pname: GLenum, params: *mut GLboolean) {
     println!("GrindKernel: Fn not implemented: glGetBooleanv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetBufferParameteriv(target: GLenum, pname: GLenum, params: *mut GLint) {
+pub extern "C" fn gk_glGetBufferParameteriv(target: GLenum, pname: GLenum, params: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glGetBufferParameteriv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetError() -> GLenum {
+pub extern "C" fn gk_glGetError() -> GLenum {
     println!("GrindKernel: Fn not implemented: glGetError");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glGetFloatv(pname: GLenum, params: *mut GLfloat) {
+pub extern "C" fn gk_glGetFloatv(pname: GLenum, params: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glGetFloatv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetFramebufferAttachmentParameteriv(
+pub extern "C" fn gk_glGetFramebufferAttachmentParameteriv(
     target: GLenum,
     attachment: GLenum,
     pname: GLenum,
@@ -448,17 +453,17 @@ pub extern "C" fn glGetFramebufferAttachmentParameteriv(
 }
 
 #[no_mangle]
-pub extern "C" fn glGetIntegerv(pname: GLenum, params: *mut GLint) {
+pub extern "C" fn gk_glGetIntegerv(pname: GLenum, params: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glGetIntegerv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetProgramiv(program: GLuint, pname: GLenum, params: *mut GLint) {
+pub extern "C" fn gk_glGetProgramiv(program: GLuint, pname: GLenum, params: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glGetProgramiv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetProgramInfoLog(
+pub extern "C" fn gk_glGetProgramInfoLog(
     program: GLuint,
     bufsize: GLsizei,
     length: *mut GLsizei,
@@ -468,17 +473,21 @@ pub extern "C" fn glGetProgramInfoLog(
 }
 
 #[no_mangle]
-pub extern "C" fn glGetRenderbufferParameteriv(target: GLenum, pname: GLenum, params: *mut GLint) {
+pub extern "C" fn gk_glGetRenderbufferParameteriv(
+    target: GLenum,
+    pname: GLenum,
+    params: *mut GLint,
+) {
     println!("GrindKernel: Fn not implemented: glGetRenderbufferParameteriv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetShaderiv(shader: GLuint, pname: GLenum, params: *mut GLint) {
+pub extern "C" fn gk_glGetShaderiv(shader: GLuint, pname: GLenum, params: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glGetShaderiv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetShaderInfoLog(
+pub extern "C" fn gk_glGetShaderInfoLog(
     shader: GLuint,
     bufsize: GLsizei,
     length: *mut GLsizei,
@@ -488,7 +497,7 @@ pub extern "C" fn glGetShaderInfoLog(
 }
 
 #[no_mangle]
-pub extern "C" fn glGetShaderPrecisionFormat(
+pub extern "C" fn gk_glGetShaderPrecisionFormat(
     shadertype: GLenum,
     precisiontype: GLenum,
     range: *mut GLint,
@@ -498,7 +507,7 @@ pub extern "C" fn glGetShaderPrecisionFormat(
 }
 
 #[no_mangle]
-pub extern "C" fn glGetShaderSource(
+pub extern "C" fn gk_glGetShaderSource(
     shader: GLuint,
     bufsize: GLsizei,
     length: *mut GLsizei,
@@ -508,49 +517,49 @@ pub extern "C" fn glGetShaderSource(
 }
 
 #[no_mangle]
-pub extern "C" fn glGetString(name: GLenum) -> *const GLubyte {
+pub extern "C" fn gk_glGetString(name: GLenum) -> *const GLubyte {
     println!("GrindKernel: Fn not implemented: glGetString");
     0 as *const u8
 }
 
 #[no_mangle]
-pub extern "C" fn glGetTexParameterfv(target: GLenum, pname: GLenum, params: *mut GLfloat) {
+pub extern "C" fn gk_glGetTexParameterfv(target: GLenum, pname: GLenum, params: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glGetTexParameterfv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetTexParameteriv(target: GLenum, pname: GLenum, params: *mut GLint) {
+pub extern "C" fn gk_glGetTexParameteriv(target: GLenum, pname: GLenum, params: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glGetTexParameteriv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetUniformfv(program: GLuint, location: GLint, params: *mut GLfloat) {
+pub extern "C" fn gk_glGetUniformfv(program: GLuint, location: GLint, params: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glGetUniformfv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetUniformiv(program: GLuint, location: GLint, params: *mut GLint) {
+pub extern "C" fn gk_glGetUniformiv(program: GLuint, location: GLint, params: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glGetUniformiv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetUniformLocation(program: GLuint, name: *const GLchar) -> GLint {
+pub extern "C" fn gk_glGetUniformLocation(program: GLuint, name: *const GLchar) -> GLint {
     println!("GrindKernel: Fn not implemented: glGetUniformLocation");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glGetVertexAttribfv(index: GLuint, pname: GLenum, params: *mut GLfloat) {
+pub extern "C" fn gk_glGetVertexAttribfv(index: GLuint, pname: GLenum, params: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glGetVertexAttribfv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetVertexAttribiv(index: GLuint, pname: GLenum, params: *mut GLint) {
+pub extern "C" fn gk_glGetVertexAttribiv(index: GLuint, pname: GLenum, params: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glGetVertexAttribiv");
 }
 
 #[no_mangle]
-pub extern "C" fn glGetVertexAttribPointerv(
+pub extern "C" fn gk_glGetVertexAttribPointerv(
     index: GLuint,
     pname: GLenum,
     pointer: *mut *mut GLvoid,
@@ -559,79 +568,79 @@ pub extern "C" fn glGetVertexAttribPointerv(
 }
 
 #[no_mangle]
-pub extern "C" fn glHint(target: GLenum, mode: GLenum) {
+pub extern "C" fn gk_glHint(target: GLenum, mode: GLenum) {
     println!("GrindKernel: Fn not implemented: glHint");
 }
 
 #[no_mangle]
-pub extern "C" fn glIsBuffer(buffer: GLuint) -> GLboolean {
+pub extern "C" fn gk_glIsBuffer(buffer: GLuint) -> GLboolean {
     println!("GrindKernel: Fn not implemented: glIsBuffer");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glIsEnabled(cap: GLenum) -> GLboolean {
+pub extern "C" fn gk_glIsEnabled(cap: GLenum) -> GLboolean {
     println!("GrindKernel: Fn not implemented: glIsEnabled");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glIsFramebuffer(framebuffer: GLuint) -> GLboolean {
+pub extern "C" fn gk_glIsFramebuffer(framebuffer: GLuint) -> GLboolean {
     println!("GrindKernel: Fn not implemented: glIsFramebuffer");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glIsProgram(program: GLuint) -> GLboolean {
+pub extern "C" fn gk_glIsProgram(program: GLuint) -> GLboolean {
     println!("GrindKernel: Fn not implemented: glIsProgram");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glIsRenderbuffer(renderbuffer: GLuint) -> GLboolean {
+pub extern "C" fn gk_glIsRenderbuffer(renderbuffer: GLuint) -> GLboolean {
     println!("GrindKernel: Fn not implemented: glIsRenderbuffer");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glIsShader(shader: GLuint) -> GLboolean {
+pub extern "C" fn gk_glIsShader(shader: GLuint) -> GLboolean {
     println!("GrindKernel: Fn not implemented: glIsShader");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glIsTexture(texture: GLuint) -> GLboolean {
+pub extern "C" fn gk_glIsTexture(texture: GLuint) -> GLboolean {
     println!("GrindKernel: Fn not implemented: glIsTexture");
     0
 }
 
 #[no_mangle]
-pub extern "C" fn glLineWidth(width: GLfloat) {
+pub extern "C" fn gk_glLineWidth(width: GLfloat) {
     println!("GrindKernel: Fn not implemented: glLineWidth");
 }
 
 #[no_mangle]
-pub extern "C" fn glLinkProgram(program: GLuint) {
+pub extern "C" fn gk_glLinkProgram(program: GLuint) {
     println!("GrindKernel: Fn not implemented: glLinkProgram");
 }
 
 #[no_mangle]
-pub extern "C" fn glPixelStorei(pname: GLenum, param: GLint) {
+pub extern "C" fn gk_glPixelStorei(pname: GLenum, param: GLint) {
     println!("GrindKernel: Fn not implemented: glPixelStorei");
 }
 
 #[no_mangle]
-pub extern "C" fn glPolygonOffset(factor: GLfloat, units: GLfloat) {
+pub extern "C" fn gk_glPolygonOffset(factor: GLfloat, units: GLfloat) {
     println!("GrindKernel: Fn not implemented: glPolygonOffset");
 }
 
 #[no_mangle]
-pub extern "C" fn glPolygonMode(face: GLenum, mode: GLenum) {
+pub extern "C" fn gk_glPolygonMode(face: GLenum, mode: GLenum) {
     println!("GrindKernel: Fn not implemented: glPolygonMode");
 }
 
 #[no_mangle]
-pub extern "C" fn glReadPixels(
+pub extern "C" fn gk_glReadPixels(
     x: GLint,
     y: GLint,
     width: GLsizei,
@@ -644,12 +653,12 @@ pub extern "C" fn glReadPixels(
 }
 
 #[no_mangle]
-pub extern "C" fn glReleaseShaderCompiler() {
+pub extern "C" fn gk_glReleaseShaderCompiler() {
     println!("GrindKernel: Fn not implemented: glReleaseShaderCompiler");
 }
 
 #[no_mangle]
-pub extern "C" fn glRenderbufferStorage(
+pub extern "C" fn gk_glRenderbufferStorage(
     target: GLenum,
     internalformat: GLenum,
     width: GLsizei,
@@ -659,17 +668,17 @@ pub extern "C" fn glRenderbufferStorage(
 }
 
 #[no_mangle]
-pub extern "C" fn glSampleCoverage(value: GLclampf, invert: GLboolean) {
+pub extern "C" fn gk_glSampleCoverage(value: GLclampf, invert: GLboolean) {
     println!("GrindKernel: Fn not implemented: glSampleCoverage");
 }
 
 #[no_mangle]
-pub extern "C" fn glScissor(x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
+pub extern "C" fn gk_glScissor(x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
     println!("GrindKernel: Fn not implemented: glScissor");
 }
 
 #[no_mangle]
-pub extern "C" fn glShaderBinary(
+pub extern "C" fn gk_glShaderBinary(
     n: GLsizei,
     shaders: *mut GLuint,
     binaryformat: GLenum,
@@ -680,7 +689,7 @@ pub extern "C" fn glShaderBinary(
 }
 
 #[no_mangle]
-pub extern "C" fn glShaderSource(
+pub extern "C" fn gk_glShaderSource(
     shader: GLuint,
     count: GLsizei,
     string: *const *const GLchar,
@@ -690,12 +699,12 @@ pub extern "C" fn glShaderSource(
 }
 
 #[no_mangle]
-pub extern "C" fn glStencilFunc(func: GLenum, reference: GLint, mask: GLuint) {
+pub extern "C" fn gk_glStencilFunc(func: GLenum, reference: GLint, mask: GLuint) {
     println!("GrindKernel: Fn not implemented: glStencilFunc");
 }
 
 #[no_mangle]
-pub extern "C" fn glStencilFuncSeparate(
+pub extern "C" fn gk_glStencilFuncSeparate(
     face: GLenum,
     func: GLenum,
     reference: GLint,
@@ -705,27 +714,32 @@ pub extern "C" fn glStencilFuncSeparate(
 }
 
 #[no_mangle]
-pub extern "C" fn glStencilMask(mask: GLuint) {
+pub extern "C" fn gk_glStencilMask(mask: GLuint) {
     println!("GrindKernel: Fn not implemented: glStencilMask");
 }
 
 #[no_mangle]
-pub extern "C" fn glStencilMaskSeparate(face: GLenum, mask: GLuint) {
+pub extern "C" fn gk_glStencilMaskSeparate(face: GLenum, mask: GLuint) {
     println!("GrindKernel: Fn not implemented: glStencilMaskSeparate");
 }
 
 #[no_mangle]
-pub extern "C" fn glStencilOp(_fail: GLenum, zfail: GLenum, zpass: GLenum) {
+pub extern "C" fn gk_glStencilOp(_fail: GLenum, zfail: GLenum, zpass: GLenum) {
     println!("GrindKernel: Fn not implemented: glStencilOp");
 }
 
 #[no_mangle]
-pub extern "C" fn glStencilOpSeparate(face: GLenum, _fail: GLenum, zfail: GLenum, zpass: GLenum) {
+pub extern "C" fn gk_glStencilOpSeparate(
+    face: GLenum,
+    _fail: GLenum,
+    zfail: GLenum,
+    zpass: GLenum,
+) {
     println!("GrindKernel: Fn not implemented: glStencilOpSeparate");
 }
 
 #[no_mangle]
-pub extern "C" fn glTexImage2D(
+pub extern "C" fn gk_glTexImage2D(
     target: GLenum,
     level: GLint,
     internalformat: GLint,
@@ -740,27 +754,27 @@ pub extern "C" fn glTexImage2D(
 }
 
 #[no_mangle]
-pub extern "C" fn glTexParameterf(target: GLenum, pname: GLenum, param: GLfloat) {
+pub extern "C" fn gk_glTexParameterf(target: GLenum, pname: GLenum, param: GLfloat) {
     println!("GrindKernel: Fn not implemented: glTexParameterf");
 }
 
 #[no_mangle]
-pub extern "C" fn glTexParameterfv(target: GLenum, pname: GLenum, params: *mut GLfloat) {
+pub extern "C" fn gk_glTexParameterfv(target: GLenum, pname: GLenum, params: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glTexParameterfv");
 }
 
 #[no_mangle]
-pub extern "C" fn glTexParameteri(target: GLenum, pname: GLenum, param: GLint) {
+pub extern "C" fn gk_glTexParameteri(target: GLenum, pname: GLenum, param: GLint) {
     println!("GrindKernel: Fn not implemented: glTexParameteri");
 }
 
 #[no_mangle]
-pub extern "C" fn glTexParameteriv(target: GLenum, pname: GLenum, params: *mut GLint) {
+pub extern "C" fn gk_glTexParameteriv(target: GLenum, pname: GLenum, params: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glTexParameteriv");
 }
 
 #[no_mangle]
-pub extern "C" fn glTexSubImage2D(
+pub extern "C" fn gk_glTexSubImage2D(
     target: GLenum,
     level: GLint,
     xoffset: GLint,
@@ -775,87 +789,87 @@ pub extern "C" fn glTexSubImage2D(
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform1f(location: GLint, x: GLfloat) {
+pub extern "C" fn gk_glUniform1f(location: GLint, x: GLfloat) {
     println!("GrindKernel: Fn not implemented: glUniform1f");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform1fv(location: GLint, count: GLsizei, v: *mut GLfloat) {
+pub extern "C" fn gk_glUniform1fv(location: GLint, count: GLsizei, v: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glUniform1fv");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform1i(location: GLint, x: GLint) {
+pub extern "C" fn gk_glUniform1i(location: GLint, x: GLint) {
     println!("GrindKernel: Fn not implemented: glUniform1i");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform1iv(location: GLint, count: GLsizei, v: *mut GLint) {
+pub extern "C" fn gk_glUniform1iv(location: GLint, count: GLsizei, v: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glUniform1iv");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform2f(location: GLint, x: GLfloat, y: GLfloat) {
+pub extern "C" fn gk_glUniform2f(location: GLint, x: GLfloat, y: GLfloat) {
     println!("GrindKernel: Fn not implemented: glUniform2f");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform2fv(location: GLint, count: GLsizei, v: *mut GLfloat) {
+pub extern "C" fn gk_glUniform2fv(location: GLint, count: GLsizei, v: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glUniform2fv");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform2i(location: GLint, x: GLint, y: GLint) {
+pub extern "C" fn gk_glUniform2i(location: GLint, x: GLint, y: GLint) {
     println!("GrindKernel: Fn not implemented: glUniform2i");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform2iv(location: GLint, count: GLsizei, v: *mut GLint) {
+pub extern "C" fn gk_glUniform2iv(location: GLint, count: GLsizei, v: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glUniform2iv");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform3f(location: GLint, x: GLfloat, y: GLfloat, z: GLfloat) {
+pub extern "C" fn gk_glUniform3f(location: GLint, x: GLfloat, y: GLfloat, z: GLfloat) {
     println!("GrindKernel: Fn not implemented: glUniform3f");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform3fv(location: GLint, count: GLsizei, v: *mut GLfloat) {
+pub extern "C" fn gk_glUniform3fv(location: GLint, count: GLsizei, v: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glUniform3fv");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform3i(location: GLint, x: GLint, y: GLint, z: GLint) {
+pub extern "C" fn gk_glUniform3i(location: GLint, x: GLint, y: GLint, z: GLint) {
     println!("GrindKernel: Fn not implemented: glUniform3i");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform3iv(location: GLint, count: GLsizei, v: *mut GLint) {
+pub extern "C" fn gk_glUniform3iv(location: GLint, count: GLsizei, v: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glUniform3iv");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform4f(location: GLint, x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat) {
+pub extern "C" fn gk_glUniform4f(location: GLint, x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat) {
     println!("GrindKernel: Fn not implemented: glUniform4f");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform4fv(location: GLint, count: GLsizei, v: *mut GLfloat) {
+pub extern "C" fn gk_glUniform4fv(location: GLint, count: GLsizei, v: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glUniform4fv");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform4i(location: GLint, x: GLint, y: GLint, z: GLint, w: GLint) {
+pub extern "C" fn gk_glUniform4i(location: GLint, x: GLint, y: GLint, z: GLint, w: GLint) {
     println!("GrindKernel: Fn not implemented: glUniform4i");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniform4iv(location: GLint, count: GLsizei, v: *mut GLint) {
+pub extern "C" fn gk_glUniform4iv(location: GLint, count: GLsizei, v: *mut GLint) {
     println!("GrindKernel: Fn not implemented: glUniform4iv");
 }
 
 #[no_mangle]
-pub extern "C" fn glUniformMatrix2fv(
+pub extern "C" fn gk_glUniformMatrix2fv(
     location: GLint,
     count: GLsizei,
     transpose: GLboolean,
@@ -865,7 +879,7 @@ pub extern "C" fn glUniformMatrix2fv(
 }
 
 #[no_mangle]
-pub extern "C" fn glUniformMatrix3fv(
+pub extern "C" fn gk_glUniformMatrix3fv(
     location: GLint,
     count: GLsizei,
     transpose: GLboolean,
@@ -875,7 +889,7 @@ pub extern "C" fn glUniformMatrix3fv(
 }
 
 #[no_mangle]
-pub extern "C" fn glUniformMatrix4fv(
+pub extern "C" fn gk_glUniformMatrix4fv(
     location: GLint,
     count: GLsizei,
     transpose: GLboolean,
@@ -885,57 +899,63 @@ pub extern "C" fn glUniformMatrix4fv(
 }
 
 #[no_mangle]
-pub extern "C" fn glUseProgram(program: GLuint) {
+pub extern "C" fn gk_glUseProgram(program: GLuint) {
     println!("GrindKernel: Fn not implemented: glUseProgram");
 }
 
 #[no_mangle]
-pub extern "C" fn glValidateProgram(program: GLuint) {
+pub extern "C" fn gk_glValidateProgram(program: GLuint) {
     println!("GrindKernel: Fn not implemented: glValidateProgram");
 }
 
 #[no_mangle]
-pub extern "C" fn glVertexAttrib1f(indx: GLuint, x: GLfloat) {
+pub extern "C" fn gk_glVertexAttrib1f(indx: GLuint, x: GLfloat) {
     println!("GrindKernel: Fn not implemented: glVertexAttrib1f");
 }
 
 #[no_mangle]
-pub extern "C" fn glVertexAttrib1fv(indx: GLuint, values: *mut GLfloat) {
+pub extern "C" fn gk_glVertexAttrib1fv(indx: GLuint, values: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glVertexAttrib1fv");
 }
 
 #[no_mangle]
-pub extern "C" fn glVertexAttrib2f(indx: GLuint, x: GLfloat, y: GLfloat) {
+pub extern "C" fn gk_glVertexAttrib2f(indx: GLuint, x: GLfloat, y: GLfloat) {
     println!("GrindKernel: Fn not implemented: glVertexAttrib2f");
 }
 
 #[no_mangle]
-pub extern "C" fn glVertexAttrib2fv(indx: GLuint, values: *mut GLfloat) {
+pub extern "C" fn gk_glVertexAttrib2fv(indx: GLuint, values: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glVertexAttrib2fv");
 }
 
 #[no_mangle]
-pub extern "C" fn glVertexAttrib3f(indx: GLuint, x: GLfloat, y: GLfloat, z: GLfloat) {
+pub extern "C" fn gk_glVertexAttrib3f(indx: GLuint, x: GLfloat, y: GLfloat, z: GLfloat) {
     println!("GrindKernel: Fn not implemented: glVertexAttrib3f");
 }
 
 #[no_mangle]
-pub extern "C" fn glVertexAttrib3fv(indx: GLuint, values: *mut GLfloat) {
+pub extern "C" fn gk_glVertexAttrib3fv(indx: GLuint, values: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glVertexAttrib3fv");
 }
 
 #[no_mangle]
-pub extern "C" fn glVertexAttrib4f(indx: GLuint, x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat) {
+pub extern "C" fn gk_glVertexAttrib4f(
+    indx: GLuint,
+    x: GLfloat,
+    y: GLfloat,
+    z: GLfloat,
+    w: GLfloat,
+) {
     println!("GrindKernel: Fn not implemented: glVertexAttrib4f");
 }
 
 #[no_mangle]
-pub extern "C" fn glVertexAttrib4fv(indx: GLuint, values: *mut GLfloat) {
+pub extern "C" fn gk_glVertexAttrib4fv(indx: GLuint, values: *mut GLfloat) {
     println!("GrindKernel: Fn not implemented: glVertexAttrib4fv");
 }
 
 #[no_mangle]
-pub extern "C" fn glVertexAttribPointer(
+pub extern "C" fn gk_glVertexAttribPointer(
     indx: GLuint,
     size: GLint,
     _type: GLenum,
@@ -947,11 +967,11 @@ pub extern "C" fn glVertexAttribPointer(
 }
 
 #[no_mangle]
-pub extern "C" fn glVertexAttribDivisor(indx: GLuint, divisor: GLuint) {
+pub extern "C" fn gk_glVertexAttribDivisor(indx: GLuint, divisor: GLuint) {
     println!("GrindKernel: Fn not implemented: glVertexAttribDivisor");
 }
 
 #[no_mangle]
-pub extern "C" fn glViewport(x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
+pub extern "C" fn gk_glViewport(x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
     println!("GrindKernel: Fn not implemented: glViewport");
 }
