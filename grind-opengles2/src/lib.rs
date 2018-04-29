@@ -167,7 +167,7 @@ extern "C" {
         count: *mut GLsizei,
         shaders: *mut GLuint,
     );
-    fn gk_glGetAttribLocation(program: GLuint, name: *const GLchar) -> c_int;
+    fn gk_glGetAttribLocation(program: GLuint, name: *const GLchar) -> GLint;
     fn gk_glGetBooleanv(pname: GLenum, params: *mut GLboolean);
     fn gk_glGetBufferParameteriv(target: GLenum, pname: GLenum, params: *mut GLint);
     fn gk_glGetError() -> GLenum;
@@ -211,7 +211,7 @@ extern "C" {
     fn gk_glGetTexParameteriv(target: GLenum, pname: GLenum, params: *mut GLint);
     fn gk_glGetUniformfv(program: GLuint, location: GLint, params: *mut GLfloat);
     fn gk_glGetUniformiv(program: GLuint, location: GLint, params: *mut GLint);
-    fn gk_glGetUniformLocation(program: GLuint, name: *const GLchar) -> c_int;
+    fn gk_glGetUniformLocation(program: GLuint, name: *const GLchar) -> GLint;
     fn gk_glGetVertexAttribfv(index: GLuint, pname: GLenum, params: *mut GLfloat);
     fn gk_glGetVertexAttribiv(index: GLuint, pname: GLenum, params: *mut GLint);
     fn gk_glGetVertexAttribPointerv(index: GLuint, pname: GLenum, pointer: *mut *mut GLvoid);
@@ -777,7 +777,7 @@ pub extern "C" fn glGetAttachedShaders(
 }
 
 #[no_mangle]
-pub extern "C" fn glGetAttribLocation(program: GLuint, name: *const GLchar) -> c_int {
+pub extern "C" fn glGetAttribLocation(program: GLuint, name: *const GLchar) -> GLint {
     unsafe { gk_glGetAttribLocation(program, name) }
 }
 
@@ -897,7 +897,7 @@ pub extern "C" fn glGetUniformiv(program: GLuint, location: GLint, params: *mut 
 }
 
 #[no_mangle]
-pub extern "C" fn glGetUniformLocation(program: GLuint, name: *const GLchar) -> c_int {
+pub extern "C" fn glGetUniformLocation(program: GLuint, name: *const GLchar) -> GLint {
     unsafe { gk_glGetUniformLocation(program, name) }
 }
 

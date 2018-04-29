@@ -12,4 +12,6 @@ extern crate lazy_static;
 extern crate vulkano;
 
 pub mod egl;
+pub mod opengl;
+
 mod kernel;
