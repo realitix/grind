@@ -6,7 +6,7 @@ publish = false
 description = "Wayland EGL proxy for Grind"
 
 [lib]
-name = "waylandegl"
+name = "grindwaylandegl"
 crate-type = ["cdylib"]
 
 [dependencies]

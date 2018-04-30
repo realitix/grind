@@ -6,7 +6,7 @@ publish = false
 description = "EGL proxy for Grind"
 
 [lib]
-name = "EGL"
+name = "grindegl"
 crate-type = ["cdylib"]
 
 [dependencies]

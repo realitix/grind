@@ -6,7 +6,7 @@ publish = false
 description = "OpenGLES2 proxy for Grind"
 
 [lib]
-name = "GLESv2"
+name = "grindopengles2"
 crate-type = ["cdylib"]
 
 [dependencies]
