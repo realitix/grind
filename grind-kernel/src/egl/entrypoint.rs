@@ -288,20 +288,3 @@ pub fn swap_buffers(dpy: EGLDisplay, surface: EGLSurface) -> EGLBoolean {
 
     EGL_TRUE
 }
-
-pub fn test_current(dpy: EGLDisplay, draw: EGLSurface, read: EGLSurface, ctx: EGLContext) {
-    /*CONTEXT.with(|c| {
-        let mut lock = CONTEXTS.lock().unwrap();
-        let mut target: Option<usize> = None;
-        for (i, elem) in lock.iter().enumerate() {
-            if elem as *const Context as EGLContext == ctx {
-                target = Some(i);
-            }
-        }
-
-        if target.is_some() {
-            *c.borrow_mut() = Some(lock.remove(target.unwrap()));
-        }
-    });
-    */
-}

@@ -102,7 +102,7 @@ pub extern "C" fn gk_glCheckFramebufferStatus(target: GLenum) -> GLenum {
 
 #[no_mangle]
 pub extern "C" fn gk_glClear(mask: GLbitfield) {
-    println!("GrindKernel: Fn not implemented: glClear");
+    entrypoint::clear(mask)
 }
 
 #[no_mangle]
