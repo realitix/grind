@@ -1,11 +1,14 @@
+use std::sync::Arc;
+use std::ptr::Unique;
+
 use kernel::vulkan::VulkanDriver;
 
 use egl::types::*;
 use egl::global::*;
 use egl::display::{is_available, Display};
 use egl::config::Config;
-use egl::context::Context;
-use egl::surface::Surface;
+use egl::context::{GlobalContext, LocalContext};
+use egl::surface::{GlobalSurface, LocalSurface};
 use egl::wayland::WaylandDisplay;
 
 static EGL_VERSION_MAJOR: EGLint = 1;
@@ -214,7 +217,8 @@ pub fn create_window_surface(
 ) -> EGLSurface {
     let mut surface_pointer: Option<EGLSurface> = None;
     with_mut_display(dpy, |d| {
-        let surface = Surface::new(d, d.get_config(config), win);
+        let rwin = Arc::new(Unique::new(win).expect("Win unavailable"));
+        let surface = GlobalSurface::new(Arc::clone(&d.native_display.display_id), rwin);
         surface_pointer = Some(d.add_surface(surface));
         EGL_TRUE
         // TODO: Error management
@@ -234,7 +238,7 @@ pub fn create_context(
 ) -> EGLContext {
     let mut context_pointer: Option<EGLContext> = None;
     with_mut_display(dpy, |d| {
-        let context = Context::new();
+        let context = GlobalContext::new();
         context_pointer = Some(d.add_context(context));
         EGL_TRUE
     });
@@ -258,7 +262,7 @@ pub fn make_current(
             return EGL_FALSE;
         }
 
-        // Get surfaces
+        // Get surfaces and context
         let draw_surface = Some(d.drain_surface(draw));
         let read_surface = {
             match draw == read {
@@ -266,14 +270,15 @@ pub fn make_current(
                 false => Some(d.drain_surface(read)),
             }
         };
-
-        // Put surfaces in context
+        // TODO: GlobalContext became Useless
         let mut context = d.drain_context(ctx);
-        context.set_surfaces(draw_surface, read_surface);
+
+        // Create LocalContext
+        let local_context = LocalContext::new(LocalSurface::new(&draw_surface.unwrap()));
 
         // Put context in local thread
         CONTEXT.with(|c| {
-            *c.borrow_mut() = Some(context);
+            *c.borrow_mut() = Some(local_context);
         });
 
         EGL_TRUE

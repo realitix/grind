@@ -128,12 +128,7 @@ impl VulkanDriver {
             ).expect("failed to create swapchain")
         };
 
-        let renderer = Renderer {
-            device,
-            surface,
-            queue,
-            swapchain,
-        };
+        let renderer = Renderer::new(device, surface, queue, swapchain);
 
         // Create renderpass
         /*let render_pass = Arc::new(

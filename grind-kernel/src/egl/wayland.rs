@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::ptr::Unique;
 use libc::{c_int, c_void};
 
@@ -41,14 +42,15 @@ pub fn gk_wl_egl_window_get_attached_size(
 // Display
 // ----------
 pub struct WaylandDisplay {
-    pub display_id: Unique<c_void>,
+    pub display_id: Arc<Unique<c_void>>,
 }
 
 impl WaylandDisplay {
     pub fn new(display_id: WlDisplay) -> WaylandDisplay {
         WaylandDisplay {
-            display_id: Unique::new(display_id)
-                .expect("You must pass a valid pointer for wayland display"),
+            display_id: Arc::new(
+                Unique::new(display_id).expect("You must pass a valid pointer for wayland display"),
+            ),
         }
     }
 }

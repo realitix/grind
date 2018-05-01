@@ -1,26 +1,49 @@
+use std::sync::Arc;
+use kernel::vulkan::VulkanDriver;
 use opengl::gles2::ContextGlES2;
+use egl::surface::{GlobalSurface, LocalSurface};
 
-use egl::surface::Surface;
-
-pub struct Context {
+// GlobalContext to be stored in a Display
+pub struct GlobalContext {
     // if read surface is none, it's the same as draw surface
-    read_surface: Option<Surface>,
-    draw_surface: Option<Surface>,
-    gl_context: Option<ContextGlES2>,
+    read_surface: Option<GlobalSurface>,
+    draw_surface: Option<GlobalSurface>,
 }
 
-impl PartialEq for Context {
-    fn eq(&self, other: &Context) -> bool {
-        self as *const Context == other as *const Context
+impl PartialEq for GlobalContext {
+    fn eq(&self, other: &GlobalContext) -> bool {
+        self as *const GlobalContext == other as *const GlobalContext
     }
 }
 
-impl Context {
-    pub fn new() -> Context {
-        Context {
+impl GlobalContext {
+    pub fn new() -> GlobalContext {
+        GlobalContext {
             read_surface: None,
             draw_surface: None,
-            gl_context: None,
+        }
+    }
+
+    pub fn set_surfaces(&mut self, draw: Option<GlobalSurface>, read: Option<GlobalSurface>) {
+        self.read_surface = read;
+        self.draw_surface = draw;
+    }
+}
+
+// LocalContext to be strored in the local thread
+pub struct LocalContext {
+    // if read surface is none, it's the same as draw surface
+    draw_surface: LocalSurface,
+    gl_context: ContextGlES2,
+}
+
+impl LocalContext {
+    pub fn new(draw_surface: LocalSurface) -> LocalContext {
+        let gl_context = ContextGlES2::new(draw_surface.clone_kernel());
+
+        LocalContext {
+            draw_surface,
+            gl_context,
         }
     }
 
@@ -28,19 +51,10 @@ impl Context {
     where
         F: FnOnce(&mut ContextGlES2),
     {
-        f(self.gl_context.as_mut().unwrap());
-    }
-
-    pub fn set_surfaces(&mut self, draw: Option<Surface>, read: Option<Surface>) {
-        self.read_surface = read;
-        self.draw_surface = draw;
-
-        // we can create context with driver
-        let gl_context = ContextGlES2::new(self.draw_surface.as_ref().unwrap().clone_kernel());
-        self.gl_context = Some(gl_context);
+        f(&mut self.gl_context);
     }
 
     pub fn swap_buffers(&self) {
-        self.draw_surface.as_ref().unwrap().swap_buffers();
+        self.draw_surface.swap_buffers();
     }
 }

@@ -5,8 +5,8 @@ use egl::wayland::WaylandDisplay;
 use egl::config::Config;
 use egl::types::*;
 use egl::global::EGL_RESULT;
-use egl::surface::Surface;
-use egl::context::Context;
+use egl::surface::GlobalSurface;
+use egl::context::GlobalContext;
 
 pub fn is_available() -> bool {
     vulkan_is_available()
@@ -15,8 +15,8 @@ pub fn is_available() -> bool {
 pub struct Display {
     pub native_display: WaylandDisplay,
     pub configs: Vec<Config>,
-    surfaces: Vec<Surface>,
-    contexts: Vec<Context>,
+    surfaces: Vec<GlobalSurface>,
+    contexts: Vec<GlobalContext>,
 }
 
 impl Display {
@@ -95,20 +95,20 @@ impl Display {
         }
     }
 
-    pub fn add_surface(&mut self, surface: Surface) -> EGLSurface {
+    pub fn add_surface(&mut self, surface: GlobalSurface) -> EGLSurface {
         self.surfaces.push(surface);
-        self.surfaces.last().unwrap() as *const Surface as EGLSurface
+        self.surfaces.last().unwrap() as *const GlobalSurface as EGLSurface
     }
 
-    pub fn add_context(&mut self, context: Context) -> EGLContext {
+    pub fn add_context(&mut self, context: GlobalContext) -> EGLContext {
         self.contexts.push(context);
-        self.contexts.last().unwrap() as *const Context as EGLContext
+        self.contexts.last().unwrap() as *const GlobalContext as EGLContext
     }
 
-    pub fn drain_context(&mut self, egl_context: EGLContext) -> Context {
+    pub fn drain_context(&mut self, egl_context: EGLContext) -> GlobalContext {
         let mut selected_context = None;
         for (i, context) in self.contexts.iter().enumerate() {
-            if context as *const Context as EGLContext == egl_context {
+            if context as *const GlobalContext as EGLContext == egl_context {
                 selected_context = Some(i);
             }
         }
@@ -121,17 +121,17 @@ impl Display {
 
     pub fn is_surface(&self, egl_surface: EGLSurface) -> bool {
         for surface in self.surfaces.iter() {
-            if surface as *const Surface as EGLSurface == egl_surface {
+            if surface as *const GlobalSurface as EGLSurface == egl_surface {
                 return true;
             }
         }
         false
     }
 
-    pub fn drain_surface(&mut self, egl_surface: EGLSurface) -> Surface {
+    pub fn drain_surface(&mut self, egl_surface: EGLSurface) -> GlobalSurface {
         let mut selected_surface = None;
         for (i, surface) in self.surfaces.iter().enumerate() {
-            if surface as *const Surface as EGLSurface == egl_surface {
+            if surface as *const GlobalSurface as EGLSurface == egl_surface {
                 selected_surface = Some(i);
             }
         }
