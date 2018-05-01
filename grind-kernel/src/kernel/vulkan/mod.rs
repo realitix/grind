@@ -1,21 +1,21 @@
 mod renderer;
 
-use std::sync::Arc;
-use std::ptr::Unique;
 use libc::c_void;
+use std::ptr::Unique;
+use std::sync::Arc;
 
-use vulkano::instance::{layers_list, Instance, InstanceExtensions};
-use vulkano::instance::PhysicalDevice;
 use vulkano::device::Device;
+use vulkano::framebuffer::Framebuffer;
+use vulkano::framebuffer::Subpass;
 use vulkano::instance::DeviceExtensions;
 use vulkano::instance::Features;
-use vulkano::swapchain::Surface;
-use vulkano::swapchain::Swapchain;
-use vulkano::swapchain::PresentMode;
-use vulkano::swapchain::SurfaceTransform;
+use vulkano::instance::PhysicalDevice;
+use vulkano::instance::{layers_list, Instance, InstanceExtensions};
 use vulkano::pipeline::GraphicsPipeline;
-use vulkano::framebuffer::Subpass;
-use vulkano::framebuffer::Framebuffer;
+use vulkano::swapchain::PresentMode;
+use vulkano::swapchain::Surface;
+use vulkano::swapchain::SurfaceTransform;
+use vulkano::swapchain::Swapchain;
 
 use kernel::vulkan::renderer::Renderer;
 
@@ -128,39 +128,16 @@ impl VulkanDriver {
             ).expect("failed to create swapchain")
         };
 
-        let renderer = Renderer::new(device, surface, queue, swapchain);
+        VulkanDriver {
+            renderer: Renderer::new(device, surface, queue, swapchain, images),
+        }
+    }
 
-        // Create renderpass
-        /*let render_pass = Arc::new(
-            single_pass_renderpass!(device.clone(),
-            attachments: {
-                color: {
-                    load: Clear,
-                    store: Store,
-                    format: swapchain.format(),
-                    samples: 1,
-                }
-            },
-            pass: {
-                color: [color],
-                depth_stencil: {}
-            }).unwrap(),
-        );*/
+    pub fn clear(&mut self, colors: [f32; 4]) {
+        self.renderer.clear(colors);
+    }
 
-        // Create pipeline
-        /*let pipeline = Arc::new(
-            GraphicsPipeline::start()
-                .vertex_input_single_buffer()
-                .triangle_list()
-                .viewports_dynamic_scissors_irrelevant(1)
-                .render_pass(Subpass::from(render_pass.clone(), 0).unwrap())
-                .build(device.clone())
-                .unwrap(),
-        );*/
-
-        // Create framebuffers
-        //let mut framebuffers: Option<Vec<Arc<Framebuffer<_, _>>>> = None;
-
-        VulkanDriver { renderer }
+    pub fn present(&mut self) {
+        self.renderer.present();
     }
 }

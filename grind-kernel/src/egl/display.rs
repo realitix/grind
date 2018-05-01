@@ -1,12 +1,12 @@
-use kernel::Kernel;
 use kernel::vulkan::is_available as vulkan_is_available;
+use kernel::Kernel;
 
-use egl::wayland::WaylandDisplay;
 use egl::config::Config;
-use egl::types::*;
+use egl::context::GlobalContext;
 use egl::global::EGL_RESULT;
 use egl::surface::GlobalSurface;
-use egl::context::GlobalContext;
+use egl::types::*;
+use egl::wayland::WaylandDisplay;
 
 pub fn is_available() -> bool {
     vulkan_is_available()

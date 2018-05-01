@@ -2,9 +2,9 @@ use std::cell::RefCell;
 use std::sync::Mutex;
 use std::sync::RwLock;
 
-use egl::types::*;
-use egl::display::Display;
 use egl::context::LocalContext;
+use egl::display::Display;
+use egl::types::*;
 
 lazy_static! {
     pub static ref DISPLAYS: RwLock<Vec<Display>> = RwLock::new(Vec::new());

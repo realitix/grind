@@ -512,15 +512,7 @@ pub extern "C" fn glCompressedTexSubImage2D(
 ) {
     unsafe {
         gk_glCompressedTexSubImage2D(
-            target,
-            level,
-            xoffset,
-            yoffset,
-            width,
-            height,
-            format,
-            imageSize,
-            data,
+            target, level, xoffset, yoffset, width, height, format, imageSize, data,
         )
     }
 }
@@ -1140,15 +1132,7 @@ pub extern "C" fn glTexSubImage2D(
 ) {
     unsafe {
         gk_glTexSubImage2D(
-            target,
-            level,
-            xoffset,
-            yoffset,
-            width,
-            height,
-            format,
-            _type,
-            pixels,
+            target, level, xoffset, yoffset, width, height, format, _type, pixels,
         )
     }
 }

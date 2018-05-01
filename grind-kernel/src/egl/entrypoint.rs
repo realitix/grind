@@ -1,14 +1,14 @@
-use std::sync::Arc;
 use std::ptr::Unique;
+use std::sync::Arc;
 
 use kernel::vulkan::VulkanDriver;
 
-use egl::types::*;
-use egl::global::*;
-use egl::display::{is_available, Display};
 use egl::config::Config;
 use egl::context::{GlobalContext, LocalContext};
+use egl::display::{is_available, Display};
+use egl::global::*;
 use egl::surface::{GlobalSurface, LocalSurface};
+use egl::types::*;
 use egl::wayland::WaylandDisplay;
 
 static EGL_VERSION_MAJOR: EGLint = 1;
@@ -274,7 +274,7 @@ pub fn make_current(
         let mut context = d.drain_context(ctx);
 
         // Create LocalContext
-        let local_context = LocalContext::new(LocalSurface::new(&draw_surface.unwrap()));
+        let local_context = LocalContext::new(draw_surface.unwrap().create_kernel());
 
         // Put context in local thread
         CONTEXT.with(|c| {
@@ -288,7 +288,7 @@ pub fn make_current(
 pub fn swap_buffers(dpy: EGLDisplay, surface: EGLSurface) -> EGLBoolean {
     // Currently, I don't use the provided surface, I take the one from the current context
     CONTEXT.with(|c| {
-        c.borrow().as_ref().unwrap().swap_buffers();
+        c.borrow_mut().as_mut().unwrap().swap_buffers();
     });
 
     EGL_TRUE

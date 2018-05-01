@@ -1,10 +1,10 @@
-pub mod global;
-mod types;
-mod surface;
+mod config;
 mod context;
 mod display;
 mod entrypoint;
-mod config;
+pub mod global;
+mod surface;
+mod types;
 
 pub mod wayland;
 

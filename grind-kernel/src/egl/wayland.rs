@@ -1,6 +1,6 @@
-use std::sync::Arc;
-use std::ptr::Unique;
 use libc::{c_int, c_void};
+use std::ptr::Unique;
+use std::sync::Arc;
 
 // ----------
 // GLOBAL TYPES

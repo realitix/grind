@@ -1,7 +1,7 @@
 use egl::global::CONTEXT;
 
-use opengl::types::*;
 use opengl::gles2::ContextGlES2;
+use opengl::types::*;
 
 fn with_gl<F>(f: F)
 where

@@ -1,5 +1,5 @@
 use libc::{c_char, c_int, c_short, c_uchar, c_uint, c_ushort, c_void, int8_t, uint8_t};
-use libc::{intptr_t, ssize_t, int32_t};
+use libc::{int32_t, intptr_t, ssize_t};
 
 pub const POINTS: c_uint = 0x0000 as c_uint;
 pub const LINES: c_uint = 0x0001 as c_uint;

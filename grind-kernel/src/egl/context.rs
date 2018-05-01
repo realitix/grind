@@ -1,7 +1,7 @@
-use std::sync::Arc;
+use egl::surface::{GlobalSurface, LocalSurface};
 use kernel::vulkan::VulkanDriver;
 use opengl::gles2::ContextGlES2;
-use egl::surface::{GlobalSurface, LocalSurface};
+use std::sync::Arc;
 
 // GlobalContext to be stored in a Display
 pub struct GlobalContext {
@@ -32,17 +32,16 @@ impl GlobalContext {
 
 // LocalContext to be strored in the local thread
 pub struct LocalContext {
-    // if read surface is none, it's the same as draw surface
-    draw_surface: LocalSurface,
+    //draw_surface: LocalSurface,
     gl_context: ContextGlES2,
 }
 
 impl LocalContext {
-    pub fn new(draw_surface: LocalSurface) -> LocalContext {
-        let gl_context = ContextGlES2::new(draw_surface.clone_kernel());
+    pub fn new(kernel: VulkanDriver) -> LocalContext {
+        let gl_context = ContextGlES2::new(kernel);
 
         LocalContext {
-            draw_surface,
+            //      draw_surface,
             gl_context,
         }
     }
@@ -54,7 +53,7 @@ impl LocalContext {
         f(&mut self.gl_context);
     }
 
-    pub fn swap_buffers(&self) {
-        self.draw_surface.swap_buffers();
+    pub fn swap_buffers(&mut self) {
+        self.gl_context.swap_buffers();
     }
 }

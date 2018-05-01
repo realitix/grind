@@ -1,9 +1,9 @@
-use std::sync::Arc;
-use std::ptr::Unique;
 use libc::c_void;
+use std::ptr::Unique;
+use std::sync::Arc;
 
-use egl::display::Display;
 use egl::config::Config;
+use egl::display::Display;
 use egl::types::EGLNativeWindowType;
 
 use kernel::vulkan::VulkanDriver;
@@ -32,6 +32,13 @@ impl GlobalSurface {
     pub fn clone_win(&self) -> Arc<Unique<c_void>> {
         Arc::clone(&self.win)
     }
+
+    pub fn create_kernel(&self) -> VulkanDriver {
+        VulkanDriver::from_wayland(
+            self.clone_display_id().as_ptr(),
+            (*self.clone_win()).as_ptr(),
+        )
+    }
 }
 
 // LocalSurface to be stored in a LocalContext
@@ -53,5 +60,7 @@ impl LocalSurface {
         self.kernel.clone()
     }
 
-    pub fn swap_buffers(&self) {}
+    pub fn swap_buffers(&mut self) {
+        Arc::get_mut(&mut self.kernel).unwrap().present();
+    }
 }

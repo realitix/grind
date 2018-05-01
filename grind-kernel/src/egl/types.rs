@@ -1,8 +1,8 @@
+use khronos::khronos_int32_t;
+use libc::{c_char, c_uint, c_void, int32_t};
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::ptr;
-use khronos::khronos_int32_t;
-use libc::{c_char, c_uint, c_void, int32_t};
 
 pub type EGLBoolean = c_uint;
 pub type EGLClientBuffer = *mut c_void;

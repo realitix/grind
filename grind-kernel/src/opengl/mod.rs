@@ -1,6 +1,6 @@
-mod types;
 mod entrypoint;
 pub mod gles2;
+mod types;
 
 use opengl::types::*;
 
