@@ -110,7 +110,7 @@ impl VulkanDriver {
 
             let alpha = caps.supported_composite_alpha.iter().next().unwrap();
             let format = caps.supported_formats[0].0;
-            let dimensions = [100, 100];
+            let dimensions = [300, 300];
             Swapchain::new(
                 device.clone(),
                 surface.clone(),

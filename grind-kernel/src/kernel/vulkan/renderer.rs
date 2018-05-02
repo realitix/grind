@@ -9,6 +9,8 @@ use vulkano::command_buffer::CommandBuffer;
 use vulkano::device::Device;
 use vulkano::device::Queue;
 use vulkano::format::ClearValue;
+use vulkano::framebuffer::Framebuffer;
+use vulkano::framebuffer::FramebufferAbstract;
 use vulkano::framebuffer::RenderPass;
 use vulkano::image::swapchain::SwapchainImage;
 use vulkano::swapchain::acquire_next_image;
@@ -24,6 +26,7 @@ pub struct Renderer {
     queue: Arc<Queue>,
     swapchain: Arc<Swapchain<Unique<c_void>>>,
     swapchain_images: Vec<Arc<SwapchainImage<Unique<c_void>>>>,
+    framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
     last_future: Box<GpuFuture>,
     image_num: usize,
 }
@@ -39,6 +42,36 @@ impl Renderer {
         let last_future = Box::new(sync::now(device.clone()));
         let image_num = 0;
 
+        let renderpass = Arc::new(
+            single_pass_renderpass!(device.clone(),
+            attachments: {
+                color: {
+                    load: Clear,
+                    store: Store,
+                    format: swapchain.format(),
+                    samples: 1,
+                }
+            },
+            pass: {
+              color: [color],
+              depth_stencil: {}
+            }
+        ).unwrap(),
+        );
+
+        let framebuffers = swapchain_images
+            .iter()
+            .map(|image| {
+                Arc::new(
+                    Framebuffer::start(renderpass.clone())
+                        .add(image.clone())
+                        .unwrap()
+                        .build()
+                        .unwrap(),
+                ) as Arc<FramebufferAbstract + Send + Sync>
+            })
+            .collect::<Vec<_>>();
+
         let mut renderer = Renderer {
             device,
             surface,
@@ -47,6 +80,7 @@ impl Renderer {
             last_future,
             image_num,
             swapchain_images,
+            framebuffers,
         };
 
         renderer.acquire();
@@ -69,18 +103,18 @@ impl Renderer {
             self.device.clone(),
             self.queue.family(),
         ).unwrap()
-            .clear_color_image(self.swapchain_images[self.image_num].clone(), clear_value)
-            .expect("Clear color error")
+            .begin_render_pass(self.framebuffers[self.image_num].clone(), false, vec![colors.into()]).unwrap()
+            .end_render_pass().unwrap()
+        //    .clear_color_image(self.swapchain_images[self.image_num].clone(), clear_value)
+         //   .expect("Clear color error")
             .build()
             .unwrap();
 
-        // let future = cb.execute(self.queue.clone()).expect("Can't execute clear command buffer");
-        // future.then_signal_fence_and_flush().unwrap().wait(None).unwrap();
         let tmp_future = Box::new(sync::now(self.device.clone()));
         let last_future = mem::replace(&mut self.last_future, tmp_future);
         last_future
             .then_execute(self.queue.clone(), cb)
-            .unwrap()
+            .expect("Can't execute clear command buffer")
             .then_signal_fence_and_flush()
             .unwrap()
             .wait(None)
