@@ -1,5 +1,6 @@
 mod entrypoint;
 pub mod gles2;
+mod global;
 mod types;
 
 use opengl::types::*;
@@ -435,8 +436,7 @@ pub extern "C" fn gk_glGetBufferParameteriv(target: GLenum, pname: GLenum, param
 
 #[no_mangle]
 pub extern "C" fn gk_glGetError() -> GLenum {
-    println!("GrindKernel: Fn not implemented: glGetError");
-    0
+    entrypoint::get_error()
 }
 
 #[no_mangle]

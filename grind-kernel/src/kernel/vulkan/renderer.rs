@@ -103,10 +103,14 @@ impl Renderer {
             self.device.clone(),
             self.queue.family(),
         ).unwrap()
-            .begin_render_pass(self.framebuffers[self.image_num].clone(), false, vec![colors.into()]).unwrap()
-            .end_render_pass().unwrap()
-        //    .clear_color_image(self.swapchain_images[self.image_num].clone(), clear_value)
-         //   .expect("Clear color error")
+            .begin_render_pass(
+                self.framebuffers[self.image_num].clone(),
+                false,
+                vec![colors.into()],
+            )
+            .unwrap()
+            .end_render_pass()
+            .unwrap()
             .build()
             .unwrap();
 
@@ -127,7 +131,11 @@ impl Renderer {
             sync::now(self.device.clone()),
             self.queue.clone(),
             self.image_num,
-        );
+        ).then_signal_fence_and_flush()
+            .unwrap()
+            .wait(None)
+            .unwrap();
+
         self.acquire()
     }
 }

@@ -1,6 +1,7 @@
 use egl::global::CONTEXT;
 
 use opengl::gles2::ContextGlES2;
+use opengl::global::GL_ERROR;
 use opengl::types::*;
 
 fn with_gl<F>(f: F)
@@ -24,4 +25,8 @@ pub fn clear(mask: GLbitfield) {
     with_gl(|gl| {
         gl.clear(mask);
     });
+}
+
+pub fn get_error() -> GLenum {
+    GL_ERROR.with(|c| *c.borrow())
 }

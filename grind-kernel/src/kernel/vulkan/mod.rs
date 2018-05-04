@@ -12,12 +12,15 @@ use vulkano::instance::Features;
 use vulkano::instance::PhysicalDevice;
 use vulkano::instance::{layers_list, Instance, InstanceExtensions};
 use vulkano::pipeline::GraphicsPipeline;
+use vulkano::swapchain::CompositeAlpha;
 use vulkano::swapchain::PresentMode;
 use vulkano::swapchain::Surface;
 use vulkano::swapchain::SurfaceTransform;
 use vulkano::swapchain::Swapchain;
+use vulkano::sync::SharingMode;
 
 use kernel::vulkan::renderer::Renderer;
+use vulkano::instance::debug::{DebugCallback, MessageTypes};
 
 pub fn is_available() -> bool {
     match Instance::new(None, &InstanceExtensions::none(), None) {
@@ -28,6 +31,7 @@ pub fn is_available() -> bool {
 
 pub struct VulkanDriver {
     renderer: Renderer,
+    callback: DebugCallback,
 }
 
 impl VulkanDriver {
@@ -36,6 +40,7 @@ impl VulkanDriver {
         let ideal = InstanceExtensions {
             khr_surface: true,
             khr_wayland_surface: true,
+            ext_debug_report: true,
             ..InstanceExtensions::none()
         };
 
@@ -50,6 +55,16 @@ impl VulkanDriver {
         let layer = "VK_LAYER_LUNARG_standard_validation";
         let layers = vec![&layer];
         let instance = Instance::new(None, &extensions, layers).expect("Can't create Instance");
+
+        let mut mt = MessageTypes::none();
+        mt.information = false;
+        mt.debug = false;
+        mt.warning = true;
+        mt.error = true;
+        let callback = DebugCallback::new(&instance, mt, |msg| {
+            println!("Debug callback: {:?}", msg.description);
+        }).ok()
+            .unwrap();
 
         // Physical device
         let physical_device = PhysicalDevice::enumerate(&instance)
@@ -111,17 +126,18 @@ impl VulkanDriver {
             let alpha = caps.supported_composite_alpha.iter().next().unwrap();
             let format = caps.supported_formats[0].0;
             let dimensions = [300, 300];
+            let num_images = caps.min_image_count;
             Swapchain::new(
                 device.clone(),
                 surface.clone(),
-                caps.min_image_count,
+                num_images,
                 format,
                 dimensions,
                 1,
                 caps.supported_usage_flags,
-                &queue,
+                SharingMode::Exclusive(0),
                 SurfaceTransform::Identity,
-                alpha,
+                CompositeAlpha::Opaque,
                 PresentMode::Fifo,
                 true,
                 None,
@@ -129,6 +145,7 @@ impl VulkanDriver {
         };
 
         VulkanDriver {
+            callback,
             renderer: Renderer::new(device, surface, queue, swapchain, images),
         }
     }
