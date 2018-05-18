@@ -1,8 +1,8 @@
-use opengl::types::{GLuint, GLenum};
+use opengl::types::*;
 
 
 pub struct Shader {
-    id: GLuint,
+    pub id: GLuint,
     shader_type: GLenum
 }
 
@@ -13,10 +13,13 @@ impl Shader {
             shader_type
         }
     }
+
+    pub fn set_source(&mut self, count: GLsizei, string: *const *const GLchar, length: *const GLint) {
+    }
 }
 
 pub struct ShaderProgram {
-    id: GLuint,
+    pub id: GLuint,
     vertex: Option<Shader>,
     fragment: Option<Shader>
 }

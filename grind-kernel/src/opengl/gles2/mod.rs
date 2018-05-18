@@ -54,10 +54,21 @@ impl ContextGlES2 {
     }
 
     pub fn shader_source(
-        shader: GLuint,
+        &mut self,
+        shader_id: GLuint,
         count: GLsizei,
         string: *const *const GLchar,
         length: *const GLint,
     ) {
+        // Retrieve shader
+        let mut current_shader = None;
+
+        for shader in self.shaders.iter_mut() {
+            if shader.id == shader_id {
+                current_shader = Some(shader);
+            }
+        }
+
+        current_shader.unwrap().set_source(count, string, length)
     }
 }

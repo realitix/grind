@@ -62,6 +62,6 @@ pub fn shader_source(
     length: *const GLint,
 ) {
     with_gl(|gl| {
-        gl.shader_sourec(shader, count, string, length);
+        gl.shader_source(shader, count, string, length);
     });
 }
