@@ -5,11 +5,10 @@ use glsltranspiler::{transpile, ShaderType};
 
 use opengl::types::*;
 
-
 pub struct Shader {
     pub id: GLuint,
     shader_type: GLenum,
-    source: String
+    source: String,
 }
 
 impl Shader {
@@ -17,11 +16,16 @@ impl Shader {
         Shader {
             id,
             shader_type,
-            source: String::new()
+            source: String::new(),
         }
     }
 
-    pub fn set_source(&mut self, count: GLsizei, string: *const *const GLchar, length: *const GLint) {
+    pub fn set_source(
+        &mut self,
+        count: GLsizei,
+        string: *const *const GLchar,
+        length: *const GLint,
+    ) {
         let mut result = String::new();
         for i in 0..count {
             let slice = unsafe { CStr::from_ptr(*string.offset(i as isize)) };
@@ -44,7 +48,7 @@ impl Shader {
 pub struct ShaderProgram {
     pub id: GLuint,
     vertex: Option<Shader>,
-    fragment: Option<Shader>
+    fragment: Option<Shader>,
 }
 
 impl ShaderProgram {
@@ -52,7 +56,7 @@ impl ShaderProgram {
         ShaderProgram {
             id: id,
             vertex: None,
-            fragment: None
+            fragment: None,
         }
     }
 }

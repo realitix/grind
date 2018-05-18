@@ -4,15 +4,15 @@ use std::sync::Arc;
 use std::vec::Vec;
 
 use kernel::vulkan::VulkanDriver;
-use opengl::types::*;
 use opengl::gles2::shader::{Shader, ShaderProgram};
+use opengl::types::*;
 
 pub struct ContextGlES2 {
     kernel: VulkanDriver,
     clear_color: [GLclampf; 4],
     programs: Vec<ShaderProgram>,
     shaders: Vec<Shader>,
-    shaders_id: GLuint
+    shaders_id: GLuint,
 }
 
 impl ContextGlES2 {
@@ -22,7 +22,7 @@ impl ContextGlES2 {
             clear_color: [0.; 4],
             programs: Vec::new(),
             shaders: Vec::new(),
-            shaders_id: 0
+            shaders_id: 0,
         }
     }
 

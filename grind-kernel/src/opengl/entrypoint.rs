@@ -39,7 +39,7 @@ pub fn create_program() -> GLuint {
 
     match result {
         Some(r) => r,
-        None => 0
+        None => 0,
     }
 }
 
@@ -51,7 +51,7 @@ pub fn create_shader(_type: GLenum) -> GLuint {
 
     match result {
         Some(r) => r,
-        None => 0
+        None => 0,
     }
 }
 

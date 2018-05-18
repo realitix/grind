@@ -1,17 +1,16 @@
 extern crate tokesies;
 
-use std::vec::Vec;
 use std::mem;
+use std::vec::Vec;
 use tokesies::{filters, FilteredTokenizer, Token};
 
 pub enum ShaderType {
     Vertex,
-    Fragment
+    Fragment,
 }
 
 type Tokens<'a> = Vec<Vec<&'a str>>;
 struct GlslFilter;
-
 
 fn tokenize(code: &str) -> Tokens {
     let mut code_tokens = Vec::new();
@@ -72,7 +71,7 @@ pub fn transpile(code: &str, shader_type: ShaderType) {
     let result = match version {
         100 => transpile100(code_tokens, shader_type),
         120 => transpile120(code_tokens, shader_type),
-        _ => panic!("Can't determine shader version")
+        _ => panic!("Can't determine shader version"),
     };
 
     println!("{:?}", result);
