@@ -1,6 +1,8 @@
 use std::ffi::CStr;
 use std::mem;
 
+use glsltranspiler::{transpile, ShaderType};
+
 use opengl::types::*;
 
 
@@ -29,6 +31,13 @@ impl Shader {
         }
 
         mem::replace(&mut self.source, result);
+    }
+
+    pub fn compile(&mut self) {
+        // TODO: 1. check shader validity
+        // 2. transpile shader to version 450
+        transpile(&self.source, ShaderType::Vertex);
+        // 3. compile to spirv
     }
 }
 

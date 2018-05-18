@@ -133,7 +133,7 @@ pub extern "C" fn gk_glColorMask(
 
 #[no_mangle]
 pub extern "C" fn gk_glCompileShader(shader: GLuint) {
-    println!("GrindKernel: Fn not implemented: glCompileShader");
+    entrypoint::compile_shader(shader)
 }
 
 #[no_mangle]

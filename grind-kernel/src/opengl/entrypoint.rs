@@ -65,3 +65,9 @@ pub fn shader_source(
         gl.shader_source(shader, count, string, length);
     });
 }
+
+pub fn compile_shader(shader: GLuint) {
+    with_gl(|gl| {
+        gl.compile_shader(shader);
+    });
+}

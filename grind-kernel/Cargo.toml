@@ -14,3 +14,4 @@ khronos = "*"
 libc = "*"
 lazy_static = "*"
 vulkano = "*"
+glsltranspiler = { path = "../glsl-transpiler" }

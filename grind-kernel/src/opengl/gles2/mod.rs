@@ -62,7 +62,6 @@ impl ContextGlES2 {
     ) {
         // Retrieve shader
         let mut current_shader = None;
-
         for shader in self.shaders.iter_mut() {
             if shader.id == shader_id {
                 current_shader = Some(shader);
@@ -70,5 +69,16 @@ impl ContextGlES2 {
         }
 
         current_shader.unwrap().set_source(count, string, length)
+    }
+
+    pub fn compile_shader(&mut self, shader_id: GLuint) {
+        let mut current_shader = None;
+        for shader in self.shaders.iter_mut() {
+            if shader.id == shader_id {
+                current_shader = Some(shader);
+            }
+        }
+
+        current_shader.unwrap().compile();
     }
 }
