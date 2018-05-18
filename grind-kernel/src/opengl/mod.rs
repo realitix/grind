@@ -195,14 +195,12 @@ pub extern "C" fn gk_glCopyTexSubImage2D(
 
 #[no_mangle]
 pub extern "C" fn gk_glCreateProgram() -> GLuint {
-    println!("GrindKernel: Fn not implemented: glCreateProgram");
-    0
+    entrypoint::create_program()
 }
 
 #[no_mangle]
 pub extern "C" fn gk_glCreateShader(_type: GLenum) -> GLuint {
-    println!("GrindKernel: Fn not implemented: glCreateShader");
-    0
+    entrypoint::create_shader(_type)
 }
 
 #[no_mangle]
@@ -697,7 +695,7 @@ pub extern "C" fn gk_glShaderSource(
     string: *const *const GLchar,
     length: *const GLint,
 ) {
-    println!("GrindKernel: Fn not implemented: glShaderSource");
+    entrypoint::shader_source(shader, count, string, length)
 }
 
 #[no_mangle]

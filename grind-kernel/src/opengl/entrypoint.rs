@@ -30,3 +30,38 @@ pub fn clear(mask: GLbitfield) {
 pub fn get_error() -> GLenum {
     GL_ERROR.with(|c| *c.borrow())
 }
+
+pub fn create_program() -> GLuint {
+    let mut result = None;
+    with_gl(|gl| {
+        result = Some(gl.create_program());
+    });
+
+    match result {
+        Some(r) => r,
+        None => 0
+    }
+}
+
+pub fn create_shader(_type: GLenum) -> GLuint {
+    let mut result = None;
+    with_gl(|gl| {
+        result = Some(gl.create_shader(_type));
+    });
+
+    match result {
+        Some(r) => r,
+        None => 0
+    }
+}
+
+pub fn shader_source(
+    shader: GLuint,
+    count: GLsizei,
+    string: *const *const GLchar,
+    length: *const GLint,
+) {
+    with_gl(|gl| {
+        gl.shader_sourec(shader, count, string, length);
+    });
+}

@@ -1,2 +1,8 @@
 [workspace]
-members = ["grind-kernel", "grind-egl", "grind-wayland-egl", "grind-opengles2"]
+members = [
+    "glsl-transpiler",
+    "grind-kernel",
+    "grind-egl",
+    "grind-wayland-egl",
+    "grind-opengles2"
+]
