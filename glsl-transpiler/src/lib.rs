@@ -1,65 +1,21 @@
-extern crate tokesies;
-
 use std::mem;
 use std::vec::Vec;
-use std::str::Lines;
-use tokesies::{filters, FilteredTokenizer, Token};
+use std::collections::HashMap;
 
 pub enum ShaderType {
     Vertex,
     Fragment,
 }
 
-type Tokens<'a> = Vec<Vec<&'a str>>;
-struct GlslFilter;
-
-fn tokenize(code: &str) -> Tokens {
-    let mut code_tokens = Vec::new();
-    for line in code.lines() {
-        code_tokens.push(line.split(" ").collect());
-    }
-    code_tokens
+pub struct TranspilationResult {
+    pub text: String,
+    // attributes: name: location
+    pub attributes: HashMap<String, u32>,
+    // uniforms: name: set/binding
+    pub uniforms: HashMap<String, [u32; 2]>,
+    // varyings: name: location
+    pub varyings: HashMap<String, u32>
 }
-
-fn get_str_token<'a>(tokens: &'a Tokens, line: usize, column: usize) -> &'a str {
-    tokens[line][column]
-}
-
-/*fn get_version(tokens: &Tokens) -> u32 {
-    let mut version = 0;
-
-    // First, try with #version
-    if get_str_token(tokens, 0, 0) == "#version" {
-        version = get_str_token(tokens, 0, 1).parse::<u32>().unwrap();
-    }
-
-    version
-}
-
-fn old transpile120(mut tokens: Tokens, shader_type: ShaderType) -> String {
-    // remove version if exists
-    if get_str_token(&tokens, 0, 0) == "#version" {
-        tokens.remove(0);
-    }
-
-    for line in tokens.iter() {
-        for token in line.iter() {
-            token.replace("attribute", "out");
-        }
-    }
-
-    let mut result = String::from("#version 450\n");
-    for line in tokens.iter() {
-        for token in line.iter() {
-            result.push_str(token);
-            result.push(' ');
-        }
-        result.push('\n');
-    }
-
-    result
-}
-*/
 
 fn get_version(lines: &Vec<&str>) -> u32 {
     let mut version = 0;
@@ -70,24 +26,51 @@ fn get_version(lines: &Vec<&str>) -> u32 {
         version = first_line[1].parse::<u32>().unwrap();
     }
 
+    // then with keyword
+    if version == 0 {
+        for line in lines.iter() {
+            if line.find("attribute").is_some() ||
+               line.find("uniform").is_some() ||
+               line.find("varying").is_some() {
+                version = 120;
+                break;
+            }
+        }
+    }
+
     version
 }
 
-fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> String {
-    // remove version if exists
-    /*for line in tokens.iter() {
-        for token in line.iter() {
-            token.replace("attribute", "out");
+fn next_attribute_location(attributes: &HashMap<String, u32>) -> u32 {
+    let mut max_location = 0;
+    for (key, val) in attributes.iter() {
+        if *val > max_location {
+            max_location = *val;
         }
-    }*/
+    }
+    max_location
+}
 
+fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResult {
     let mut result = String::from("#version 450\n");
+    result.push_str("#extension GL_ARB_separate_shader_objects :enable\n");
+
+    match shader_type {
+        Vertex => result.push_str("out gl_PerVertex {vec4 gl_Position;};\n"),
+        Fragment => result.push_str("layout(location = 0) out vec4 gl_FragColor;")
+    };
+
+    let mut attributes = HashMap::new();
+
     for line in lines.iter() {
         if line.find("#version").is_some() {
             continue;
         }
         else if line.find("attribute").is_some() {
-            result.push_str(&line.replace("attribute", "out"))
+            let location = next_attribute_location(&attributes);
+            let tokens: Vec<&str> = line.split(" ").collect();
+            let s = format!("layout(location={}) in", location);
+            result.push_str(&line.replace("attribute", &s));
         }
         else {
             result.push_str(line);
@@ -95,24 +78,26 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> String {
         result.push('\n');
     }
 
-    result
+    TranspilationResult {
+        text: result,
+        uniforms: HashMap::new(),
+        attributes: HashMap::new(),
+        varyings: HashMap::new()
+    }
 }
 
-fn transpile100(lines: &Vec<&str>, shader_type: ShaderType) -> String {
+fn transpile100(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResult {
     //TODO: remove precision qualifier
     transpile120(lines, shader_type)
 }
 
-pub fn transpile(code: &str, shader_type: ShaderType) {
-    //let code_tokens = tokenize(code);
+pub fn transpile(code: &str, shader_type: ShaderType) -> TranspilationResult {
     let lines = code.lines().collect();
     let version = get_version(&lines);
 
-    let result = match version {
+    match version {
         100 => transpile100(&lines, shader_type),
         120 => transpile120(&lines, shader_type),
         _ => panic!("Can't determine shader version"),
-    };
-
-    println!("{:?}", result);
+    }
 }

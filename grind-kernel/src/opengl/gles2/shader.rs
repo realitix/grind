@@ -9,6 +9,7 @@ pub struct Shader {
     pub id: GLuint,
     shader_type: GLenum,
     source: String,
+    source_transpiled: Option<String>
 }
 
 impl Shader {
@@ -17,6 +18,7 @@ impl Shader {
             id,
             shader_type,
             source: String::new(),
+            source_transpiled: None
         }
     }
 
@@ -38,9 +40,16 @@ impl Shader {
     }
 
     pub fn compile(&mut self) {
+        let shader_type = match self.shader_type {
+            VERTEX_SHADER => ShaderType::Vertex,
+            FRAGMENT_SHADER => ShaderType::Fragment,
+            _ => panic!("Unknow shader type")
+        };
+
         // TODO: 1. check shader validity
         // 2. transpile shader to version 450
-        transpile(&self.source, ShaderType::Vertex);
+        let transpilation = transpile(&self.source, shader_type);
+        self.source_transpiled = Some(transpilation.text);
         // 3. compile to spirv
     }
 }
