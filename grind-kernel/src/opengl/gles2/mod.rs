@@ -96,7 +96,7 @@ impl ContextGlES2 {
     }
 
     pub fn attach_shader(&mut self, program_id: GLuint, shader_id: GLuint) {
-        // Refactor get shader
+        // TODO: Refactor get shader
         let mut current_shader = None;
         for shader in self.shaders.iter() {
             if shader.id == shader_id {
@@ -137,5 +137,9 @@ impl ContextGlES2 {
         }
 
         current_program.unwrap().get_programiv(pname, params);
+    }
+
+    pub fn delete_shader(&mut self, shader_id: GLuint) {
+        self.shaders.retain(|ref shader| shader.id != shader_id);
     }
 }

@@ -230,7 +230,7 @@ pub extern "C" fn gk_glDeleteRenderbuffers(n: GLsizei, renderbuffers: *const GLu
 
 #[no_mangle]
 pub extern "C" fn gk_glDeleteShader(shader: GLuint) {
-    println!("GrindKernel: Fn not implemented: glDeleteShader");
+    entrypoint::delete_shader(shader)
 }
 
 #[no_mangle]

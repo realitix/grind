@@ -95,3 +95,9 @@ pub fn get_programiv(program: GLuint, pname: GLenum, params: *mut GLint) {
         gl.get_programiv(program, pname, params);
     });
 }
+
+pub fn delete_shader(shader: GLuint) {
+    with_gl(|gl| {
+        gl.delete_shader(shader);
+    });
+}
