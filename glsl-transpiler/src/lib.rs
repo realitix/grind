@@ -57,8 +57,9 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResu
     result.push_str("#extension GL_ARB_separate_shader_objects :enable\n");
 
     match shader_type {
-        Vertex => result.push_str("out gl_PerVertex {vec4 gl_Position;};\n"),
-        Fragment => result.push_str("layout(location = 0) out vec4 gl_FragColor;"),
+        ShaderType::Vertex => result.push_str("out gl_PerVertex {vec4 gl_Position;};\n"),
+        ShaderType::Fragment => result.push_str("layout(location = 0) out vec4 out_color;\n"),
+        _ => panic!("Unknow shader type"),
     };
 
     let mut attributes = HashMap::new();
@@ -71,6 +72,8 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResu
             let tokens: Vec<&str> = line.split(" ").collect();
             let s = format!("layout(location={}) in", location);
             result.push_str(&line.replace("attribute", &s));
+        } else if line.find("gl_FragColor").is_some() {
+            result.push_str(&line.replace("gl_FragColor", "out_color"));
         } else {
             result.push_str(line);
         }

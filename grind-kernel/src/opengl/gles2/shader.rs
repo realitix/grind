@@ -56,9 +56,21 @@ impl Shader {
     }
 
     pub fn compile(&mut self) {
-        let shader_type = match self.shader_type {
-            VERTEX_SHADER => ShaderType::Vertex,
-            FRAGMENT_SHADER => ShaderType::Fragment,
+        let shader_type;
+        let shader_kind;
+        let shader_name;
+
+        match self.shader_type {
+            VERTEX_SHADER => {
+                shader_type = ShaderType::Vertex;
+                shader_kind = ShaderKind::Vertex;
+                shader_name = String::from("Vertex");
+            }
+            FRAGMENT_SHADER => {
+                shader_type = ShaderType::Fragment;
+                shader_kind = ShaderKind::Fragment;
+                shader_name = String::from("Fragment");
+            }
             _ => panic!("Unknow shader type"),
         };
 
@@ -68,12 +80,7 @@ impl Shader {
         self.source_transpiled = Some(transpilation.text);
 
         // 3. compile to spirv
-        let shader_kind = match self.shader_type {
-            VERTEX_SHADER => ShaderKind::Vertex,
-            FRAGMENT_SHADER => ShaderKind::Fragment,
-            _ => panic!("Unknow shader type"),
-        };
-
+        //println!("{}", self.source_transpiled.as_ref().unwrap());
         let mut compiler = Compiler::new().unwrap();
         let mut options = CompileOptions::new().unwrap();
         self.spirv = Some(
@@ -81,7 +88,7 @@ impl Shader {
                 .compile_into_spirv(
                     self.source_transpiled.as_ref().unwrap(),
                     shader_kind,
-                    "shader.glsl",
+                    &shader_name,
                     "main",
                     Some(&options),
                 )
@@ -104,6 +111,7 @@ pub struct ShaderProgram {
     pub id: GLuint,
     vertex: Option<Shader>,
     fragment: Option<Shader>,
+    linked: bool,
 }
 
 impl ShaderProgram {
@@ -112,6 +120,7 @@ impl ShaderProgram {
             id: id,
             vertex: None,
             fragment: None,
+            linked: false,
         }
     }
 
@@ -126,5 +135,16 @@ impl ShaderProgram {
 
     pub fn link(&mut self) {
         // TODO: Check linking with glslang
+        self.linked = true;
+    }
+
+    pub fn get_programiv(&self, pname: GLenum, params: *mut GLint) {
+        match pname {
+            GL_LINK_STATUS => match self.linked {
+                true => unsafe { *params = TRUE as i32 },
+                false => unsafe { *params = FALSE as i32 },
+            },
+            _ => {}
+        };
     }
 }

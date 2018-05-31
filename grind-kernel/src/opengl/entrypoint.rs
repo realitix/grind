@@ -89,3 +89,9 @@ pub fn link_program(program: GLuint) {
         gl.link_program(program);
     });
 }
+
+pub fn get_programiv(program: GLuint, pname: GLenum, params: *mut GLint) {
+    with_gl(|gl| {
+        gl.get_programiv(program, pname, params);
+    });
+}

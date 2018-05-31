@@ -459,7 +459,7 @@ pub extern "C" fn gk_glGetIntegerv(pname: GLenum, params: *mut GLint) {
 
 #[no_mangle]
 pub extern "C" fn gk_glGetProgramiv(program: GLuint, pname: GLenum, params: *mut GLint) {
-    println!("GrindKernel: Fn not implemented: glGetProgramiv");
+    entrypoint::get_programiv(program, pname, params);
 }
 
 #[no_mangle]

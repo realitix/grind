@@ -128,4 +128,16 @@ impl ContextGlES2 {
 
         current_program.unwrap().link();
     }
+
+    pub fn get_programiv(&self, program_id: GLuint, pname: GLenum, params: *mut GLint) {
+        // Get Program
+        let mut current_program = None;
+        for program in self.programs.iter() {
+            if program.id == program_id {
+                current_program = Some(program);
+            }
+        }
+
+        current_program.unwrap().get_programiv(pname, params);
+    }
 }
