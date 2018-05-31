@@ -96,15 +96,13 @@ impl ContextGlES2 {
     }
 
     pub fn attach_shader(&mut self, program_id: GLuint, shader_id: GLuint) {
-        // Refactor get shader position
-        let mut current_shader_pos = None;
-        for (i, shader) in self.shaders.iter().enumerate() {
+        // Refactor get shader
+        let mut current_shader = None;
+        for shader in self.shaders.iter() {
             if shader.id == shader_id {
-                current_shader_pos = Some(i);
+                current_shader = Some(shader);
             }
         }
-
-        let shader = self.shaders.remove(current_shader_pos.unwrap());
 
         // Get Program
         let mut current_program = None;
@@ -114,7 +112,7 @@ impl ContextGlES2 {
             }
         }
 
-        current_program.unwrap().attach(shader);
+        current_program.unwrap().attach(current_shader.unwrap());
     }
 
     pub fn link_program(&mut self, program_id: GLuint) {
@@ -126,7 +124,7 @@ impl ContextGlES2 {
             }
         }
 
-        current_program.unwrap().link();
+        current_program.unwrap().link(&self.shaders);
     }
 
     pub fn get_programiv(&self, program_id: GLuint, pname: GLenum, params: *mut GLint) {

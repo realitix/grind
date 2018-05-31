@@ -56,21 +56,9 @@ impl Shader {
     }
 
     pub fn compile(&mut self) {
-        let shader_type;
-        let shader_kind;
-        let shader_name;
-
-        match self.shader_type {
-            VERTEX_SHADER => {
-                shader_type = ShaderType::Vertex;
-                shader_kind = ShaderKind::Vertex;
-                shader_name = String::from("Vertex");
-            }
-            FRAGMENT_SHADER => {
-                shader_type = ShaderType::Fragment;
-                shader_kind = ShaderKind::Fragment;
-                shader_name = String::from("Fragment");
-            }
+        let shader_type = match self.shader_type {
+            VERTEX_SHADER => ShaderType::Vertex,
+            FRAGMENT_SHADER => ShaderType::Fragment,
             _ => panic!("Unknow shader type"),
         };
 
@@ -78,22 +66,6 @@ impl Shader {
         // 2. transpile shader to version 450
         let transpilation = transpile(&self.source, shader_type);
         self.source_transpiled = Some(transpilation.text);
-
-        // 3. compile to spirv
-        //println!("{}", self.source_transpiled.as_ref().unwrap());
-        let mut compiler = Compiler::new().unwrap();
-        let mut options = CompileOptions::new().unwrap();
-        self.spirv = Some(
-            compiler
-                .compile_into_spirv(
-                    self.source_transpiled.as_ref().unwrap(),
-                    shader_kind,
-                    &shader_name,
-                    "main",
-                    Some(&options),
-                )
-                .unwrap(),
-        );
     }
 
     pub fn get_shaderiv(&self, pname: GLenum, params: *mut GLint) {
@@ -109,32 +81,84 @@ impl Shader {
 
 pub struct ShaderProgram {
     pub id: GLuint,
-    vertex: Option<Shader>,
-    fragment: Option<Shader>,
+    vertex_id: Option<GLuint>,
+    fragment_id: Option<GLuint>,
     linked: bool,
+    vertex_spirv: Option<CompilationArtifact>,
+    fragment_spirv: Option<CompilationArtifact>,
 }
 
 impl ShaderProgram {
     pub fn new(id: GLuint) -> ShaderProgram {
         ShaderProgram {
             id: id,
-            vertex: None,
-            fragment: None,
+            vertex_id: None,
+            fragment_id: None,
             linked: false,
+            vertex_spirv: None,
+            fragment_spirv: None,
         }
     }
 
-    pub fn attach(&mut self, shader: Shader) {
+    pub fn attach(&mut self, shader: &Shader) {
         let t = shader.shader_type;
         match t {
-            VERTEX_SHADER => self.vertex = Some(shader),
-            FRAGMENT_SHADER => self.fragment = Some(shader),
+            VERTEX_SHADER => self.vertex_id = Some(shader.id),
+            FRAGMENT_SHADER => self.fragment_id = Some(shader.id),
             _ => {}
         };
     }
 
-    pub fn link(&mut self) {
-        // TODO: Check linking with glslang
+    pub fn link(&mut self, shaders: &Vec<Shader>) {
+        // 1. TODO: Check linking with glslang
+        // 2. Find Vertex and Fragment shaders
+        let mut vertex_shader = None;
+        let mut fragment_shader = None;
+        for shader in shaders.iter() {
+            if shader.id == self.vertex_id.unwrap() {
+                vertex_shader = Some(shader);
+            }
+            if shader.id == self.fragment_id.unwrap() {
+                fragment_shader = Some(shader);
+            }
+        }
+
+        // 2. Compile to spirv
+        let mut compiler = Compiler::new().unwrap();
+        let mut options = CompileOptions::new().unwrap();
+
+        // vertex
+        let v_shader_kind = ShaderKind::Vertex;
+        let v_shader_name = String::from("Vertex");
+
+        self.vertex_spirv = Some(
+            compiler
+                .compile_into_spirv(
+                    vertex_shader.unwrap().source_transpiled.as_ref().unwrap(),
+                    v_shader_kind,
+                    &v_shader_name,
+                    "main",
+                    Some(&options),
+                )
+                .unwrap(),
+        );
+
+        // fragment
+        let f_shader_kind = ShaderKind::Fragment;
+        let f_shader_name = String::from("Fragment");
+
+        self.vertex_spirv = Some(
+            compiler
+                .compile_into_spirv(
+                    fragment_shader.unwrap().source_transpiled.as_ref().unwrap(),
+                    f_shader_kind,
+                    &f_shader_name,
+                    "main",
+                    Some(&options),
+                )
+                .unwrap(),
+        );
+
         self.linked = true;
     }
 
