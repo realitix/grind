@@ -1,6 +1,6 @@
+use std::collections::HashMap;
 use std::mem;
 use std::vec::Vec;
-use std::collections::HashMap;
 
 pub enum ShaderType {
     Vertex,
@@ -14,7 +14,7 @@ pub struct TranspilationResult {
     // uniforms: name: set/binding
     pub uniforms: HashMap<String, [u32; 2]>,
     // varyings: name: location
-    pub varyings: HashMap<String, u32>
+    pub varyings: HashMap<String, u32>,
 }
 
 fn get_version(lines: &Vec<&str>) -> u32 {
@@ -29,10 +29,10 @@ fn get_version(lines: &Vec<&str>) -> u32 {
     // then with keyword
     if version == 0 {
         for line in lines.iter() {
-            if line.find("attribute").is_some() ||
-               line.find("uniform").is_some() ||
-               line.find("varying").is_some() ||
-               line.find("gl_FragColor").is_some() {
+            if line.find("attribute").is_some() || line.find("uniform").is_some()
+                || line.find("varying").is_some()
+                || line.find("gl_FragColor").is_some()
+            {
                 version = 120;
                 break;
             }
@@ -58,7 +58,7 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResu
 
     match shader_type {
         Vertex => result.push_str("out gl_PerVertex {vec4 gl_Position;};\n"),
-        Fragment => result.push_str("layout(location = 0) out vec4 gl_FragColor;")
+        Fragment => result.push_str("layout(location = 0) out vec4 gl_FragColor;"),
     };
 
     let mut attributes = HashMap::new();
@@ -66,14 +66,12 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResu
     for line in lines.iter() {
         if line.find("#version").is_some() {
             continue;
-        }
-        else if line.find("attribute").is_some() {
+        } else if line.find("attribute").is_some() {
             let location = next_attribute_location(&attributes);
             let tokens: Vec<&str> = line.split(" ").collect();
             let s = format!("layout(location={}) in", location);
             result.push_str(&line.replace("attribute", &s));
-        }
-        else {
+        } else {
             result.push_str(line);
         }
         result.push('\n');
@@ -83,7 +81,7 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResu
         text: result,
         uniforms: HashMap::new(),
         attributes: HashMap::new(),
-        varyings: HashMap::new()
+        varyings: HashMap::new(),
     }
 }
 

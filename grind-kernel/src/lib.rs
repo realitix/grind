@@ -11,9 +11,9 @@ extern crate lazy_static;
 #[macro_use]
 extern crate vulkano;
 
+extern crate glsltranspiler;
 extern crate shaderc;
 extern crate vulkano_shaders;
-extern crate glsltranspiler;
 
 pub mod egl;
 pub mod opengl;

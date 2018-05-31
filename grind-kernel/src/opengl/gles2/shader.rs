@@ -1,22 +1,22 @@
 use std::ffi::CStr;
-use std::mem;
 use std::io::Read;
+use std::mem;
 
 use glsltranspiler::{transpile, ShaderType};
 use shaderc::{CompilationArtifact, CompileOptions, Compiler, ShaderKind};
 
 use opengl::types::*;
 
-struct ReflectResult {
-}
+struct ReflectResult {}
 
 fn reflect<R>(mut spirv: R) -> ReflectResult
-    where R: Read
+where
+    R: Read,
 {
     let mut data = Vec::new();
     spirv.read_to_end(&mut data);
     //let doc = parse::parse_spirv(&data);
-    ReflectResult{}
+    ReflectResult {}
 }
 
 pub struct Shader {
@@ -24,7 +24,7 @@ pub struct Shader {
     pub shader_type: GLenum,
     source: String,
     source_transpiled: Option<String>,
-    spirv: Option<CompilationArtifact>
+    spirv: Option<CompilationArtifact>,
 }
 
 impl Shader {
@@ -34,7 +34,7 @@ impl Shader {
             shader_type,
             source: String::new(),
             source_transpiled: None,
-            spirv: None
+            spirv: None,
         }
     }
 
@@ -59,7 +59,7 @@ impl Shader {
         let shader_type = match self.shader_type {
             VERTEX_SHADER => ShaderType::Vertex,
             FRAGMENT_SHADER => ShaderType::Fragment,
-            _ => panic!("Unknow shader type")
+            _ => panic!("Unknow shader type"),
         };
 
         // TODO: 1. check shader validity
@@ -71,23 +71,29 @@ impl Shader {
         let shader_kind = match self.shader_type {
             VERTEX_SHADER => ShaderKind::Vertex,
             FRAGMENT_SHADER => ShaderKind::Fragment,
-            _ => panic!("Unknow shader type")
+            _ => panic!("Unknow shader type"),
         };
 
         let mut compiler = Compiler::new().unwrap();
         let mut options = CompileOptions::new().unwrap();
-        self.spirv = Some(compiler.compile_into_spirv(
-            self.source_transpiled.as_ref().unwrap(), shader_kind,
-            "shader.glsl", "main", Some(&options)).unwrap());
+        self.spirv = Some(
+            compiler
+                .compile_into_spirv(
+                    self.source_transpiled.as_ref().unwrap(),
+                    shader_kind,
+                    "shader.glsl",
+                    "main",
+                    Some(&options),
+                )
+                .unwrap(),
+        );
     }
 
     pub fn get_shaderiv(&self, pname: GLenum, params: *mut GLint) {
         match pname {
-            GL_COMPILE_STATUS => {
-                match self.source_transpiled {
-                    Some(ref x) => unsafe { *params = TRUE as i32 },
-                    None => unsafe { *params = FALSE as i32 }
-                }
+            GL_COMPILE_STATUS => match self.source_transpiled {
+                Some(ref x) => unsafe { *params = TRUE as i32 },
+                None => unsafe { *params = FALSE as i32 },
             },
             _ => {}
         };
@@ -108,7 +114,7 @@ impl ShaderProgram {
             fragment: None,
         }
     }
-    
+
     pub fn attach(&mut self, shader: Shader) {
         let t = shader.shader_type;
         match t {
@@ -119,6 +125,6 @@ impl ShaderProgram {
     }
 
     pub fn link(&mut self) {
-        // TODO: Check linking with glslang      
+        // TODO: Check linking with glslang
     }
 }
