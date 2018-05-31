@@ -72,6 +72,7 @@ impl ContextGlES2 {
     }
 
     pub fn compile_shader(&mut self, shader_id: GLuint) {
+        // TODO: Refactor get shader
         let mut current_shader = None;
         for shader in self.shaders.iter_mut() {
             if shader.id == shader_id {
@@ -80,5 +81,51 @@ impl ContextGlES2 {
         }
 
         current_shader.unwrap().compile();
+    }
+
+    pub fn get_shaderiv(&self, shader_id: GLuint, pname: GLenum, params: *mut GLint) {
+        // TODO: Refactor get shader
+        let mut current_shader = None;
+        for shader in self.shaders.iter() {
+            if shader.id == shader_id {
+                current_shader = Some(shader);
+            }
+        }
+
+        current_shader.unwrap().get_shaderiv(pname, params);
+    }
+
+    pub fn attach_shader(&mut self, program_id: GLuint, shader_id: GLuint) {
+        // Refactor get shader position
+        let mut current_shader_pos = None;
+        for (i, shader) in self.shaders.iter().enumerate() {
+            if shader.id == shader_id {
+                current_shader_pos = Some(i);
+            }
+        }
+
+        let shader = self.shaders.remove(current_shader_pos.unwrap());
+
+        // Get Program
+        let mut current_program = None;
+        for program in self.programs.iter_mut() {
+            if program.id == program_id {
+                current_program = Some(program);
+            }
+        }
+
+        current_program.unwrap().attach(shader);
+    }
+
+    pub fn link_program(&mut self, program_id: GLuint) {
+        // Get Program
+        let mut current_program = None;
+        for program in self.programs.iter_mut() {
+            if program.id == program_id {
+                current_program = Some(program);
+            }
+        }
+
+        current_program.unwrap().link();
     }
 }

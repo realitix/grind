@@ -71,3 +71,21 @@ pub fn compile_shader(shader: GLuint) {
         gl.compile_shader(shader);
     });
 }
+
+pub fn get_shaderiv(shader: GLuint, pname: GLenum, params: *mut GLint) {
+    with_gl(|gl| {
+        gl.get_shaderiv(shader, pname, params);
+    });
+}
+
+pub fn attach_shader(program: GLuint, shader: GLuint) {
+    with_gl(|gl| {
+        gl.attach_shader(program, shader);
+    });
+}
+
+pub fn link_program(program: GLuint) {
+    with_gl(|gl| {
+        gl.link_program(program);
+    });
+}

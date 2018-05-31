@@ -31,7 +31,8 @@ fn get_version(lines: &Vec<&str>) -> u32 {
         for line in lines.iter() {
             if line.find("attribute").is_some() ||
                line.find("uniform").is_some() ||
-               line.find("varying").is_some() {
+               line.find("varying").is_some() ||
+               line.find("gl_FragColor").is_some() {
                 version = 120;
                 break;
             }

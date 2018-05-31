@@ -12,7 +12,7 @@ pub extern "C" fn gk_glActiveTexture(texture: GLenum) {
 
 #[no_mangle]
 pub extern "C" fn gk_glAttachShader(program: GLuint, shader: GLuint) {
-    println!("GrindKernel: Fn not implemented: glAttachShader");
+    entrypoint::attach_shader(program, shader)
 }
 
 #[no_mangle]
@@ -483,7 +483,7 @@ pub extern "C" fn gk_glGetRenderbufferParameteriv(
 
 #[no_mangle]
 pub extern "C" fn gk_glGetShaderiv(shader: GLuint, pname: GLenum, params: *mut GLint) {
-    println!("GrindKernel: Fn not implemented: glGetShaderiv");
+    entrypoint::get_shaderiv(shader, pname, params)
 }
 
 #[no_mangle]
@@ -621,7 +621,7 @@ pub extern "C" fn gk_glLineWidth(width: GLfloat) {
 
 #[no_mangle]
 pub extern "C" fn gk_glLinkProgram(program: GLuint) {
-    println!("GrindKernel: Fn not implemented: glLinkProgram");
+    entrypoint::link_program(program)
 }
 
 #[no_mangle]
