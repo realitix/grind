@@ -22,7 +22,7 @@ pub extern "C" fn gk_glBindAttribLocation(program: GLuint, index: GLuint, name: 
 
 #[no_mangle]
 pub extern "C" fn gk_glBindBuffer(target: GLenum, buffer: GLuint) {
-    println!("GrindKernel: Fn not implemented: glBindBuffer");
+    entrypoint::bind_buffer(target, buffer)
 }
 
 #[no_mangle]

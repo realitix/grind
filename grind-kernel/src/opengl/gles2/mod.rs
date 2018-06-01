@@ -156,7 +156,21 @@ impl ContextGlES2 {
             let buffer = Buffer::new(self.buffers_id);
             self.buffers.push(buffer);
 
-            unsafe { *buffers.offset(i as isize) = id; }
+            unsafe {
+                *buffers.offset(i as isize) = id;
+            }
         }
+    }
+
+    pub fn bind_buffer(&mut self, target: GLenum, buffer_id: GLuint) {
+        // Get buffer
+        let mut current_buffer = None;
+        for buffer in self.buffers.iter_mut() {
+            if buffer.id == buffer_id {
+                current_buffer = Some(buffer);
+            }
+        }
+
+        current_buffer.unwrap().target = target;
     }
 }

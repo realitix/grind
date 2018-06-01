@@ -107,3 +107,9 @@ pub fn gen_buffers(n: GLsizei, buffers: *mut GLuint) {
         gl.gen_buffers(n, buffers);
     });
 }
+
+pub fn bind_buffer(target: GLenum, buffer: GLuint) {
+    with_gl(|gl| {
+        gl.bind_buffer(target, buffer);
+    });
+}
