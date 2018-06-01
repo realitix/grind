@@ -352,7 +352,7 @@ pub extern "C" fn gk_glFrontFace(mode: GLenum) {
 
 #[no_mangle]
 pub extern "C" fn gk_glGenBuffers(n: GLsizei, buffers: *mut GLuint) {
-    println!("GrindKernel: Fn not implemented: glGenBuffers");
+    entrypoint::gen_buffers(n, buffers)
 }
 
 #[no_mangle]

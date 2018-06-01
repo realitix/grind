@@ -1,9 +1,11 @@
+mod buffer;
 mod shader;
 
 use std::sync::Arc;
 use std::vec::Vec;
 
 use kernel::vulkan::VulkanDriver;
+use opengl::gles2::buffer::Buffer;
 use opengl::gles2::shader::{Shader, ShaderProgram};
 use opengl::types::*;
 
@@ -13,6 +15,8 @@ pub struct ContextGlES2 {
     programs: Vec<ShaderProgram>,
     shaders: Vec<Shader>,
     shaders_id: GLuint,
+    buffers: Vec<Buffer>,
+    buffers_id: GLuint,
 }
 
 impl ContextGlES2 {
@@ -23,6 +27,8 @@ impl ContextGlES2 {
             programs: Vec::new(),
             shaders: Vec::new(),
             shaders_id: 0,
+            buffers: Vec::new(),
+            buffers_id: 0,
         }
     }
 
@@ -141,5 +147,16 @@ impl ContextGlES2 {
 
     pub fn delete_shader(&mut self, shader_id: GLuint) {
         self.shaders.retain(|ref shader| shader.id != shader_id);
+    }
+
+    pub fn gen_buffers(&mut self, n: GLsizei, buffers: *mut GLuint) {
+        for i in 0..n {
+            self.buffers_id += 1;
+            let id = self.buffers_id;
+            let buffer = Buffer::new(self.buffers_id);
+            self.buffers.push(buffer);
+
+            unsafe { *buffers.offset(i as isize) = id; }
+        }
     }
 }

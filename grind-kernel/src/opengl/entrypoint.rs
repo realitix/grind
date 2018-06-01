@@ -101,3 +101,9 @@ pub fn delete_shader(shader: GLuint) {
         gl.delete_shader(shader);
     });
 }
+
+pub fn gen_buffers(n: GLsizei, buffers: *mut GLuint) {
+    with_gl(|gl| {
+        gl.gen_buffers(n, buffers);
+    });
+}
