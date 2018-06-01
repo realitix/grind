@@ -13,10 +13,15 @@ pub struct ContextGlES2 {
     kernel: VulkanDriver,
     clear_color: [GLclampf; 4],
     programs: Vec<ShaderProgram>,
+
+    // shader attributes
     shaders: Vec<Shader>,
-    shaders_id: GLuint,
+    next_shader_id: GLuint,
+
+    // buffer attributes
     buffers: Vec<Buffer>,
-    buffers_id: GLuint,
+    next_buffer_id: GLuint,
+    buffer_binded: GLuint,
 }
 
 impl ContextGlES2 {
@@ -26,9 +31,10 @@ impl ContextGlES2 {
             clear_color: [0.; 4],
             programs: Vec::new(),
             shaders: Vec::new(),
-            shaders_id: 0,
+            next_shader_id: 0,
             buffers: Vec::new(),
-            buffers_id: 0,
+            next_buffer_id: 0,
+            buffer_binded: 0,
         }
     }
 
@@ -52,8 +58,8 @@ impl ContextGlES2 {
     }
 
     pub fn create_shader(&mut self, shader_type: GLenum) -> GLuint {
-        self.shaders_id += 1;
-        let id = self.shaders_id;
+        self.next_shader_id += 1;
+        let id = self.next_shader_id;
         let shader = Shader::new(id, shader_type);
         self.shaders.push(shader);
         id
@@ -151,9 +157,9 @@ impl ContextGlES2 {
 
     pub fn gen_buffers(&mut self, n: GLsizei, buffers: *mut GLuint) {
         for i in 0..n {
-            self.buffers_id += 1;
-            let id = self.buffers_id;
-            let buffer = Buffer::new(self.buffers_id);
+            self.next_buffer_id += 1;
+            let id = self.next_buffer_id;
+            let buffer = Buffer::new(id);
             self.buffers.push(buffer);
 
             unsafe {
@@ -171,6 +177,22 @@ impl ContextGlES2 {
             }
         }
 
-        current_buffer.unwrap().target = target;
+        match current_buffer {
+            Some(b) => {
+                b.target = target;
+                self.buffer_binded = buffer_id;
+            }
+            None => self.buffer_binded = 0, // unbind buffer
+        };
+    }
+
+    pub fn buffer_data(
+        &mut self,
+        target: GLenum,
+        size: GLsizeiptr,
+        data: *const GLvoid,
+        usage: GLenum,
+    ) {
+
     }
 }

@@ -82,7 +82,7 @@ pub extern "C" fn gk_glBufferData(
     data: *const GLvoid,
     usage: GLenum,
 ) {
-    println!("GrindKernel: Fn not implemented: glBufferData");
+    entrypoint::buffer_data(target, size, data, usage)
 }
 
 #[no_mangle]

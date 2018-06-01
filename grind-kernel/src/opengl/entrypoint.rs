@@ -113,3 +113,9 @@ pub fn bind_buffer(target: GLenum, buffer: GLuint) {
         gl.bind_buffer(target, buffer);
     });
 }
+
+pub fn buffer_data(target: GLenum, size: GLsizeiptr, data: *const GLvoid, usage: GLenum) {
+    with_gl(|gl| {
+        gl.buffer_data(target, size, data, usage);
+    });
+}
