@@ -8,6 +8,3 @@ description = "GLSL Transpiler"
 [lib]
 name = "glsltranspiler"
 crate-type = ["lib"]
-
-[dependencies]
-tokesies = { path = "/home/realitix/git/tokesies" }
