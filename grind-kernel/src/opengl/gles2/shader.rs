@@ -171,4 +171,8 @@ impl ShaderProgram {
             _ => {}
         };
     }
+
+    pub fn get_attrib_location(name: *const GLchar) -> GLint {
+        1
+    }
 }

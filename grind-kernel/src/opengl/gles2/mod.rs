@@ -217,4 +217,16 @@ impl ContextGlES2 {
 
         current_buffer.unwrap().enable_vertex_attrib_array(index);
     }
+
+    pub fn get_attrib_location(program_id: GLuint, name: *const GLchar) -> GLint {
+        // Get program
+        let mut current_program = None;
+        for program in self.programs.iter_mut() {
+            if program.id == program_id {
+                current_program = Some(program);
+            }
+        }
+
+        program.unwrap().get_attrib_location(name)
+    }
 }

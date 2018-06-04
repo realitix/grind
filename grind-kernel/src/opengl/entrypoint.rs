@@ -125,3 +125,9 @@ pub fn enable_vertex_attrib_array(index: GLuint) {
         gl.enable_vertex_attrib_array(index);
     });
 }
+
+pub fn get_attrib_location(program: GLuint, name: *const GLchar) -> GLint {
+    with_gl(|gl| {
+        gl.get_attrib_location(program, name);
+    });
+}

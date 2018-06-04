@@ -418,8 +418,7 @@ pub extern "C" fn gk_glGetAttachedShaders(
 
 #[no_mangle]
 pub extern "C" fn gk_glGetAttribLocation(program: GLuint, name: *const GLchar) -> GLint {
-    println!("GrindKernel: Fn not implemented: glGetAttribLocation");
-    0
+    entrypoint::get_attrib_location(program, name)
 }
 
 #[no_mangle]
