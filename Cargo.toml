@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "glsl-transpiler",
+    "spirv-parser",
     "grind-kernel",
     "grind-egl",
     "grind-wayland-egl",

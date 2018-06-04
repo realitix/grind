@@ -1,0 +1,10 @@
+[package]
+name = "spirv-parser"
+version = "0.1.0"
+authors = ["Jean-Sebastien BEVILACQUA <realitix@gmail.com>"]
+publish = false
+description = "SpirV Parser"
+
+[lib]
+name = "spirvparser"
+crate-type = ["lib"]
