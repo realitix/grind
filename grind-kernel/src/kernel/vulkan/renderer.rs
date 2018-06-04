@@ -138,4 +138,8 @@ impl Renderer {
 
         self.acquire()
     }
+
+    pub fn get_device(&self) -> Arc<Device> {
+        self.device.clone()
+    }
 }

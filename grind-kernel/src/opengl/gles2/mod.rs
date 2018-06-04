@@ -159,7 +159,7 @@ impl ContextGlES2 {
         for i in 0..n {
             self.next_buffer_id += 1;
             let id = self.next_buffer_id;
-            let buffer = Buffer::new(id);
+            let buffer = Buffer::new(id, &self.kernel);
             self.buffers.push(buffer);
 
             unsafe {
@@ -193,6 +193,28 @@ impl ContextGlES2 {
         data: *const GLvoid,
         usage: GLenum,
     ) {
+        // Get buffer
+        let mut current_buffer = None;
+        for buffer in self.buffers.iter_mut() {
+            if buffer.id == self.buffer_binded {
+                current_buffer = Some(buffer);
+            }
+        }
 
+        current_buffer
+            .unwrap()
+            .buffer_data(target, size, data, usage);
+    }
+
+    pub fn enable_vertex_attrib_array(&mut self, index: GLuint) {
+        // Get buffer
+        let mut current_buffer = None;
+        for buffer in self.buffers.iter_mut() {
+            if buffer.id == self.buffer_binded {
+                current_buffer = Some(buffer);
+            }
+        }
+
+        current_buffer.unwrap().enable_vertex_attrib_array(index);
     }
 }

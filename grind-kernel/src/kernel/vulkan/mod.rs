@@ -1,3 +1,4 @@
+pub mod buffer;
 mod renderer;
 
 use libc::c_void;
@@ -7,6 +8,7 @@ use std::sync::Arc;
 use vulkano::device::Device;
 use vulkano::framebuffer::Framebuffer;
 use vulkano::framebuffer::Subpass;
+use vulkano::instance::debug::{DebugCallback, MessageTypes};
 use vulkano::instance::DeviceExtensions;
 use vulkano::instance::Features;
 use vulkano::instance::PhysicalDevice;
@@ -19,8 +21,8 @@ use vulkano::swapchain::SurfaceTransform;
 use vulkano::swapchain::Swapchain;
 use vulkano::sync::SharingMode;
 
+use kernel::vulkan::buffer::Buffer;
 use kernel::vulkan::renderer::Renderer;
-use vulkano::instance::debug::{DebugCallback, MessageTypes};
 
 pub fn is_available() -> bool {
     match Instance::new(None, &InstanceExtensions::none(), None) {
@@ -156,5 +158,9 @@ impl VulkanDriver {
 
     pub fn present(&mut self) {
         self.renderer.present();
+    }
+
+    pub fn new_buffer(&self) -> Buffer {
+        Buffer::new(self.renderer.get_device())
     }
 }

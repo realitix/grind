@@ -119,3 +119,9 @@ pub fn buffer_data(target: GLenum, size: GLsizeiptr, data: *const GLvoid, usage:
         gl.buffer_data(target, size, data, usage);
     });
 }
+
+pub fn enable_vertex_attrib_array(index: GLuint) {
+    with_gl(|gl| {
+        gl.enable_vertex_attrib_array(index);
+    });
+}

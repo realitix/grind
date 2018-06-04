@@ -311,7 +311,7 @@ pub extern "C" fn gk_glEnable(cap: GLenum) {
 
 #[no_mangle]
 pub extern "C" fn gk_glEnableVertexAttribArray(index: GLuint) {
-    println!("GrindKernel: Fn not implemented: glEnableVertexAttribArray");
+    entrypoint::enable_vertex_attrib_array(index)
 }
 
 #[no_mangle]
