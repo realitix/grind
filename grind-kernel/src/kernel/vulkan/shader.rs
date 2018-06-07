@@ -179,14 +179,15 @@ impl Shader {
         unsafe {
             static NAME: [u8; 5] = [109, 97, 105, 110, 0]; // "main"
             let layout = match self.shader_type {
-                Vertex => Layout(ShaderStages {
+                GraphicsShaderType::Vertex => Layout(ShaderStages {
                     vertex: true,
                     ..ShaderStages::none()
                 }),
-                Fragment => Layout(ShaderStages {
+                GraphicsShaderType::Fragment => Layout(ShaderStages {
                     fragment: true,
                     ..ShaderStages::none()
                 }),
+                _ => panic!("Unknow shader type")
             };
 
             self.module.graphics_entry_point(

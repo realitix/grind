@@ -5,7 +5,10 @@ use std::mem;
 use glsltranspiler::{transpile, ShaderType};
 use shaderc::{CompilationArtifact, CompileOptions, Compiler, ShaderKind};
 use spirvparser::{reflect, SpirvReflection};
+use vulkano::pipeline::shader::GraphicsShaderType;
 
+use kernel::vulkan::shader::Shader as VulkanShader;
+use kernel::vulkan::VulkanDriver;
 use opengl::types::*;
 
 pub struct Shader {
@@ -73,9 +76,9 @@ pub struct ShaderProgram {
     vertex_id: Option<GLuint>,
     fragment_id: Option<GLuint>,
     linked: bool,
-    vertex_spirv: Option<CompilationArtifact>,
-    fragment_spirv: Option<CompilationArtifact>,
+    vertex_shader: Option<VulkanShader>,
     vertex_reflection: Option<SpirvReflection>,
+    fragment_shader: Option<VulkanShader>,
     fragment_reflection: Option<SpirvReflection>,
 }
 
@@ -86,8 +89,8 @@ impl ShaderProgram {
             vertex_id: None,
             fragment_id: None,
             linked: false,
-            vertex_spirv: None,
-            fragment_spirv: None,
+            vertex_shader: None,
+            fragment_shader: None,
             vertex_reflection: None,
             fragment_reflection: None,
         }
@@ -102,7 +105,7 @@ impl ShaderProgram {
         };
     }
 
-    pub fn link(&mut self, shaders: &Vec<Shader>) {
+    pub fn link(&mut self, kernel: &VulkanDriver, shaders: &Vec<Shader>) {
         // 1. TODO: Check linking with glslang
         // 2. Find Vertex and Fragment shaders
         let mut vertex_shader = None;
@@ -121,39 +124,41 @@ impl ShaderProgram {
         let mut options = CompileOptions::new().unwrap();
 
         // vertex
-        let v_shader_kind = ShaderKind::Vertex;
-        let v_shader_name = String::from("Vertex");
-
-        self.vertex_spirv = Some(
+        let vertex_spirv = Some(
             compiler
                 .compile_into_spirv(
                     vertex_shader.unwrap().source_transpiled.as_ref().unwrap(),
-                    v_shader_kind,
-                    &v_shader_name,
+                    ShaderKind::Vertex,
+                    &String::from("Vertex"),
                     "main",
                     Some(&options),
                 )
                 .unwrap(),
         );
-        self.vertex_reflection = Some(reflect(self.vertex_spirv.as_ref().unwrap().as_binary_u8()));
+        self.vertex_shader = Some(kernel.new_shader(
+            vertex_spirv.as_ref().unwrap().as_binary_u8(),
+            GraphicsShaderType::Vertex
+        ));
+        self.vertex_reflection = Some(reflect(vertex_spirv.as_ref().unwrap().as_binary_u8()));
 
         // fragment
-        let f_shader_kind = ShaderKind::Fragment;
-        let f_shader_name = String::from("Fragment");
-
-        self.fragment_spirv = Some(
+        let fragment_spirv = Some(
             compiler
                 .compile_into_spirv(
                     fragment_shader.unwrap().source_transpiled.as_ref().unwrap(),
-                    f_shader_kind,
-                    &f_shader_name,
+                    ShaderKind::Fragment,
+                    &String::from("Fragment"),
                     "main",
                     Some(&options),
                 )
                 .unwrap(),
         );
+        self.fragment_shader = Some(kernel.new_shader(
+            fragment_spirv.as_ref().unwrap().as_binary_u8(),
+            GraphicsShaderType::Fragment
+        ));
         self.fragment_reflection = Some(reflect(
-            self.fragment_spirv.as_ref().unwrap().as_binary_u8(),
+            fragment_spirv.as_ref().unwrap().as_binary_u8(),
         ));
 
         self.linked = true;

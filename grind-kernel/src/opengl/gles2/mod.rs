@@ -140,7 +140,7 @@ impl ContextGlES2 {
             }
         }
 
-        current_program.unwrap().link(&self.shaders);
+        current_program.unwrap().link(&self.kernel, &self.shaders);
     }
 
     pub fn get_programiv(&self, program_id: GLuint, pname: GLenum, params: *mut GLint) {

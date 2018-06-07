@@ -21,8 +21,10 @@ use vulkano::swapchain::Surface;
 use vulkano::swapchain::SurfaceTransform;
 use vulkano::swapchain::Swapchain;
 use vulkano::sync::SharingMode;
+use vulkano::pipeline::shader::GraphicsShaderType;
 
 use kernel::vulkan::buffer::Buffer;
+use kernel::vulkan::shader::Shader;
 use kernel::vulkan::renderer::Renderer;
 
 pub fn is_available() -> bool {
@@ -163,5 +165,9 @@ impl VulkanDriver {
 
     pub fn new_buffer(&self) -> Buffer {
         Buffer::new(self.renderer.get_device())
+    }
+
+    pub fn new_shader(&self, spirv: &[u8], shader_type: GraphicsShaderType) -> Shader {
+        Shader::new(self.renderer.get_device(), spirv, shader_type)
     }
 }
