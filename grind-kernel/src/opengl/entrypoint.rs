@@ -127,7 +127,34 @@ pub fn enable_vertex_attrib_array(index: GLuint) {
 }
 
 pub fn get_attrib_location(program: GLuint, name: *const GLchar) -> GLint {
+    let mut res = None;
     with_gl(|gl| {
-        gl.get_attrib_location(program, name);
+        res = Some(gl.get_attrib_location(program, name));
+    });
+    res.unwrap()
+}
+
+pub fn vertex_attrib_pointer(
+    index: GLuint,
+    size: GLint,
+    _type: GLenum,
+    normalized: GLboolean,
+    stride: GLsizei,
+    ptr: *const GLvoid,
+) {
+    with_gl(|gl| {
+        gl.vertex_attrib_pointer(index, size, _type, normalized, stride, ptr);
+    });
+}
+
+pub fn use_program(program: GLuint) {
+    with_gl(|gl| {
+        gl.use_program(program);
+    });
+}
+
+pub fn draw_arrays(mode: GLenum, first: GLint, count: GLsizei) {
+    with_gl(|gl| {
+        gl.draw_arrays(mode, first, count);
     });
 }

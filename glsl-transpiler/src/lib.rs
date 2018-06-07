@@ -43,13 +43,22 @@ fn get_version(lines: &Vec<&str>) -> u32 {
 }
 
 fn next_attribute_location(attributes: &HashMap<String, u32>) -> u32 {
+    let mut current_location = None;
     let mut max_location = 0;
+
+    // TODO: Take into account the location length
+    // example: a matrix 4 consumes 4 locations
     for (key, val) in attributes.iter() {
-        if *val > max_location {
+        if *val >= max_location {
+            current_location = Some(*val);
             max_location = *val;
         }
     }
-    max_location
+
+    match current_location {
+        Some(l) => l + 1,
+        None => 0,
+    }
 }
 
 fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResult {
@@ -70,6 +79,7 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResu
         } else if line.find("attribute").is_some() {
             let location = next_attribute_location(&attributes);
             let tokens: Vec<&str> = line.split(" ").collect();
+            attributes.insert(tokens[2].to_string(), location);
             let s = format!("layout(location={}) in", location);
             result.push_str(&line.replace("attribute", &s));
         } else if line.find("gl_FragColor").is_some() {

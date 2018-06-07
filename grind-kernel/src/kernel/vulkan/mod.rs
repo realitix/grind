@@ -1,5 +1,6 @@
 pub mod buffer;
 mod renderer;
+pub mod shader;
 
 use libc::c_void;
 use std::ptr::Unique;

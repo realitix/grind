@@ -16,4 +16,5 @@ lazy_static = "*"
 vulkano = "*"
 vulkano-shaders = "*"
 glsltranspiler = { path = "../glsl-transpiler" }
-shaderc = "*"
+spirvparser = { path = "../spirv-parser" }
+shaderc = { path = "../../shaderc-rs" }

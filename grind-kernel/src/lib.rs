@@ -13,6 +13,7 @@ extern crate vulkano;
 
 extern crate glsltranspiler;
 extern crate shaderc;
+extern crate spirvparser;
 extern crate vulkano_shaders;
 
 pub mod egl;

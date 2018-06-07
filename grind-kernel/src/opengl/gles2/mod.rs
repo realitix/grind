@@ -12,7 +12,10 @@ use opengl::types::*;
 pub struct ContextGlES2 {
     kernel: VulkanDriver,
     clear_color: [GLclampf; 4],
+
+    // program attributes
     programs: Vec<ShaderProgram>,
+    program_binded: GLuint,
 
     // shader attributes
     shaders: Vec<Shader>,
@@ -30,6 +33,7 @@ impl ContextGlES2 {
             kernel,
             clear_color: [0.; 4],
             programs: Vec::new(),
+            program_binded: 0,
             shaders: Vec::new(),
             next_shader_id: 0,
             buffers: Vec::new(),
@@ -218,7 +222,7 @@ impl ContextGlES2 {
         current_buffer.unwrap().enable_vertex_attrib_array(index);
     }
 
-    pub fn get_attrib_location(program_id: GLuint, name: *const GLchar) -> GLint {
+    pub fn get_attrib_location(&mut self, program_id: GLuint, name: *const GLchar) -> GLint {
         // Get program
         let mut current_program = None;
         for program in self.programs.iter_mut() {
@@ -227,6 +231,35 @@ impl ContextGlES2 {
             }
         }
 
-        program.unwrap().get_attrib_location(name)
+        current_program.unwrap().get_attrib_location(name)
     }
+
+    pub fn vertex_attrib_pointer(
+        &mut self,
+        index: GLuint,
+        size: GLint,
+        _type: GLenum,
+        normalized: GLboolean,
+        stride: GLsizei,
+        ptr: *const GLvoid,
+    ) {
+        println!("GrindKernel: not yet implemented: vertex_attrib_pointer");
+    }
+
+    pub fn use_program(&mut self, program_id: GLuint) {
+        // Get program
+        let mut current_program = None;
+        for program in self.programs.iter() {
+            if program.id == program_id {
+                current_program = Some(program);
+            }
+        }
+
+        match current_program {
+            Some(p) => self.program_binded = program_id,
+            None => self.program_binded = 0, // unbind program
+        };
+    }
+
+    pub fn draw_arrays(&self, mode: GLenum, first: GLint, count: GLsizei) {}
 }

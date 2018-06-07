@@ -270,7 +270,7 @@ pub extern "C" fn gk_glDisableVertexAttribArray(index: GLuint) {
 
 #[no_mangle]
 pub extern "C" fn gk_glDrawArrays(mode: GLenum, first: GLint, count: GLsizei) {
-    println!("GrindKernel: Fn not implemented: glDrawArrays");
+    entrypoint::draw_arrays(mode, first, count)
 }
 
 #[no_mangle]
@@ -899,7 +899,7 @@ pub extern "C" fn gk_glUniformMatrix4fv(
 
 #[no_mangle]
 pub extern "C" fn gk_glUseProgram(program: GLuint) {
-    println!("GrindKernel: Fn not implemented: glUseProgram");
+    entrypoint::use_program(program)
 }
 
 #[no_mangle]
@@ -955,14 +955,14 @@ pub extern "C" fn gk_glVertexAttrib4fv(indx: GLuint, values: *mut GLfloat) {
 
 #[no_mangle]
 pub extern "C" fn gk_glVertexAttribPointer(
-    indx: GLuint,
+    index: GLuint,
     size: GLint,
     _type: GLenum,
     normalized: GLboolean,
     stride: GLsizei,
     ptr: *const GLvoid,
 ) {
-    println!("GrindKernel: Fn not implemented: glVertexAttribPointer");
+    entrypoint::vertex_attrib_pointer(index, size, _type, normalized, stride, ptr)
 }
 
 #[no_mangle]

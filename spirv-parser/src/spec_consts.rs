@@ -46,15 +46,11 @@ pub fn write_specialization_constants(doc: &parse::Spirv) -> String {
             &parse::Instruction::SpecConstantTrue {
                 result_type_id,
                 result_id,
-            } => {
-                (result_type_id, result_id, "1u32".to_string())
-            },
+            } => (result_type_id, result_id, "1u32".to_string()),
             &parse::Instruction::SpecConstantFalse {
                 result_type_id,
                 result_id,
-            } => {
-                (result_type_id, result_id, "0u32".to_string())
-            },
+            } => (result_type_id, result_id, "0u32".to_string()),
             &parse::Instruction::SpecConstant {
                 result_type_id,
                 result_id,
@@ -66,7 +62,7 @@ pub fn write_specialization_constants(doc: &parse::Spirv) -> String {
                     .join(", ");
                 let def_val = format!("unsafe {{ ::std::mem::transmute([{}]) }}", data);
                 (result_type_id, result_id, def_val)
-            },
+            }
             &parse::Instruction::SpecConstantComposite {
                 result_type_id,
                 result_id,
@@ -78,7 +74,7 @@ pub fn write_specialization_constants(doc: &parse::Spirv) -> String {
                     .join(", ");
                 let def_val = format!("unsafe {{ ::std::mem::transmute([{}]) }}", data);
                 (result_type_id, result_id, def_val)
-            },
+            }
             _ => continue,
         };
 
@@ -88,26 +84,27 @@ pub fn write_specialization_constants(doc: &parse::Spirv) -> String {
         let constant_id = doc.instructions
             .iter()
             .filter_map(|i| match i {
-                            &parse::Instruction::Decorate {
-                                target_id,
-                                decoration: enums::Decoration::DecorationSpecId,
-                                ref params,
-                            } if target_id == result_id => {
-                                Some(params[0])
-                            },
-                            _ => None,
-                        })
+                &parse::Instruction::Decorate {
+                    target_id,
+                    decoration: enums::Decoration::DecorationSpecId,
+                    ref params,
+                } if target_id == result_id =>
+                {
+                    Some(params[0])
+                }
+                _ => None,
+            })
             .next()
             .expect("Found a specialization constant with no SpecId decoration");
 
         spec_consts.push(SpecConst {
-                             name: ::name_from_id(doc, result_id),
-                             constant_id,
-                             rust_ty,
-                             rust_size,
-                             rust_alignment,
-                             default_value,
-                         });
+            name: ::name_from_id(doc, result_id),
+            constant_id,
+            rust_ty,
+            rust_size,
+            rust_alignment,
+            default_value,
+        });
     }
 
     let map_entries = {
@@ -122,9 +119,7 @@ pub fn write_specialization_constants(doc: &parse::Spirv) -> String {
                 size: {},
             \
                  }}",
-                c.constant_id,
-                curr_offset,
-                c.rust_size
+                c.constant_id, curr_offset, c.rust_size
             ));
 
             assert_ne!(c.rust_size, 0);
@@ -182,8 +177,12 @@ fn spec_const_type_from_id(doc: &parse::Spirv, searched: u32) -> (String, Option
     for instruction in doc.instructions.iter() {
         match instruction {
             &parse::Instruction::TypeBool { result_id } if result_id == searched => {
-                return ("u32".to_owned(), Some(mem::size_of::<u32>()), mem::align_of::<u32>());
-            },
+                return (
+                    "u32".to_owned(),
+                    Some(mem::size_of::<u32>()),
+                    mem::align_of::<u32>(),
+                );
+            }
             _ => (),
         }
     }

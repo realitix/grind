@@ -13,6 +13,7 @@ use vulkano::framebuffer::Framebuffer;
 use vulkano::framebuffer::FramebufferAbstract;
 use vulkano::framebuffer::RenderPass;
 use vulkano::image::swapchain::SwapchainImage;
+use vulkano::pipeline::GraphicsPipeline;
 use vulkano::swapchain::acquire_next_image;
 use vulkano::swapchain::present;
 use vulkano::swapchain::Surface;
@@ -87,6 +88,10 @@ impl Renderer {
         renderer
     }
 
+    pub fn get_device(&self) -> Arc<Device> {
+        self.device.clone()
+    }
+
     fn acquire(&mut self) {
         let (image_num, acquire_future) = match acquire_next_image(self.swapchain.clone(), None) {
             Ok(r) => r,
@@ -139,7 +144,16 @@ impl Renderer {
         self.acquire()
     }
 
-    pub fn get_device(&self) -> Arc<Device> {
-        self.device.clone()
+    pub fn draw(&mut self) {
+        /*let pipeline = Arc::new(GraphicsPipeline::start()
+            .vertex_input()
+            .vertex_shader(vs.main_entry_point(), ())
+            .triangle_list()
+            .viewports_dynamic_scissors_irrelevant(1)
+            .fragment_shader(fs.main_entry_point(), ())
+            .depth_stencil_simple_depth()
+            .render_pass(vulkano::framebuffer::Subpass::from(renderpass.clone(), 0).unwrap())
+            .build(device.clone())
+        .unwrap());*/
     }
 }

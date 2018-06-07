@@ -4,20 +4,9 @@ use std::mem;
 
 use glsltranspiler::{transpile, ShaderType};
 use shaderc::{CompilationArtifact, CompileOptions, Compiler, ShaderKind};
+use spirvparser::{reflect, SpirvReflection};
 
 use opengl::types::*;
-
-struct ReflectResult {}
-
-fn reflect<R>(mut spirv: R) -> ReflectResult
-where
-    R: Read,
-{
-    let mut data = Vec::new();
-    spirv.read_to_end(&mut data);
-    //let doc = parse::parse_spirv(&data);
-    ReflectResult {}
-}
 
 pub struct Shader {
     pub id: GLuint,
@@ -86,6 +75,8 @@ pub struct ShaderProgram {
     linked: bool,
     vertex_spirv: Option<CompilationArtifact>,
     fragment_spirv: Option<CompilationArtifact>,
+    vertex_reflection: Option<SpirvReflection>,
+    fragment_reflection: Option<SpirvReflection>,
 }
 
 impl ShaderProgram {
@@ -97,6 +88,8 @@ impl ShaderProgram {
             linked: false,
             vertex_spirv: None,
             fragment_spirv: None,
+            vertex_reflection: None,
+            fragment_reflection: None,
         }
     }
 
@@ -142,12 +135,13 @@ impl ShaderProgram {
                 )
                 .unwrap(),
         );
+        self.vertex_reflection = Some(reflect(self.vertex_spirv.as_ref().unwrap().as_binary_u8()));
 
         // fragment
         let f_shader_kind = ShaderKind::Fragment;
         let f_shader_name = String::from("Fragment");
 
-        self.vertex_spirv = Some(
+        self.fragment_spirv = Some(
             compiler
                 .compile_into_spirv(
                     fragment_shader.unwrap().source_transpiled.as_ref().unwrap(),
@@ -158,6 +152,9 @@ impl ShaderProgram {
                 )
                 .unwrap(),
         );
+        self.fragment_reflection = Some(reflect(
+            self.fragment_spirv.as_ref().unwrap().as_binary_u8(),
+        ));
 
         self.linked = true;
     }
@@ -172,7 +169,25 @@ impl ShaderProgram {
         };
     }
 
-    pub fn get_attrib_location(name: *const GLchar) -> GLint {
-        1
+    pub fn get_attrib_location(&self, name_ptr: *const GLchar) -> GLint {
+        let cname = unsafe { CStr::from_ptr(name_ptr) };
+        let name = cname.to_str().unwrap();
+
+        *self.vertex_reflection
+            .as_ref()
+            .unwrap()
+            .input
+            .get(name)
+            .unwrap() as GLint
+    }
+
+    pub fn vertex_attrib_pointer(
+        index: GLuint,
+        size: GLint,
+        _type: GLenum,
+        normalized: GLboolean,
+        stride: GLsizei,
+        ptr: *const GLvoid,
+    ) {
     }
 }
