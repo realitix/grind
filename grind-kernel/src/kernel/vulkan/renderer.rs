@@ -12,7 +12,12 @@ use vulkano::format::ClearValue;
 use vulkano::framebuffer::Framebuffer;
 use vulkano::framebuffer::FramebufferAbstract;
 use vulkano::framebuffer::RenderPass;
+use vulkano::framebuffer::RenderPassAbstract;
+use vulkano::framebuffer::Subpass;
 use vulkano::image::swapchain::SwapchainImage;
+use vulkano::pipeline::vertex::Vertex;
+use vulkano::pipeline::vertex::VertexMemberInfo;
+use vulkano::pipeline::vertex::VertexMemberTy;
 use vulkano::pipeline::GraphicsPipeline;
 use vulkano::swapchain::acquire_next_image;
 use vulkano::swapchain::present;
@@ -20,6 +25,9 @@ use vulkano::swapchain::Surface;
 use vulkano::swapchain::Swapchain;
 use vulkano::sync;
 use vulkano::sync::GpuFuture;
+
+use kernel::vulkan::shader::EmptySpecializationConstants;
+use kernel::vulkan::shader::Shader;
 
 pub struct Renderer {
     device: Arc<Device>,
@@ -30,6 +38,7 @@ pub struct Renderer {
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
     last_future: Box<GpuFuture>,
     image_num: usize,
+    renderpass: Arc<RenderPassAbstract + Send + Sync>,
 }
 
 impl Renderer {
@@ -45,19 +54,19 @@ impl Renderer {
 
         let renderpass = Arc::new(
             single_pass_renderpass!(device.clone(),
-            attachments: {
-                color: {
-                    load: Clear,
-                    store: Store,
-                    format: swapchain.format(),
-                    samples: 1,
+                attachments: {
+                    color: {
+                        load: Clear,
+                        store: Store,
+                        format: swapchain.format(),
+                        samples: 1,
+                    }
+                },
+                pass: {
+                    color: [color],
+                    depth_stencil: {}
                 }
-            },
-            pass: {
-              color: [color],
-              depth_stencil: {}
-            }
-        ).unwrap(),
+            ).unwrap(),
         );
 
         let framebuffers = swapchain_images
@@ -82,6 +91,7 @@ impl Renderer {
             image_num,
             swapchain_images,
             framebuffers,
+            renderpass,
         };
 
         renderer.acquire();
@@ -144,16 +154,30 @@ impl Renderer {
         self.acquire()
     }
 
-    pub fn draw(&mut self) {
-        /*let pipeline = Arc::new(GraphicsPipeline::start()
-            .vertex_input()
-            .vertex_shader(vs.main_entry_point(), ())
-            .triangle_list()
-            .viewports_dynamic_scissors_irrelevant(1)
-            .fragment_shader(fs.main_entry_point(), ())
-            .depth_stencil_simple_depth()
-            .render_pass(vulkano::framebuffer::Subpass::from(renderpass.clone(), 0).unwrap())
-            .build(device.clone())
-        .unwrap());*/
+    pub fn draw(&mut self, vs: &Shader, fs: &Shader) {
+        struct Dummy {
+            vin_position: [f32; 3],
+        };
+        unsafe impl Vertex for Dummy {
+            fn member(name: &str) -> Option<VertexMemberInfo> {
+                Some(VertexMemberInfo {
+                    offset: 0,
+                    ty: VertexMemberTy::F32,
+                    array_size: 3,
+                })
+            }
+        };
+
+        let pipeline = Arc::new(
+            GraphicsPipeline::start()
+                .vertex_input_single_buffer::<Dummy>()
+                .vertex_shader(vs.main_entry_point(), EmptySpecializationConstants {})
+                .triangle_list()
+                .viewports_dynamic_scissors_irrelevant(1)
+                .fragment_shader(fs.main_entry_point(), EmptySpecializationConstants {})
+                .render_pass(Subpass::from(self.renderpass.clone(), 0).unwrap())
+                .build(self.device.clone())
+                .unwrap(),
+        );
     }
 }

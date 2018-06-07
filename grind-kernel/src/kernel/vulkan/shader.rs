@@ -187,7 +187,7 @@ impl Shader {
                     fragment: true,
                     ..ShaderStages::none()
                 }),
-                _ => panic!("Unknow shader type")
+                _ => panic!("Unknow shader type"),
             };
 
             self.module.graphics_entry_point(

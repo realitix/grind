@@ -137,7 +137,7 @@ impl ShaderProgram {
         );
         self.vertex_shader = Some(kernel.new_shader(
             vertex_spirv.as_ref().unwrap().as_binary_u8(),
-            GraphicsShaderType::Vertex
+            GraphicsShaderType::Vertex,
         ));
         self.vertex_reflection = Some(reflect(vertex_spirv.as_ref().unwrap().as_binary_u8()));
 
@@ -155,11 +155,9 @@ impl ShaderProgram {
         );
         self.fragment_shader = Some(kernel.new_shader(
             fragment_spirv.as_ref().unwrap().as_binary_u8(),
-            GraphicsShaderType::Fragment
+            GraphicsShaderType::Fragment,
         ));
-        self.fragment_reflection = Some(reflect(
-            fragment_spirv.as_ref().unwrap().as_binary_u8(),
-        ));
+        self.fragment_reflection = Some(reflect(fragment_spirv.as_ref().unwrap().as_binary_u8()));
 
         self.linked = true;
     }

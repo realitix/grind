@@ -14,6 +14,7 @@ use vulkano::instance::DeviceExtensions;
 use vulkano::instance::Features;
 use vulkano::instance::PhysicalDevice;
 use vulkano::instance::{layers_list, Instance, InstanceExtensions};
+use vulkano::pipeline::shader::GraphicsShaderType;
 use vulkano::pipeline::GraphicsPipeline;
 use vulkano::swapchain::CompositeAlpha;
 use vulkano::swapchain::PresentMode;
@@ -21,11 +22,10 @@ use vulkano::swapchain::Surface;
 use vulkano::swapchain::SurfaceTransform;
 use vulkano::swapchain::Swapchain;
 use vulkano::sync::SharingMode;
-use vulkano::pipeline::shader::GraphicsShaderType;
 
 use kernel::vulkan::buffer::Buffer;
-use kernel::vulkan::shader::Shader;
 use kernel::vulkan::renderer::Renderer;
+use kernel::vulkan::shader::Shader;
 
 pub fn is_available() -> bool {
     match Instance::new(None, &InstanceExtensions::none(), None) {
