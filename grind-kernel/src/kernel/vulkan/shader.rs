@@ -18,19 +18,31 @@ use vulkano::pipeline::shader::SpecializationMapEntry;
 // **********
 // Main Input
 // **********
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct MainInput;
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct MainInput {
+    shader_type: GraphicsShaderType,
+}
+
+impl MainInput {
+    pub fn new(shader_type: GraphicsShaderType) -> MainInput {
+        MainInput { shader_type }
+    }
+}
 
 unsafe impl ShaderInterfaceDef for MainInput {
     type Iter = MainInputIter;
     fn elements(&self) -> MainInputIter {
-        MainInputIter { num: 0 }
+        MainInputIter {
+            num: 0,
+            shader_type: self.shader_type,
+        }
     }
 }
 
 #[derive(Debug, Copy, Clone)]
 pub struct MainInputIter {
     num: u16,
+    shader_type: GraphicsShaderType,
 }
 impl Iterator for MainInputIter {
     type Item = ShaderInterfaceDefEntry;
@@ -39,11 +51,15 @@ impl Iterator for MainInputIter {
         if self.num == 0 {
             self.num += 1;
 
-            return Some(ShaderInterfaceDefEntry {
-                location: 0..1,
-                format: Format::R8G8B8Unorm,
-                name: Some(Borrowed("vin_position")),
-            });
+            if self.shader_type == GraphicsShaderType::Vertex {
+                return Some(ShaderInterfaceDefEntry {
+                    location: 0..1,
+                    format: Format::R32G32B32Sfloat,
+                    name: Some(Borrowed("vin_position")),
+                });
+            } else {
+
+            }
         }
         None
     }
@@ -59,19 +75,31 @@ impl ExactSizeIterator for MainInputIter {}
 // **********
 // Main Output
 // **********
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct MainOutput;
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct MainOutput {
+    shader_type: GraphicsShaderType,
+}
+
+impl MainOutput {
+    pub fn new(shader_type: GraphicsShaderType) -> MainOutput {
+        MainOutput { shader_type }
+    }
+}
 
 unsafe impl ShaderInterfaceDef for MainOutput {
     type Iter = MainOutputIter;
     fn elements(&self) -> MainOutputIter {
-        MainOutputIter { num: 0 }
+        MainOutputIter {
+            num: 0,
+            shader_type: self.shader_type,
+        }
     }
 }
 
 #[derive(Debug, Copy, Clone)]
 pub struct MainOutputIter {
     num: u16,
+    shader_type: GraphicsShaderType,
 }
 impl Iterator for MainOutputIter {
     type Item = ShaderInterfaceDefEntry;
@@ -80,11 +108,14 @@ impl Iterator for MainOutputIter {
         if self.num == 0 {
             self.num += 1;
 
-            return Some(ShaderInterfaceDefEntry {
-                location: 0..1,
-                format: Format::R32G32B32A32Sfloat,
-                name: Some(Borrowed("f_color")),
-            });
+            if self.shader_type == GraphicsShaderType::Vertex {
+            } else {
+                return Some(ShaderInterfaceDefEntry {
+                    location: 0..1,
+                    format: Format::R32G32B32A32Sfloat,
+                    name: Some(Borrowed("out_color")),
+                });
+            }
         }
         None
     }
@@ -192,8 +223,8 @@ impl Shader {
 
             self.module.graphics_entry_point(
                 CStr::from_ptr(NAME.as_ptr() as *const _),
-                MainInput,
-                MainOutput,
+                MainInput::new(self.shader_type),
+                MainOutput::new(self.shader_type),
                 layout,
                 self.shader_type,
             )

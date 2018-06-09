@@ -4,8 +4,11 @@ use std::mem;
 use std::ptr::Unique;
 use std::sync::Arc;
 
+use vulkano::buffer::cpu_pool::CpuBufferPoolChunk;
+use vulkano::buffer::BufferAccess;
 use vulkano::command_buffer::AutoCommandBufferBuilder;
 use vulkano::command_buffer::CommandBuffer;
+use vulkano::command_buffer::DynamicState;
 use vulkano::device::Device;
 use vulkano::device::Queue;
 use vulkano::format::ClearValue;
@@ -15,9 +18,13 @@ use vulkano::framebuffer::RenderPass;
 use vulkano::framebuffer::RenderPassAbstract;
 use vulkano::framebuffer::Subpass;
 use vulkano::image::swapchain::SwapchainImage;
+use vulkano::memory::pool::StdMemoryPool;
+use vulkano::pipeline::vertex::SingleBufferDefinition;
 use vulkano::pipeline::vertex::Vertex;
 use vulkano::pipeline::vertex::VertexMemberInfo;
 use vulkano::pipeline::vertex::VertexMemberTy;
+use vulkano::pipeline::vertex::VertexSource;
+use vulkano::pipeline::viewport::Viewport;
 use vulkano::pipeline::GraphicsPipeline;
 use vulkano::swapchain::acquire_next_image;
 use vulkano::swapchain::present;
@@ -26,6 +33,8 @@ use vulkano::swapchain::Swapchain;
 use vulkano::sync;
 use vulkano::sync::GpuFuture;
 
+use kernel::vulkan::buffer::Buffer;
+use kernel::vulkan::buffer::GrindBufferDefinition;
 use kernel::vulkan::shader::EmptySpecializationConstants;
 use kernel::vulkan::shader::Shader;
 
@@ -131,19 +140,22 @@ impl Renderer {
 
         let tmp_future = Box::new(sync::now(self.device.clone()));
         let last_future = mem::replace(&mut self.last_future, tmp_future);
-        last_future
-            .then_execute(self.queue.clone(), cb)
-            .expect("Can't execute clear command buffer")
-            .then_signal_fence_and_flush()
-            .unwrap()
-            .wait(None)
-            .unwrap();
+        let new_future = Box::new(
+            last_future
+                .then_execute(self.queue.clone(), cb)
+                .expect("Can't execute clear command buffer")
+                .then_signal_fence_and_flush()
+                .unwrap(),
+        );
+        mem::replace(&mut self.last_future, new_future);
     }
 
     pub fn present(&mut self) {
+        let tmp_future = Box::new(sync::now(self.device.clone()));
+        let last_future = mem::replace(&mut self.last_future, tmp_future);
         present(
             self.swapchain.clone(),
-            sync::now(self.device.clone()),
+            last_future,
             self.queue.clone(),
             self.image_num,
         ).then_signal_fence_and_flush()
@@ -154,23 +166,10 @@ impl Renderer {
         self.acquire()
     }
 
-    pub fn draw(&mut self, vs: &Shader, fs: &Shader) {
-        struct Dummy {
-            vin_position: [f32; 3],
-        };
-        unsafe impl Vertex for Dummy {
-            fn member(name: &str) -> Option<VertexMemberInfo> {
-                Some(VertexMemberInfo {
-                    offset: 0,
-                    ty: VertexMemberTy::F32,
-                    array_size: 3,
-                })
-            }
-        };
-
+    pub fn draw(&mut self, vs: Arc<Shader>, fs: Arc<Shader>, buf: Arc<Buffer>) {
         let pipeline = Arc::new(
             GraphicsPipeline::start()
-                .vertex_input_single_buffer::<Dummy>()
+                .vertex_input(GrindBufferDefinition)
                 .vertex_shader(vs.main_entry_point(), EmptySpecializationConstants {})
                 .triangle_list()
                 .viewports_dynamic_scissors_irrelevant(1)
@@ -179,5 +178,48 @@ impl Renderer {
                 .build(self.device.clone())
                 .unwrap(),
         );
+
+        // TRY to display
+        //println!("Buffer Length: {}", buf.chunk.as_ref().unwrap().size());
+        let cb = AutoCommandBufferBuilder::primary_one_time_submit(
+            self.device.clone(),
+            self.queue.family(),
+        ).unwrap()
+            .begin_render_pass(
+                self.framebuffers[self.image_num].clone(),
+                false,
+                vec![[0.0, 0.0, 1.0, 1.0].into()],
+            )
+            .unwrap()
+            .draw(
+                pipeline.clone(),
+                DynamicState {
+                    line_width: None,
+                    viewports: Some(vec![Viewport {
+                        origin: [0.0, 0.0],
+                        dimensions: [300 as f32, 300 as f32],
+                        depth_range: 0.0..1.0,
+                    }]),
+                    scissors: None,
+                },
+                buf.chunk.as_ref().unwrap().clone(),
+                (),
+                (),
+            )
+            .unwrap()
+            .end_render_pass()
+            .unwrap()
+            .build()
+            .unwrap();
+
+        let tmp_future = Box::new(sync::now(self.device.clone()));
+        let last_future = mem::replace(&mut self.last_future, tmp_future);
+        last_future
+            .then_execute(self.queue.clone(), cb)
+            .expect("Can't execute draw command buffer")
+            .then_signal_fence_and_flush()
+            .unwrap()
+            .wait(None)
+            .unwrap();
     }
 }

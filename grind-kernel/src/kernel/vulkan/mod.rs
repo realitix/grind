@@ -170,4 +170,8 @@ impl VulkanDriver {
     pub fn new_shader(&self, spirv: &[u8], shader_type: GraphicsShaderType) -> Shader {
         Shader::new(self.renderer.get_device(), spirv, shader_type)
     }
+
+    pub fn draw(&mut self, vs: Arc<Shader>, fs: Arc<Shader>, buf: Arc<Buffer>) {
+        self.renderer.draw(vs, fs, buf);
+    }
 }

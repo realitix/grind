@@ -1,6 +1,7 @@
 use std::ffi::CStr;
 use std::io::Read;
 use std::mem;
+use std::sync::Arc;
 
 use glsltranspiler::{transpile, ShaderType};
 use shaderc::{CompilationArtifact, CompileOptions, Compiler, ShaderKind};
@@ -76,9 +77,9 @@ pub struct ShaderProgram {
     vertex_id: Option<GLuint>,
     fragment_id: Option<GLuint>,
     linked: bool,
-    vertex_shader: Option<VulkanShader>,
+    vertex_shader: Option<Arc<VulkanShader>>,
     vertex_reflection: Option<SpirvReflection>,
-    fragment_shader: Option<VulkanShader>,
+    fragment_shader: Option<Arc<VulkanShader>>,
     fragment_reflection: Option<SpirvReflection>,
 }
 
@@ -135,10 +136,10 @@ impl ShaderProgram {
                 )
                 .unwrap(),
         );
-        self.vertex_shader = Some(kernel.new_shader(
+        self.vertex_shader = Some(Arc::new(kernel.new_shader(
             vertex_spirv.as_ref().unwrap().as_binary_u8(),
             GraphicsShaderType::Vertex,
-        ));
+        )));
         self.vertex_reflection = Some(reflect(vertex_spirv.as_ref().unwrap().as_binary_u8()));
 
         // fragment
@@ -153,13 +154,21 @@ impl ShaderProgram {
                 )
                 .unwrap(),
         );
-        self.fragment_shader = Some(kernel.new_shader(
+        self.fragment_shader = Some(Arc::new(kernel.new_shader(
             fragment_spirv.as_ref().unwrap().as_binary_u8(),
             GraphicsShaderType::Fragment,
-        ));
+        )));
         self.fragment_reflection = Some(reflect(fragment_spirv.as_ref().unwrap().as_binary_u8()));
 
         self.linked = true;
+    }
+
+    pub fn get_vertex_shader(&self) -> Arc<VulkanShader> {
+        self.vertex_shader.as_ref().unwrap().clone()
+    }
+
+    pub fn get_fragment_shader(&self) -> Arc<VulkanShader> {
+        self.fragment_shader.as_ref().unwrap().clone()
     }
 
     pub fn get_programiv(&self, pname: GLenum, params: *mut GLint) {

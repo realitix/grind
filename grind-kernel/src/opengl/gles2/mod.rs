@@ -261,5 +261,27 @@ impl ContextGlES2 {
         };
     }
 
-    pub fn draw_arrays(&self, mode: GLenum, first: GLint, count: GLsizei) {}
+    pub fn draw_arrays(&mut self, mode: GLenum, first: GLint, count: GLsizei) {
+        // Get program
+        let mut current_program = None;
+        for program in self.programs.iter() {
+            if program.id == self.program_binded {
+                current_program = Some(program);
+            }
+        }
+
+        // Get buffer
+        let mut current_buffer = None;
+        for buffer in self.buffers.iter() {
+            if buffer.id == self.buffer_binded {
+                current_buffer = Some(buffer);
+            }
+        }
+
+        let vs = current_program.unwrap().get_vertex_shader();
+        let fs = current_program.unwrap().get_fragment_shader();
+        let buf = current_buffer.unwrap().get_buffer();
+
+        self.kernel.draw(vs, fs, buf);
+    }
 }
