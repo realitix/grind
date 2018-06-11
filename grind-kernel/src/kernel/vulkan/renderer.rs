@@ -38,16 +38,21 @@ use kernel::vulkan::buffer::GrindBufferDefinition;
 use kernel::vulkan::shader::EmptySpecializationConstants;
 use kernel::vulkan::shader::Shader;
 
+struct RenderContainer {
+    pub framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
+    pub renderpass: Arc<RenderPassAbstract + Send + Sync>,
+}
+
 pub struct Renderer {
     device: Arc<Device>,
     surface: Arc<Surface<Unique<c_void>>>,
     queue: Arc<Queue>,
     swapchain: Arc<Swapchain<Unique<c_void>>>,
     swapchain_images: Vec<Arc<SwapchainImage<Unique<c_void>>>>,
-    framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
     last_future: Box<GpuFuture>,
     image_num: usize,
-    renderpass: Arc<RenderPassAbstract + Send + Sync>,
+    clear_container: RenderContainer,
+    draw_container: RenderContainer,
 }
 
 impl Renderer {
@@ -61,7 +66,8 @@ impl Renderer {
         let last_future = Box::new(sync::now(device.clone()));
         let image_num = 0;
 
-        let renderpass = Arc::new(
+        // Clear continer
+        let clear_renderpass = Arc::new(
             single_pass_renderpass!(device.clone(),
                 attachments: {
                     color: {
@@ -78,11 +84,11 @@ impl Renderer {
             ).unwrap(),
         );
 
-        let framebuffers = swapchain_images
+        let clear_framebuffers = swapchain_images
             .iter()
             .map(|image| {
                 Arc::new(
-                    Framebuffer::start(renderpass.clone())
+                    Framebuffer::start(clear_renderpass.clone())
                         .add(image.clone())
                         .unwrap()
                         .build()
@@ -90,6 +96,47 @@ impl Renderer {
                 ) as Arc<FramebufferAbstract + Send + Sync>
             })
             .collect::<Vec<_>>();
+
+        let clear_container = RenderContainer {
+            renderpass: clear_renderpass,
+            framebuffers: clear_framebuffers,
+        };
+
+        // Draw container
+        let draw_renderpass = Arc::new(
+            single_pass_renderpass!(device.clone(),
+                attachments: {
+                    color: {
+                        load: Load,
+                        store: Store,
+                        format: swapchain.format(),
+                        samples: 1,
+                    }
+                },
+                pass: {
+                    color: [color],
+                    depth_stencil: {}
+                }
+            ).unwrap(),
+        );
+
+        let draw_framebuffers = swapchain_images
+            .iter()
+            .map(|image| {
+                Arc::new(
+                    Framebuffer::start(draw_renderpass.clone())
+                        .add(image.clone())
+                        .unwrap()
+                        .build()
+                        .unwrap(),
+                ) as Arc<FramebufferAbstract + Send + Sync>
+            })
+            .collect::<Vec<_>>();
+
+        let draw_container = RenderContainer {
+            renderpass: draw_renderpass,
+            framebuffers: draw_framebuffers,
+        };
 
         let mut renderer = Renderer {
             device,
@@ -99,8 +146,8 @@ impl Renderer {
             last_future,
             image_num,
             swapchain_images,
-            framebuffers,
-            renderpass,
+            clear_container,
+            draw_container,
         };
 
         renderer.acquire();
@@ -128,10 +175,14 @@ impl Renderer {
             self.queue.family(),
         ).unwrap()
             .begin_render_pass(
-                self.framebuffers[self.image_num].clone(),
+                self.clear_container.framebuffers[self.image_num].clone(),
                 false,
                 vec![colors.into()],
             )
+            /*.clear_color_image(
+                self.swapchain_images[self.image_num].clone(),
+                clear_value
+            )*/
             .unwrap()
             .end_render_pass()
             .unwrap()
@@ -174,7 +225,7 @@ impl Renderer {
                 .triangle_list()
                 .viewports_dynamic_scissors_irrelevant(1)
                 .fragment_shader(fs.main_entry_point(), EmptySpecializationConstants {})
-                .render_pass(Subpass::from(self.renderpass.clone(), 0).unwrap())
+                .render_pass(Subpass::from(self.draw_container.renderpass.clone(), 0).unwrap())
                 .build(self.device.clone())
                 .unwrap(),
         );
@@ -186,9 +237,9 @@ impl Renderer {
             self.queue.family(),
         ).unwrap()
             .begin_render_pass(
-                self.framebuffers[self.image_num].clone(),
+                self.draw_container.framebuffers[self.image_num].clone(),
                 false,
-                vec![[0.0, 0.0, 1.0, 1.0].into()],
+                vec![ClearValue::None],
             )
             .unwrap()
             .draw(
@@ -196,8 +247,8 @@ impl Renderer {
                 DynamicState {
                     line_width: None,
                     viewports: Some(vec![Viewport {
-                        origin: [0.0, 0.0],
-                        dimensions: [300 as f32, 300 as f32],
+                        origin: [0.0, 300.0],                  // y to th bottom left corner
+                        dimensions: [300 as f32, -300 as f32], // height negative to respect opengl convention
                         depth_range: 0.0..1.0,
                     }]),
                     scissors: None,
