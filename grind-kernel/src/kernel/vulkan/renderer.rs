@@ -231,7 +231,6 @@ impl Renderer {
         );
 
         // TRY to display
-        //println!("Buffer Length: {}", buf.chunk.as_ref().unwrap().size());
         let cb = AutoCommandBufferBuilder::primary_one_time_submit(
             self.device.clone(),
             self.queue.family(),

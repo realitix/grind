@@ -37,7 +37,6 @@ where
             12 as usize, // vertex size (3xfloat)
             InputRate::Vertex,
         )];
-        //let attribs = vec![(0, 0, AttributeInfo{offset: 0, format: Format::R8G8B8Unorm})];
         let attribs = vec![(
             0,
             0,

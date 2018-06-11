@@ -17,4 +17,4 @@ vulkano = "*"
 vulkano-shaders = "*"
 glsltranspiler = { path = "../glsl-transpiler" }
 spirvparser = { path = "../spirv-parser" }
-shaderc = { path = "../../shaderc-rs" }
+shaderc = { git = "https://github.com/google/shaderc-rs.git" }
