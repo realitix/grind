@@ -82,6 +82,20 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResu
             attributes.insert(tokens[2].to_string(), location);
             let s = format!("layout(location={}) in", location);
             result.push_str(&line.replace("attribute", &s));
+        } else if line.find("varying").is_some() {
+            // TODO location autogenerate
+            match shader_type {
+                ShaderType::Vertex => {
+                    let location = 0;
+                    let s = format!("layout(location={}) out", location);
+                    result.push_str(&line.replace("varying", &s));
+                }
+                ShaderType::Fragment => {
+                    let location = 0;
+                    let s = format!("layout(location={}) in", location);
+                    result.push_str(&line.replace("varying", &s));
+                }
+            }
         } else if line.find("gl_FragColor").is_some() {
             result.push_str(&line.replace("gl_FragColor", "out_color"));
         } else {

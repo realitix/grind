@@ -161,8 +161,6 @@ impl VertexAttributes {
             attributes.push((*index, binding, info));
         }
 
-        println!("Attributes: {:?}", self.attributes);
-
         attributes
     }
 }
@@ -212,7 +210,6 @@ unsafe impl VertexSource<HashMap<u32, Arc<Buffer>>> for GrindBufferDefinition {
                 Box::new(buffer.chunk.as_ref().unwrap().clone()) as Box<BufferAccess + Send + Sync>;
             result.push(chunk);
             len = buffer.chunk.as_ref().unwrap().size();
-            println!("Len: {}", len);
         }
 
         let mut len = 36 / 4; // float
