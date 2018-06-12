@@ -57,8 +57,17 @@ impl Iterator for MainInputIter {
                     format: Format::R32G32B32Sfloat,
                     name: Some(Borrowed("vin_position")),
                 });
-            } else {
+            }
+        }
+        if self.num == 1 {
+            self.num += 1;
 
+            if self.shader_type == GraphicsShaderType::Vertex {
+                return Some(ShaderInterfaceDefEntry {
+                    location: 1..2,
+                    format: Format::R32G32B32Sfloat,
+                    name: Some(Borrowed("vin_position2")),
+                });
             }
         }
         None

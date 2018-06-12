@@ -1,17 +1,22 @@
 mod buffer;
 mod shader;
+mod util;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::vec::Vec;
 
+use kernel::vulkan::buffer::VertexAttributes;
 use kernel::vulkan::VulkanDriver;
 use opengl::gles2::buffer::Buffer;
 use opengl::gles2::shader::{Shader, ShaderProgram};
+use opengl::gles2::util::{get_stride, get_vk_format};
 use opengl::types::*;
 
 pub struct ContextGlES2 {
     kernel: VulkanDriver,
     clear_color: [GLclampf; 4],
+    vertex_attributes: Arc<VertexAttributes>,
 
     // program attributes
     programs: Vec<ShaderProgram>,
@@ -32,6 +37,7 @@ impl ContextGlES2 {
         ContextGlES2 {
             kernel,
             clear_color: [0.; 4],
+            vertex_attributes: Arc::new(VertexAttributes::new()),
             programs: Vec::new(),
             program_binded: 0,
             shaders: Vec::new(),
@@ -211,15 +217,9 @@ impl ContextGlES2 {
     }
 
     pub fn enable_vertex_attrib_array(&mut self, index: GLuint) {
-        // Get buffer
-        let mut current_buffer = None;
-        for buffer in self.buffers.iter_mut() {
-            if buffer.id == self.buffer_binded {
-                current_buffer = Some(buffer);
-            }
-        }
-
-        current_buffer.unwrap().enable_vertex_attrib_array(index);
+        Arc::get_mut(&mut self.vertex_attributes)
+            .unwrap()
+            .enable_attribute(index);
     }
 
     pub fn get_attrib_location(&mut self, program_id: GLuint, name: *const GLchar) -> GLint {
@@ -243,7 +243,20 @@ impl ContextGlES2 {
         stride: GLsizei,
         ptr: *const GLvoid,
     ) {
-        println!("GrindKernel: not yet implemented: vertex_attrib_pointer");
+        let vk_stride = match stride {
+            0 => get_stride(size, _type),
+            x => x as usize,
+        };
+
+        Arc::get_mut(&mut self.vertex_attributes)
+            .unwrap()
+            .set_attribute(
+                index,
+                self.buffer_binded,
+                get_vk_format(size, _type),
+                vk_stride,
+                0,
+            );
     }
 
     pub fn use_program(&mut self, program_id: GLuint) {
@@ -278,10 +291,16 @@ impl ContextGlES2 {
             }
         }
 
+        // Collect all VK Buffers
+        let mut vk_buffers = HashMap::new();
+        for buffer in self.buffers.iter() {
+            vk_buffers.insert(buffer.id, buffer.get_buffer());
+        }
+
         let vs = current_program.unwrap().get_vertex_shader();
         let fs = current_program.unwrap().get_fragment_shader();
-        let buf = current_buffer.unwrap().get_buffer();
 
-        self.kernel.draw(vs, fs, buf);
+        self.kernel
+            .draw(vs, fs, vk_buffers, self.vertex_attributes.clone());
     }
 }

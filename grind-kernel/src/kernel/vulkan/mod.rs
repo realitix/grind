@@ -3,6 +3,7 @@ mod renderer;
 pub mod shader;
 
 use libc::c_void;
+use std::collections::HashMap;
 use std::ptr::Unique;
 use std::sync::Arc;
 
@@ -24,6 +25,7 @@ use vulkano::swapchain::Swapchain;
 use vulkano::sync::SharingMode;
 
 use kernel::vulkan::buffer::Buffer;
+use kernel::vulkan::buffer::VertexAttributes;
 use kernel::vulkan::renderer::Renderer;
 use kernel::vulkan::shader::Shader;
 
@@ -171,7 +173,13 @@ impl VulkanDriver {
         Shader::new(self.renderer.get_device(), spirv, shader_type)
     }
 
-    pub fn draw(&mut self, vs: Arc<Shader>, fs: Arc<Shader>, buf: Arc<Buffer>) {
-        self.renderer.draw(vs, fs, buf);
+    pub fn draw(
+        &mut self,
+        vs: Arc<Shader>,
+        fs: Arc<Shader>,
+        buffers: HashMap<u32, Arc<Buffer>>,
+        attrs: Arc<VertexAttributes>,
+    ) {
+        self.renderer.draw(vs, fs, buffers, attrs);
     }
 }

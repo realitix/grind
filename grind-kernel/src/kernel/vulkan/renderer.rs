@@ -1,5 +1,6 @@
 use libc::c_void;
 use std::boxed::Box;
+use std::collections::HashMap;
 use std::mem;
 use std::ptr::Unique;
 use std::sync::Arc;
@@ -35,6 +36,7 @@ use vulkano::sync::GpuFuture;
 
 use kernel::vulkan::buffer::Buffer;
 use kernel::vulkan::buffer::GrindBufferDefinition;
+use kernel::vulkan::buffer::VertexAttributes;
 use kernel::vulkan::shader::EmptySpecializationConstants;
 use kernel::vulkan::shader::Shader;
 
@@ -217,10 +219,17 @@ impl Renderer {
         self.acquire()
     }
 
-    pub fn draw(&mut self, vs: Arc<Shader>, fs: Arc<Shader>, buf: Arc<Buffer>) {
+    pub fn draw(
+        &mut self,
+        vs: Arc<Shader>,
+        fs: Arc<Shader>,
+        buffers: HashMap<u32, Arc<Buffer>>,
+        attrs: Arc<VertexAttributes>,
+    ) {
+        let definition = GrindBufferDefinition::new(attrs);
         let pipeline = Arc::new(
             GraphicsPipeline::start()
-                .vertex_input(buf.definition.clone())
+                .vertex_input(definition)
                 .vertex_shader(vs.main_entry_point(), EmptySpecializationConstants {})
                 .triangle_list()
                 .viewports_dynamic_scissors_irrelevant(1)
@@ -252,7 +261,8 @@ impl Renderer {
                     }]),
                     scissors: None,
                 },
-                buf.chunk.as_ref().unwrap().clone(),
+                //buf.chunk.as_ref().unwrap().clone(),
+                buffers,
                 (),
                 (),
             )
