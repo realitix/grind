@@ -220,7 +220,7 @@ impl Renderer {
     pub fn draw(&mut self, vs: Arc<Shader>, fs: Arc<Shader>, buf: Arc<Buffer>) {
         let pipeline = Arc::new(
             GraphicsPipeline::start()
-                .vertex_input(GrindBufferDefinition)
+                .vertex_input(buf.definition.clone())
                 .vertex_shader(vs.main_entry_point(), EmptySpecializationConstants {})
                 .triangle_list()
                 .viewports_dynamic_scissors_irrelevant(1)
