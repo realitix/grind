@@ -57,8 +57,7 @@ impl Shader {
 
         // TODO: 1. check shader validity
         // 2. transpile shader to version 450
-        let transpilation = transpile(&self.source, shader_type);
-        self.source_transpiled = Some(transpilation.text);
+        self.source_transpiled = Some(transpile(&self.source, shader_type));
     }
 
     pub fn get_shaderiv(&self, pname: GLenum, params: *mut GLint) {

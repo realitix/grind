@@ -248,6 +248,8 @@ impl ContextGlES2 {
             x => x as usize,
         };
 
+        let offset = ptr as *const _ as usize;
+
         Arc::get_mut(&mut self.vertex_attributes)
             .unwrap()
             .set_attribute(
@@ -255,7 +257,7 @@ impl ContextGlES2 {
                 self.buffer_binded,
                 get_vk_format(size, _type),
                 vk_stride,
-                0,
+                offset,
             );
     }
 

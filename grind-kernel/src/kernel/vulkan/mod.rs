@@ -8,6 +8,7 @@ use std::ptr::Unique;
 use std::sync::Arc;
 
 use vulkano::device::Device;
+use vulkano::format::Format;
 use vulkano::framebuffer::Framebuffer;
 use vulkano::framebuffer::Subpass;
 use vulkano::instance::debug::{DebugCallback, MessageTypes};
@@ -17,6 +18,8 @@ use vulkano::instance::PhysicalDevice;
 use vulkano::instance::{layers_list, Instance, InstanceExtensions};
 use vulkano::pipeline::shader::GraphicsShaderType;
 use vulkano::pipeline::GraphicsPipeline;
+use vulkano::swapchain::Capabilities;
+use vulkano::swapchain::ColorSpace;
 use vulkano::swapchain::CompositeAlpha;
 use vulkano::swapchain::PresentMode;
 use vulkano::swapchain::Surface;
@@ -130,8 +133,22 @@ impl VulkanDriver {
                 .capabilities(physical_device)
                 .expect("failed to get surface capabilities");
 
-            let alpha = caps.supported_composite_alpha.iter().next().unwrap();
-            let format = caps.supported_formats[0].0;
+            //let alpha = caps.supported_composite_alpha.iter().next().unwrap();
+
+            // The format must be a Unorm one
+            fn get_best_format(caps: &Capabilities) -> Format {
+                for (format, color_space) in caps.supported_formats.iter() {
+                    if *format == Format::B8G8R8A8Unorm
+                        || *format == Format::R8G8B8A8Unorm
+                            && *color_space == ColorSpace::SrgbNonLinear
+                    {
+                        return *format;
+                    }
+                }
+                panic!("No acceptable format");
+            }
+            let format = get_best_format(&caps);
+
             let dimensions = [300, 300];
             let num_images = caps.min_image_count;
             Swapchain::new(

@@ -7,16 +7,6 @@ pub enum ShaderType {
     Fragment,
 }
 
-pub struct TranspilationResult {
-    pub text: String,
-    // attributes: name: location
-    pub attributes: HashMap<String, u32>,
-    // uniforms: name: set/binding
-    pub uniforms: HashMap<String, [u32; 2]>,
-    // varyings: name: location
-    pub varyings: HashMap<String, u32>,
-}
-
 fn get_version(lines: &Vec<&str>) -> u32 {
     let mut version = 0;
 
@@ -61,7 +51,7 @@ fn next_attribute_location(attributes: &HashMap<String, u32>) -> u32 {
     }
 }
 
-fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResult {
+fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> String {
     let mut result = String::from("#version 450\n");
     result.push_str("#extension GL_ARB_separate_shader_objects :enable\n");
 
@@ -72,6 +62,7 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResu
     };
 
     let mut attributes = HashMap::new();
+    let mut varyings_location = 0;
 
     for line in lines.iter() {
         if line.find("#version").is_some() {
@@ -83,17 +74,16 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResu
             let s = format!("layout(location={}) in", location);
             result.push_str(&line.replace("attribute", &s));
         } else if line.find("varying").is_some() {
-            // TODO location autogenerate
             match shader_type {
                 ShaderType::Vertex => {
-                    let location = 0;
-                    let s = format!("layout(location={}) out", location);
+                    let s = format!("layout(location={}) out", varyings_location);
                     result.push_str(&line.replace("varying", &s));
+                    varyings_location += 1;
                 }
                 ShaderType::Fragment => {
-                    let location = 0;
-                    let s = format!("layout(location={}) in", location);
+                    let s = format!("layout(location={}) in", varyings_location);
                     result.push_str(&line.replace("varying", &s));
+                    varyings_location += 1;
                 }
             }
         } else if line.find("gl_FragColor").is_some() {
@@ -104,20 +94,15 @@ fn transpile120(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResu
         result.push('\n');
     }
 
-    TranspilationResult {
-        text: result,
-        uniforms: HashMap::new(),
-        attributes: HashMap::new(),
-        varyings: HashMap::new(),
-    }
+    result
 }
 
-fn transpile100(lines: &Vec<&str>, shader_type: ShaderType) -> TranspilationResult {
+fn transpile100(lines: &Vec<&str>, shader_type: ShaderType) -> String {
     //TODO: remove precision qualifier
     transpile120(lines, shader_type)
 }
 
-pub fn transpile(code: &str, shader_type: ShaderType) -> TranspilationResult {
+pub fn transpile(code: &str, shader_type: ShaderType) -> String {
     let lines = code.lines().collect();
     let version = get_version(&lines);
 

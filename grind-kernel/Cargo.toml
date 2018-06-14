@@ -13,8 +13,7 @@ crate-type = ["cdylib"]
 khronos = "*"
 libc = "*"
 lazy_static = "*"
-vulkano = "*"
-vulkano-shaders = "*"
+vulkano = { git = "https://github.com/vulkano-rs/vulkano.git" }
 glsltranspiler = { path = "../glsl-transpiler" }
 spirvparser = { path = "../spirv-parser" }
 shaderc = { git = "https://github.com/google/shaderc-rs.git" }
