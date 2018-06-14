@@ -1,4 +1,4 @@
-use egl::surface::{GlobalSurface, LocalSurface};
+use egl::surface::GlobalSurface;
 use kernel::vulkan::VulkanDriver;
 use opengl::gles2::ContextGlES2;
 use std::sync::Arc;
@@ -32,7 +32,6 @@ impl GlobalContext {
 
 // LocalContext to be strored in the local thread
 pub struct LocalContext {
-    //draw_surface: LocalSurface,
     gl_context: ContextGlES2,
 }
 

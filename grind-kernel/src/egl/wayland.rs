@@ -1,4 +1,6 @@
 use libc::{c_int, c_void};
+use std::boxed::Box;
+use std::mem;
 use std::ptr::Unique;
 use std::sync::Arc;
 
@@ -6,15 +8,40 @@ use std::sync::Arc;
 // GLOBAL TYPES
 // ----------
 type WlDisplay = *mut c_void;
-type WlEglWindow = *mut c_void;
 type WlSurface = *mut c_void;
+
+// ----------
+// STRUCTS
+// ----------
+pub struct WlEglWindow {
+    pub surface: WlSurface,
+    pub width: u32,
+    pub height: u32,
+}
+
+impl Drop for WlEglWindow {
+    fn drop(&mut self) {
+        println!("Dropping WlEGLWindow!");
+    }
+}
 
 // ----------
 // EXPORTED FUNCTIONS
 // ----------
 #[no_mangle]
-pub fn gk_wl_egl_window_create(surface: WlSurface, width: c_int, height: c_int) -> WlEglWindow {
-    surface as WlEglWindow
+pub fn gk_wl_egl_window_create(
+    surface: WlSurface,
+    width: c_int,
+    height: c_int,
+) -> *const WlEglWindow {
+    // On Heap!
+    let w = Box::new(WlEglWindow {
+        surface: surface,
+        width: width as u32,
+        height: height as u32,
+    });
+    let pointer = Box::into_raw(w) as *const WlEglWindow;
+    pointer
 }
 
 #[no_mangle]

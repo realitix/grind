@@ -7,7 +7,7 @@ use egl::config::Config;
 use egl::context::{GlobalContext, LocalContext};
 use egl::display::{is_available, Display};
 use egl::global::*;
-use egl::surface::{GlobalSurface, LocalSurface};
+use egl::surface::GlobalSurface;
 use egl::types::*;
 use egl::wayland::WaylandDisplay;
 

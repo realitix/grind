@@ -1,10 +1,12 @@
 use libc::c_void;
+use std::ptr;
 use std::ptr::Unique;
 use std::sync::Arc;
 
 use egl::config::Config;
 use egl::display::Display;
 use egl::types::EGLNativeWindowType;
+use egl::wayland::WlEglWindow;
 
 use kernel::vulkan::VulkanDriver;
 
@@ -34,33 +36,9 @@ impl GlobalSurface {
     }
 
     pub fn create_kernel(&self) -> VulkanDriver {
-        VulkanDriver::from_wayland(
-            self.clone_display_id().as_ptr(),
-            (*self.clone_win()).as_ptr(),
-        )
-    }
-}
-
-// LocalSurface to be stored in a LocalContext
-// This is mandatory to avoid multithreading on LocalContext
-pub struct LocalSurface {
-    kernel: Arc<VulkanDriver>,
-}
-
-impl LocalSurface {
-    pub fn new(global_surface: &GlobalSurface) -> LocalSurface {
-        let kernel = Arc::new(VulkanDriver::from_wayland(
-            global_surface.clone_display_id().as_ptr(),
-            (*global_surface.clone_win()).as_ptr(),
-        ));
-        LocalSurface { kernel }
-    }
-
-    pub fn clone_kernel(&self) -> Arc<VulkanDriver> {
-        self.kernel.clone()
-    }
-
-    pub fn swap_buffers(&mut self) {
-        Arc::get_mut(&mut self.kernel).unwrap().present();
+        // Wayland is specific, we need to retrieve the WlEglWindow from self.win
+        let c_pointer = unsafe { (*self.win).as_ref() as *const c_void as *const WlEglWindow };
+        let wl_egl_window = unsafe { &(*c_pointer) };
+        VulkanDriver::from_wayland(self.clone_display_id().as_ptr(), wl_egl_window)
     }
 }

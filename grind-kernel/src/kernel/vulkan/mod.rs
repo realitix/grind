@@ -27,6 +27,7 @@ use vulkano::swapchain::SurfaceTransform;
 use vulkano::swapchain::Swapchain;
 use vulkano::sync::SharingMode;
 
+use egl::wayland::WlEglWindow;
 use kernel::vulkan::buffer::Buffer;
 use kernel::vulkan::buffer::VertexAttributes;
 use kernel::vulkan::renderer::Renderer;
@@ -45,7 +46,7 @@ pub struct VulkanDriver {
 }
 
 impl VulkanDriver {
-    pub fn from_wayland(display: *mut c_void, surface: *mut c_void) -> VulkanDriver {
+    pub fn from_wayland(display: *mut c_void, wl_egl_window: &WlEglWindow) -> VulkanDriver {
         // Instance
         let ideal = InstanceExtensions {
             khr_surface: true,
@@ -86,7 +87,7 @@ impl VulkanDriver {
             Surface::from_wayland(
                 instance.clone(),
                 display,
-                surface,
+                wl_egl_window.surface,
                 Unique::new(display).unwrap(),
             )
         }.expect("Can't create surface");
@@ -149,7 +150,7 @@ impl VulkanDriver {
             }
             let format = get_best_format(&caps);
 
-            let dimensions = [300, 300];
+            let dimensions = [wl_egl_window.width, wl_egl_window.height];
             let num_images = caps.min_image_count;
             Swapchain::new(
                 device.clone(),
