@@ -3,10 +3,9 @@ mod context;
 mod display;
 mod entrypoint;
 pub mod global;
+pub mod platform;
 mod surface;
 mod types;
-
-pub mod wayland;
 
 use egl::types::*;
 
@@ -63,8 +62,7 @@ pub extern "C" fn gk_eglCreatePbufferSurface(
     config: EGLConfig,
     attrib_list: *const EGLint,
 ) -> EGLSurface {
-    println!("Grind-Kernel: FN not implemented: eglCreatePBufferSurface");
-    EGL_NO_SURFACE
+    entrypoint::create_pbuffer_surface(dpy, config, attrib_list)
 }
 
 #[no_mangle]

@@ -4,10 +4,9 @@ use kernel::Kernel;
 use egl::config::Config;
 use egl::context::GlobalContext;
 use egl::global::EGL_RESULT;
+use egl::platform::wayland::WaylandDisplay;
 use egl::surface::GlobalSurface;
-use egl::surface::SurfaceCreator;
 use egl::types::*;
-use egl::wayland::WaylandDisplay;
 
 pub fn is_available() -> bool {
     vulkan_is_available()

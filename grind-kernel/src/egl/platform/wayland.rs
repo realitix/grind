@@ -5,7 +5,7 @@ use std::ptr;
 use std::ptr::Unique;
 use std::sync::Arc;
 
-use egl::surface::SurfaceCreator;
+use egl::surface::SurfaceManager;
 use kernel::vulkan::VulkanDriver;
 
 // ----------
@@ -95,18 +95,18 @@ impl WaylandDisplay {
 // ----------
 // Creator
 // ----------
-pub struct WaylandSurfaceCreator {
+pub struct WaylandSurfaceManager {
     display_id: Arc<Unique<c_void>>,
     win: Arc<Unique<c_void>>,
 }
 
-impl WaylandSurfaceCreator {
-    pub fn new(display_id: Arc<Unique<c_void>>, win: Arc<Unique<c_void>>) -> WaylandSurfaceCreator {
-        WaylandSurfaceCreator { display_id, win }
+impl WaylandSurfaceManager {
+    pub fn new(display_id: Arc<Unique<c_void>>, win: Arc<Unique<c_void>>) -> WaylandSurfaceManager {
+        WaylandSurfaceManager { display_id, win }
     }
 }
 
-impl SurfaceCreator for WaylandSurfaceCreator {
+impl SurfaceManager for WaylandSurfaceManager {
     fn generate_kernel(&self) -> VulkanDriver {
         let c_pointer = unsafe { (*self.win).as_ref() as *const c_void as *const WlEglWindow };
         let wl_egl_window = unsafe { &(*c_pointer) };

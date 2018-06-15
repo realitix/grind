@@ -7,10 +7,10 @@ use egl::config::Config;
 use egl::context::{GlobalContext, LocalContext};
 use egl::display::{is_available, Display};
 use egl::global::*;
+use egl::platform::wayland::WaylandDisplay;
+use egl::platform::wayland::WaylandSurfaceManager;
 use egl::surface::GlobalSurface;
 use egl::types::*;
-use egl::wayland::WaylandDisplay;
-use egl::wayland::WaylandSurfaceCreator;
 
 static EGL_VERSION_MAJOR: EGLint = 1;
 static EGL_VERSION_MINOR: EGLint = 4;
@@ -221,12 +221,31 @@ pub fn create_window_surface(
         let display_id = Arc::clone(&d.native_display.display_id);
         let rwin = Arc::new(Unique::new(win).expect("Win unavailable"));
 
-        let wayland_creator = WaylandSurfaceCreator::new(display_id, rwin);
-        let surface = GlobalSurface::new(Box::new(wayland_creator));
+        let wayland_manager = WaylandSurfaceManager::new(display_id, rwin);
+        let surface = GlobalSurface::new(Box::new(wayland_manager));
 
         surface_pointer = Some(d.add_surface(surface));
         EGL_TRUE
-        // TODO: Error management
+    });
+
+    match surface_pointer {
+        Some(p) => p,
+        None => EGL_NO_SURFACE,
+    }
+}
+
+pub fn create_pbuffer_surface(
+    dpy: EGLDisplay,
+    config: EGLConfig,
+    attrib_list: *const EGLint,
+) -> EGLSurface {
+    let mut surface_pointer: Option<EGLSurface> = None;
+    with_mut_display(dpy, |d| {
+        //let offscreen_creator = OffscreenSurfaceCreator::new();
+        //let surface = GlobalSurface::new(Box::new(offscreen_creator));
+
+        //surface_pointer = Some(d.add_surface(surface));
+        EGL_TRUE
     });
 
     match surface_pointer {

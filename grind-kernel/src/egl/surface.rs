@@ -6,17 +6,16 @@ use std::sync::Arc;
 use egl::config::Config;
 use egl::display::Display;
 use egl::types::EGLNativeWindowType;
-use egl::wayland::WlEglWindow;
 
 use kernel::vulkan::VulkanDriver;
 
-pub trait SurfaceCreator: Send + Sync {
+pub trait SurfaceManager: Send + Sync {
     fn generate_kernel(&self) -> VulkanDriver;
 }
 
 // GlobalSurface to be stored in a Display
 pub struct GlobalSurface {
-    creator: Box<SurfaceCreator>,
+    creator: Box<SurfaceManager>,
 }
 
 impl PartialEq for GlobalSurface {
@@ -26,7 +25,7 @@ impl PartialEq for GlobalSurface {
 }
 
 impl GlobalSurface {
-    pub fn new(creator: Box<SurfaceCreator>) -> GlobalSurface {
+    pub fn new(creator: Box<SurfaceManager>) -> GlobalSurface {
         GlobalSurface { creator }
     }
 

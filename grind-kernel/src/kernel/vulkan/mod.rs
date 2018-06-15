@@ -27,7 +27,7 @@ use vulkano::swapchain::SurfaceTransform;
 use vulkano::swapchain::Swapchain;
 use vulkano::sync::SharingMode;
 
-use egl::wayland::WlEglWindow;
+use egl::platform::wayland::WlEglWindow;
 use kernel::vulkan::buffer::Buffer;
 use kernel::vulkan::buffer::VertexAttributes;
 use kernel::vulkan::renderer::Renderer;
