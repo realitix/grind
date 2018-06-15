@@ -1,6 +1,7 @@
 use libc::{c_int, c_void};
 use std::boxed::Box;
 use std::mem;
+use std::ptr;
 use std::ptr::Unique;
 use std::sync::Arc;
 
@@ -17,12 +18,6 @@ pub struct WlEglWindow {
     pub surface: WlSurface,
     pub width: u32,
     pub height: u32,
-}
-
-impl Drop for WlEglWindow {
-    fn drop(&mut self) {
-        println!("Dropping WlEGLWindow!");
-    }
 }
 
 // ----------
@@ -45,24 +40,36 @@ pub fn gk_wl_egl_window_create(
 }
 
 #[no_mangle]
-pub fn gk_wl_egl_window_destroy(egl_window: WlEglWindow) {}
+pub fn gk_wl_egl_window_destroy(mut egl_window_ptr: *mut c_void) {
+    unsafe {
+        ptr::drop_in_place(egl_window_ptr as *mut WlEglWindow);
+    }
+}
 
 #[no_mangle]
 pub fn gk_wl_egl_window_resize(
-    egl_window: WlEglWindow,
+    mut egl_window_ptr: *mut c_void,
     width: c_int,
     height: c_int,
     dx: c_int,
     dy: c_int,
 ) {
+    let egl_window = unsafe { &mut *(egl_window_ptr as *mut WlEglWindow) };
+    egl_window.height = height as u32;
+    egl_window.width = width as u32;
 }
 
 #[no_mangle]
 pub fn gk_wl_egl_window_get_attached_size(
-    egl_window: WlEglWindow,
+    egl_window_ptr: *const WlEglWindow,
     width: *mut c_int,
     height: *mut c_int,
 ) {
+    unsafe {
+        let egl_window = &(*egl_window_ptr);
+        *width = egl_window.width as i32;
+        *height = egl_window.height as i32;
+    }
 }
 
 // ----------

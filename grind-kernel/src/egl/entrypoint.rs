@@ -256,6 +256,14 @@ pub fn make_current(
     ctx: EGLContext,
 ) -> EGLBoolean {
     with_mut_display(dpy, |d| {
+        // Remove context
+        if draw == EGL_NO_SURFACE && read == EGL_NO_SURFACE && ctx == EGL_NO_CONTEXT {
+            CONTEXT.with(|c| {
+                *c.borrow_mut() = None;
+            });
+            return EGL_TRUE;
+        }
+
         // Check surface
         if !d.is_surface(draw) || !d.is_surface(read) {
             // TODO EGL_RESULT
