@@ -64,5 +64,5 @@ On Android, we need only `ANativeWindow`:
 
 With EGL, you can enable Off-screen rendering like that:
 
-- Call `eglGetDisplay` with `EGL_NO_DISPLAY`
+- Call `eglGetDisplay` with `EGL_DEFAULT_DISPLAY`
 - Instead of calling `eglCreateWindowSurface`, call `eglCreatePbufferSurface`
