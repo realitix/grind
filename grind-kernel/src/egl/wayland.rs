@@ -5,6 +5,9 @@ use std::ptr;
 use std::ptr::Unique;
 use std::sync::Arc;
 
+use egl::surface::SurfaceCreator;
+use kernel::vulkan::VulkanDriver;
+
 // ----------
 // GLOBAL TYPES
 // ----------
@@ -86,5 +89,27 @@ impl WaylandDisplay {
                 Unique::new(display_id).expect("You must pass a valid pointer for wayland display"),
             ),
         }
+    }
+}
+
+// ----------
+// Creator
+// ----------
+pub struct WaylandSurfaceCreator {
+    display_id: Arc<Unique<c_void>>,
+    win: Arc<Unique<c_void>>,
+}
+
+impl WaylandSurfaceCreator {
+    pub fn new(display_id: Arc<Unique<c_void>>, win: Arc<Unique<c_void>>) -> WaylandSurfaceCreator {
+        WaylandSurfaceCreator { display_id, win }
+    }
+}
+
+impl SurfaceCreator for WaylandSurfaceCreator {
+    fn generate_kernel(&self) -> VulkanDriver {
+        let c_pointer = unsafe { (*self.win).as_ref() as *const c_void as *const WlEglWindow };
+        let wl_egl_window = unsafe { &(*c_pointer) };
+        VulkanDriver::from_wayland(self.display_id.as_ptr(), wl_egl_window)
     }
 }

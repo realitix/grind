@@ -10,6 +10,7 @@ use egl::global::*;
 use egl::surface::GlobalSurface;
 use egl::types::*;
 use egl::wayland::WaylandDisplay;
+use egl::wayland::WaylandSurfaceCreator;
 
 static EGL_VERSION_MAJOR: EGLint = 1;
 static EGL_VERSION_MINOR: EGLint = 4;
@@ -217,8 +218,12 @@ pub fn create_window_surface(
 ) -> EGLSurface {
     let mut surface_pointer: Option<EGLSurface> = None;
     with_mut_display(dpy, |d| {
+        let display_id = Arc::clone(&d.native_display.display_id);
         let rwin = Arc::new(Unique::new(win).expect("Win unavailable"));
-        let surface = GlobalSurface::new(Arc::clone(&d.native_display.display_id), rwin);
+
+        let wayland_creator = WaylandSurfaceCreator::new(display_id, rwin);
+        let surface = GlobalSurface::new(Box::new(wayland_creator));
+
         surface_pointer = Some(d.add_surface(surface));
         EGL_TRUE
         // TODO: Error management

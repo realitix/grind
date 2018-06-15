@@ -10,10 +10,13 @@ use egl::wayland::WlEglWindow;
 
 use kernel::vulkan::VulkanDriver;
 
+pub trait SurfaceCreator: Send + Sync {
+    fn generate_kernel(&self) -> VulkanDriver;
+}
+
 // GlobalSurface to be stored in a Display
 pub struct GlobalSurface {
-    display_id: Arc<Unique<c_void>>,
-    win: Arc<Unique<c_void>>,
+    creator: Box<SurfaceCreator>,
 }
 
 impl PartialEq for GlobalSurface {
@@ -23,22 +26,11 @@ impl PartialEq for GlobalSurface {
 }
 
 impl GlobalSurface {
-    pub fn new(display_id: Arc<Unique<c_void>>, win: Arc<Unique<c_void>>) -> GlobalSurface {
-        GlobalSurface { display_id, win }
-    }
-
-    pub fn clone_display_id(&self) -> Arc<Unique<c_void>> {
-        Arc::clone(&self.display_id)
-    }
-
-    pub fn clone_win(&self) -> Arc<Unique<c_void>> {
-        Arc::clone(&self.win)
+    pub fn new(creator: Box<SurfaceCreator>) -> GlobalSurface {
+        GlobalSurface { creator }
     }
 
     pub fn create_kernel(&self) -> VulkanDriver {
-        // Wayland is specific, we need to retrieve the WlEglWindow from self.win
-        let c_pointer = unsafe { (*self.win).as_ref() as *const c_void as *const WlEglWindow };
-        let wl_egl_window = unsafe { &(*c_pointer) };
-        VulkanDriver::from_wayland(self.clone_display_id().as_ptr(), wl_egl_window)
+        self.creator.generate_kernel()
     }
 }
