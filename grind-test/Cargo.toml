@@ -1,0 +1,15 @@
+[package]
+name = "grind-test"
+version = "0.1.0"
+authors = ["Jean-Sebastien BEVILACQUA <realitix@gmail.com>"]
+publish = false
+description = "The Test of GRIND"
+
+[lib]
+name = "grindtest"
+crate-type = []
+
+[dependencies]
+grindegl = { path = "../grind-egl" }
+grindopengles2 = { path = "../grind-opengles2" }
+grindwaylandegl = { path = "../grind-wayland-egl" }

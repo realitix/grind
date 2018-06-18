@@ -1,3 +1,7 @@
+use std::sync::Arc;
+use std::ptr::Unique;
+use libc::c_void;
+
 use kernel::vulkan::is_available as vulkan_is_available;
 use kernel::Kernel;
 
@@ -139,6 +143,21 @@ impl Display {
         match selected_surface {
             Some(id_surface) => self.surfaces.remove(id_surface),
             None => panic!("Can't get surface"),
+        }
+    }
+}
+
+// Contains the pointer passed with getDisplay
+pub struct PlatformDisplay {
+    pub display_id: Arc<Unique<c_void>>,
+}
+
+impl PlatformDisplay {
+    pub fn new(display_id: *mut c_void) -> PlatformDisplay {
+        PlatformDisplay {
+            display_id: Arc::new(
+                Unique::new(display_id).expect("You must pass a valid pointer for display"),
+            ),
         }
     }
 }
