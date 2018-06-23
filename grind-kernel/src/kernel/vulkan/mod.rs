@@ -200,4 +200,8 @@ impl VulkanDriver {
     ) {
         self.renderer.draw(vs, fs, buffers, attrs);
     }
+
+    pub fn read_pixels(&mut self, x: i32, y: i32, width: i32, height: i32, pixels: *mut c_void) {
+        self.renderer.read_pixels(x, y, width, height, pixels);
+    }
 }

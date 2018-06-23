@@ -7,9 +7,10 @@ description = "The Test of GRIND"
 
 [lib]
 name = "grindtest"
-crate-type = []
+crate-type = ["lib"]
 
-[dependencies]
-grindegl = { path = "../grind-egl" }
-grindopengles2 = { path = "../grind-opengles2" }
-grindwaylandegl = { path = "../grind-wayland-egl" }
+[dev-dependencies]
+egl-rs = { path = "../../egl-rs" }
+opengles2-rs = { path = "../../opengles2-rs" }
+wayland-client = "*"
+image = "*"

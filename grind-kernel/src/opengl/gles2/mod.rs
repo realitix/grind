@@ -305,4 +305,17 @@ impl ContextGlES2 {
         self.kernel
             .draw(vs, fs, vk_buffers, self.vertex_attributes.clone());
     }
+
+    pub fn read_pixels(
+        &mut self,
+        x: GLint,
+        y: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        _type: GLenum,
+        pixels: *mut GLvoid,
+    ) {
+        self.kernel.read_pixels(x, y, width, height, pixels);
+    }
 }

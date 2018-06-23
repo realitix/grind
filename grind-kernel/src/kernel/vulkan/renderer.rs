@@ -3,10 +3,13 @@ use std::boxed::Box;
 use std::collections::HashMap;
 use std::mem;
 use std::ptr::Unique;
+use std::slice;
 use std::sync::Arc;
 
 use vulkano::buffer::cpu_pool::CpuBufferPoolChunk;
 use vulkano::buffer::BufferAccess;
+use vulkano::buffer::BufferUsage;
+use vulkano::buffer::CpuAccessibleBuffer;
 use vulkano::command_buffer::AutoCommandBufferBuilder;
 use vulkano::command_buffer::CommandBuffer;
 use vulkano::command_buffer::DynamicState;
@@ -281,5 +284,44 @@ impl Renderer {
             .unwrap()
             .wait(None)
             .unwrap();
+    }
+
+    pub fn read_pixels(&mut self, x: i32, y: i32, width: i32, height: i32, pixels: *mut c_void) {
+        let buffer_size = width * height * 4;
+        let buffer = CpuAccessibleBuffer::from_iter(
+            self.device.clone(),
+            BufferUsage::all(),
+            (0..buffer_size).map(|_| 0u8),
+        ).expect("failed to create buffer");
+
+        let cb = AutoCommandBufferBuilder::primary_one_time_submit(
+            self.device.clone(),
+            self.queue.family(),
+        ).unwrap()
+            .copy_image_to_buffer(
+                self.swapchain_images[self.image_num].clone(),
+                buffer.clone(),
+            )
+            .unwrap()
+            .build()
+            .unwrap();
+
+        let tmp_future = Box::new(sync::now(self.device.clone()));
+        let last_future = mem::replace(&mut self.last_future, tmp_future);
+        let new_future = Box::new(
+            last_future
+                .then_execute(self.queue.clone(), cb)
+                .expect("Can't execute clear command buffer")
+                .then_signal_fence_and_flush()
+                .unwrap(),
+        );
+        new_future.wait(None);
+        mem::replace(&mut self.last_future, new_future);
+
+        let buffer_content = buffer.read().unwrap();
+        unsafe {
+            let ptr_slice = slice::from_raw_parts_mut(pixels as *mut u8, buffer_size as usize);
+            ptr_slice.copy_from_slice(&buffer_content[..]);
+        }
     }
 }

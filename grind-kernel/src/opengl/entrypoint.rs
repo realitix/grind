@@ -158,3 +158,17 @@ pub fn draw_arrays(mode: GLenum, first: GLint, count: GLsizei) {
         gl.draw_arrays(mode, first, count);
     });
 }
+
+pub fn read_pixels(
+    x: GLint,
+    y: GLint,
+    width: GLsizei,
+    height: GLsizei,
+    format: GLenum,
+    _type: GLenum,
+    pixels: *mut GLvoid,
+) {
+    with_gl(|gl| {
+        gl.read_pixels(x, y, width, height, format, _type, pixels);
+    });
+}

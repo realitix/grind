@@ -1,6 +1,6 @@
-use std::sync::Arc;
-use std::ptr::Unique;
 use libc::c_void;
+use std::ptr::Unique;
+use std::sync::Arc;
 
 use kernel::vulkan::is_available as vulkan_is_available;
 use kernel::Kernel;

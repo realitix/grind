@@ -648,7 +648,7 @@ pub extern "C" fn gk_glReadPixels(
     _type: GLenum,
     pixels: *mut GLvoid,
 ) {
-    println!("GrindKernel: Fn not implemented: glReadPixels");
+    entrypoint::read_pixels(x, y, width, height, format, _type, pixels)
 }
 
 #[no_mangle]

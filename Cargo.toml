@@ -5,5 +5,6 @@ members = [
     "grind-kernel",
     "grind-egl",
     "grind-wayland-egl",
-    "grind-opengles2"
+    "grind-opengles2",
+    "grind-test"
 ]
