@@ -1,6 +1,8 @@
 pub mod buffer;
+mod context;
 mod renderer;
 pub mod shader;
+mod vulkanobject;
 
 use libc::c_void;
 use std::collections::HashMap;
@@ -32,6 +34,7 @@ use kernel::vulkan::buffer::Buffer;
 use kernel::vulkan::buffer::VertexAttributes;
 use kernel::vulkan::renderer::Renderer;
 use kernel::vulkan::shader::Shader;
+use kernel::vulkan::vulkanobject as vo;
 
 pub fn is_available() -> bool {
     match Instance::new(None, &InstanceExtensions::none(), None) {
