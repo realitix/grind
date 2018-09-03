@@ -203,14 +203,14 @@ unsafe impl VertexSource<HashMap<u32, Arc<Buffer>>> for GrindBufferDefinition {
         let mut result = Vec::new();
         let mut len = 0;
 
-        for i in 0..bindings.len() {
+        /*for i in 0..bindings.len() {
             let buffer_id = bindings.get(&(i as u32)).unwrap();
             let buffer = source.get(buffer_id).unwrap();
             let chunk =
                 Box::new(buffer.chunk.as_ref().unwrap().clone()) as Box<BufferAccess + Send + Sync>;
             result.push(chunk);
             len = buffer.chunk.as_ref().unwrap().size();
-        }
+        }*/
 
         let mut len = 36 / 4; // float
         len = len / 3; // vec3
@@ -226,19 +226,19 @@ unsafe impl<T> VertexSource<Vec<T>> for GrindBufferDefinition {
 }
 
 pub struct Buffer {
-    inner: CpuBufferPool<u8>,
-    pub chunk: Option<CpuBufferPoolChunk<u8, Arc<StdMemoryPool>>>,
+    //inner: CpuBufferPool<u8>,
+    //pub chunk: Option<CpuBufferPoolChunk<u8, Arc<StdMemoryPool>>>,
 }
 
 impl Buffer {
-    pub fn new(device: Arc<Device>) -> Buffer {
+    pub fn new(/*device: Arc<Device>*/) -> Buffer {
         Buffer {
-            inner: CpuBufferPool::vertex_buffer(device),
-            chunk: None,
+            //inner: CpuBufferPool::vertex_buffer(device),
+            //chunk: None,
         }
     }
 
     pub fn set_data(&mut self, data: &[u8]) {
-        self.chunk = Some(self.inner.chunk(data.iter().cloned()).unwrap());
+        //self.chunk = Some(self.inner.chunk(data.iter().cloned()).unwrap());
     }
 }

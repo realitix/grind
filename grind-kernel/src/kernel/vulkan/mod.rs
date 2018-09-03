@@ -1,5 +1,5 @@
 pub mod buffer;
-mod context;
+mod vulkancontext;
 mod renderer;
 pub mod shader;
 mod vulkanobject;
@@ -34,6 +34,7 @@ use kernel::vulkan::buffer::Buffer;
 use kernel::vulkan::buffer::VertexAttributes;
 use kernel::vulkan::renderer::Renderer;
 use kernel::vulkan::shader::Shader;
+use kernel::vulkan::vulkancontext::VulkanContext;
 use kernel::vulkan::vulkanobject as vo;
 
 pub fn is_available() -> bool {
@@ -44,12 +45,18 @@ pub fn is_available() -> bool {
 }
 
 pub struct VulkanDriver {
-    renderer: Renderer,
-    callback: DebugCallback,
+    context: VulkanContext
+    //renderer: Renderer,
+    //callback: DebugCallback,
 }
 
 impl VulkanDriver {
     pub fn from_wayland(display: *mut c_void, wl_egl_window: &WlEglWindow) -> VulkanDriver {
+        VulkanDriver{
+            context: VulkanContext::new("TEST".to_string())
+        }
+    }
+    /*pub fn from_wayland(display: *mut c_void, wl_egl_window: &WlEglWindow) -> VulkanDriver {
         // Instance
         let ideal = InstanceExtensions {
             khr_surface: true,
@@ -176,22 +183,23 @@ impl VulkanDriver {
             callback,
             renderer: Renderer::new(device, surface, queue, swapchain, images),
         }
-    }
+    }*/
+    
 
     pub fn clear(&mut self, colors: [f32; 4]) {
-        self.renderer.clear(colors);
+        //self.renderer.clear(colors);
     }
 
     pub fn present(&mut self) {
-        self.renderer.present();
+        //self.renderer.present();
     }
 
     pub fn new_buffer(&self) -> Buffer {
-        Buffer::new(self.renderer.get_device())
+        Buffer::new()
     }
 
     pub fn new_shader(&self, spirv: &[u8], shader_type: GraphicsShaderType) -> Shader {
-        Shader::new(self.renderer.get_device(), spirv, shader_type)
+        Shader::new(spirv, shader_type)
     }
 
     pub fn draw(
@@ -201,10 +209,10 @@ impl VulkanDriver {
         buffers: HashMap<u32, Arc<Buffer>>,
         attrs: Arc<VertexAttributes>,
     ) {
-        self.renderer.draw(vs, fs, buffers, attrs);
+        //self.renderer.draw(vs, fs, buffers, attrs);
     }
 
     pub fn read_pixels(&mut self, x: i32, y: i32, width: i32, height: i32, pixels: *mut c_void) {
-        self.renderer.read_pixels(x, y, width, height, pixels);
+        //self.renderer.read_pixels(x, y, width, height, pixels);
     }
 }

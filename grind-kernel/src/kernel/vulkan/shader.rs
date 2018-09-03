@@ -200,20 +200,20 @@ unsafe impl PipelineLayoutDesc for Layout {
 // Shader
 // **********
 pub struct Shader {
-    module: Arc<ShaderModule>,
-    shader_type: GraphicsShaderType,
+    //module: Arc<ShaderModule>,
+    //shader_type: GraphicsShaderType,
 }
 
 impl Shader {
-    pub fn new(device: Arc<Device>, spirv: &[u8], shader_type: GraphicsShaderType) -> Shader {
-        let module = unsafe { ShaderModule::new(device, spirv).unwrap() };
+    pub fn new(/*device: Arc<Device>*/spirv: &[u8], shader_type: GraphicsShaderType) -> Shader {
+        //let module = unsafe { ShaderModule::new(device, spirv).unwrap() };
         Shader {
-            module,
-            shader_type,
+            //module,
+            //shader_type,
         }
     }
 
-    pub fn main_entry_point(
+    /*pub fn main_entry_point(
         &self,
     ) -> GraphicsEntryPoint<EmptySpecializationConstants, MainInput, MainOutput, Layout> {
         unsafe {
@@ -238,5 +238,5 @@ impl Shader {
                 self.shader_type,
             )
         }
-    }
+    }*/
 }

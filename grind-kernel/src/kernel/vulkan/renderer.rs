@@ -229,7 +229,7 @@ impl Renderer {
         buffers: HashMap<u32, Arc<Buffer>>,
         attrs: Arc<VertexAttributes>,
     ) {
-        let definition = GrindBufferDefinition::new(attrs);
+        /*let definition = GrindBufferDefinition::new(attrs);
         let pipeline = Arc::new(
             GraphicsPipeline::start()
                 .vertex_input(definition)
@@ -284,6 +284,7 @@ impl Renderer {
             .unwrap()
             .wait(None)
             .unwrap();
+            */
     }
 
     pub fn read_pixels(&mut self, x: i32, y: i32, width: i32, height: i32, pixels: *mut c_void) {
