@@ -6,6 +6,7 @@ use ash::version::{InstanceV1_0, DeviceV1_0, V1_0};
 
 use kernel::vulkan::vulkancontext::VulkanContext;
 pub use ash::vk::types::*;
+pub use ash::extensions::*;
 
 
 // -----------

@@ -69,7 +69,8 @@ fn basic_clear() {
             8,
             egl::NONE,
         ],
-    );
+    );    
+
     let config = configs.remove(0);
     let surface =
         egl::create_window_surface(egl_display, config, egl_surface.ptr() as _, vec![egl::NONE]);
@@ -80,8 +81,10 @@ fn basic_clear() {
         vec![egl::CONTEXT_CLIENT_VERSION, 2, egl::NONE, egl::NONE],
     );
 
-    egl::make_current(egl_display, surface, surface, context);
 
+    egl::make_current(egl_display, surface, surface, context);
+    /*
+    
     gl::clear_color(1., 0., 0., 1.);
     gl::clear(gl::COLOR_BUFFER_BIT);
     egl::swap_buffers(egl_display, surface);
@@ -100,6 +103,6 @@ fn basic_clear() {
         egl::NO_SURFACE,
         egl::NO_SURFACE,
         egl::NO_CONTEXT,
-    );
+    );*/
     // wayland is deleted by drop
 }

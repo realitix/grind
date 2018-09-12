@@ -28,7 +28,7 @@ use kernel::vulkan::vulkanobject as vo;
 fn extension_names() -> Vec<*const i8> {
     vec![
         Surface::name().as_ptr(),
-        XlibSurface::name().as_ptr(),
+        vo::WaylandSurface::name().as_ptr(),
         DebugReport::name().as_ptr(),
     ]
 }
@@ -70,19 +70,6 @@ pub struct VulkanContext {
     pub swapchain: vk::SwapchainKHR,
     pub swapchain_image_views: Vec<GrindImageView>,
     pub current_swapchain_image: u32
-    /*
-    pub present_image_views: Vec<vk::ImageView>,
-
-    pub pool: vk::CommandPool,
-    pub draw_command_buffer: vk::CommandBuffer,
-    pub setup_command_buffer: vk::CommandBuffer,
-
-    pub depth_image: vk::Image,
-    pub depth_image_view: vk::ImageView,
-    pub depth_image_memory: vk::DeviceMemory,
-
-    pub present_complete_semaphore: vk::Semaphore,
-    pub rendering_complete_semaphore: vk::Semaphore*/
 }
 
 impl VulkanContext {
@@ -131,7 +118,7 @@ impl VulkanContext {
             s_type: vk::StructureType::DebugReportCallbackCreateInfoExt,
             p_next: ptr::null(),
             flags: vk::DEBUG_REPORT_ERROR_BIT_EXT | vk::DEBUG_REPORT_WARNING_BIT_EXT
-                | vk::DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT,
+                | vk::DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | vk::DEBUG_REPORT_INFORMATION_BIT_EXT,
             pfn_callback: vulkan_debug_callback,
             p_user_data: ptr::null_mut(),
         };
@@ -145,10 +132,24 @@ impl VulkanContext {
         }
     }
 
-    fn create_surface<E: EntryV1_0, I: InstanceV1_0>(entry: &E, instance: &I) -> vk::SurfaceKHR {
-        let win = ptr::null() as *const c_void;
-        let dpy = ptr::null() as *const c_void;
-        let x11_create_info = vk::XlibSurfaceCreateInfoKHR {
+    fn create_surface<E: EntryV1_0, I: InstanceV1_0>(entry: &E, instance: &I, mut display: *const c_void, mut surface: *const c_void) -> vk::SurfaceKHR {
+        let wayland_create_info = vo::WaylandSurfaceCreateInfoKHR {
+            s_type: vo::StructureType::WaylandSurfaceCreateInfoKhr,
+            p_next: ptr::null(),
+            flags: Default::default(),
+            display: &mut display,
+            surface: &mut surface
+        };
+        let wayland_surface_loader = vo::WaylandSurface::new(entry, instance).expect("Unable to load wayland surface");
+
+        unsafe {
+            wayland_surface_loader
+                .create_wayland_surface_khr(&wayland_create_info, None)
+                .expect("Unable to create wayland surface")
+        }
+
+
+        /*let x11_create_info = vk::XlibSurfaceCreateInfoKHR {
             s_type: vk::StructureType::XlibSurfaceCreateInfoKhr,
             p_next: ptr::null(),
             flags: Default::default(),
@@ -162,7 +163,7 @@ impl VulkanContext {
             xlib_surface_loader
                 .create_xlib_surface_khr(&x11_create_info, None)
                 .expect("Unable to create Surface")
-        }
+        }*/
     }
 
     fn create_physical_device<I: InstanceV1_0>(
@@ -173,7 +174,7 @@ impl VulkanContext {
         let pdevices = instance
             .enumerate_physical_devices()
             .expect("Physical device error");
-
+        
         pdevices
             .iter()
             .map(|pdevice| {
@@ -189,6 +190,7 @@ impl VulkanContext {
                                 index as u32,
                                 *surface,
                             );
+                        
                         match supports_graphic_and_surface {
                             true => Some((*pdevice, index)),
                             _ => None,
@@ -236,7 +238,7 @@ impl VulkanContext {
         let device: Device = unsafe {
             instance
                 .create_device(*physical_device, &device_create_info, None)
-                .expect("Unable to craete logical device")
+                .expect("Unable to create logical device")
         };
 
         let present_queue = unsafe { device.get_device_queue(queue_family_index, 0) };
@@ -245,7 +247,6 @@ impl VulkanContext {
     }
 
     fn create_swapchain(
-        instance: &Instance<V1_0>,
         physical_device: &vk::PhysicalDevice,
         device: &Device,
         surface_loader: &Surface,
@@ -254,9 +255,11 @@ impl VulkanContext {
         width: u32,
         height: u32
     ) -> (vk::SwapchainKHR, Vec<GrindImageView>) {
+        // c'est ici le probleme
         let surface_formats = surface_loader
             .get_physical_device_surface_formats_khr(*physical_device, *surface)
             .unwrap();
+        panic!("TOTO 3");
         let surface_format = surface_formats
             .iter()
             .map(|sfmt| match sfmt.format {
@@ -268,9 +271,11 @@ impl VulkanContext {
             })
             .nth(0)
             .expect("Unable to find suitable surface format.");
+            
         let surface_capabilities = surface_loader
             .get_physical_device_surface_capabilities_khr(*physical_device, *surface)
             .unwrap();
+
         let mut desired_image_count = surface_capabilities.min_image_count + 1;
         if surface_capabilities.max_image_count > 0
             && desired_image_count > surface_capabilities.max_image_count
@@ -350,7 +355,7 @@ impl VulkanContext {
         (swapchain, image_views)
     }
 
-    fn update_swpachain_layout(context: &VulkanContext) {
+    fn update_swapchain_layout(context: &VulkanContext) {
         // Update layout to present_src_khr
         for image_view in context.swapchain_image_views.iter() {
             let swapchain_image = &image_view.image;
@@ -364,21 +369,28 @@ impl VulkanContext {
         }
     }
 
-    pub fn new(app_name: String) -> VulkanContext {
+    pub fn new(display_ptr: *const c_void, surface_ptr: *const c_void) -> VulkanContext {
+        let app_name = "TEST".to_string();
         let entry = Entry::new().unwrap();
         let instance = VulkanContext::create_instance(&entry, app_name);
         let debug_callback = VulkanContext::create_debug_callback(&entry, &instance);
-        let surface = VulkanContext::create_surface(&entry, &instance);
+        let surface = VulkanContext::create_surface(&entry, &instance, display_ptr, surface_ptr);
         let surface_loader = Surface::new(&entry, &instance).expect("Unable to load the Surface extension");
         let (physical_device, queue_family_index) =
             VulkanContext::create_physical_device(&instance, &surface_loader, &surface);
         let (device, present_queue) =
             VulkanContext::create_device(&instance, &physical_device, queue_family_index as u32);
         let swapchain_loader = Swapchain::new(&instance, &device).expect("Unable to load swapchain");
+        
+        // ca plante ici maintenant
         let (swapchain, swapchain_image_views) = VulkanContext::create_swapchain(
-            &instance, &physical_device, &device, &surface_loader, &surface,
+            &physical_device, &device, &surface_loader, &surface,
             &swapchain_loader, 200, 200);
+            
+
+
         let current_swapchain_image = VulkanContext::acquire_next_image(&swapchain_loader, swapchain);
+        
         
         let context = VulkanContext {
             entry,
@@ -395,8 +407,7 @@ impl VulkanContext {
             current_swapchain_image
         };
 
-        VulkanContext::update_swpachain_layout(&context);
-
+        VulkanContext::update_swapchain_layout(&context);
         context
     }
 

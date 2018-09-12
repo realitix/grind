@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 khronos = "*"
 libc = "*"
 lazy_static = "*"
-ash = "*"
+ash = { path = "../../ash/ash"}
 vulkano = { path = "../../vulkano/vulkano" }
 glsltranspiler = { path = "../glsl-transpiler" }
 spirvparser = { path = "../spirv-parser" }

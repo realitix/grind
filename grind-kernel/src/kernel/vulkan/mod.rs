@@ -52,7 +52,7 @@ impl VulkanDriver {
     // Create driver from wayland
     pub fn from_wayland(display: *mut c_void, wl_egl_window: &WlEglWindow) -> VulkanDriver {
         VulkanDriver{
-            context: VulkanContext::new("TEST".to_string())
+            context: VulkanContext::new(display, wl_egl_window.surface)
         }
     }    
 
