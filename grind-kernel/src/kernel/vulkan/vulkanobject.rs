@@ -5,35 +5,8 @@ use ash::vk;
 use ash::version::{InstanceV1_0, DeviceV1_0, V1_0};
 
 use kernel::vulkan::vulkancontext::VulkanContext;
+pub use ash::vk::types::*;
 
-// ----------
-// FLAGS
-// ----------
-pub use ash::vk::types::IMAGE_ASPECT_COLOR_BIT as IMAGE_ASPECT_COLOR_BIT;
-
-// ----------
-// SIMPLE TYPES
-// ----------
-pub use ash::vk::types::ComponentMapping as ComponentMapping;
-pub use ash::vk::types::ComponentSwizzle as ComponentSwizzle;
-pub use ash::vk::types::Extent3D as Extent3D;
-pub use ash::vk::types::Format as Format;
-pub use ash::vk::types::ImageAspectFlags as ImageAspectFlags;
-pub use ash::vk::types::ImageCreateFlags as ImageCreateFlags;
-pub use ash::vk::types::ImageCreateInfo as ImageCreateInfo;
-pub use ash::vk::types::ImageLayout as ImageLayout;
-pub use ash::vk::types::ImageSubresourceRange as ImageSubresourceRange;
-pub use ash::vk::types::ImageTiling as ImageTiling;
-pub use ash::vk::types::ImageType as ImageType;
-pub use ash::vk::types::ImageUsageFlags as ImageUsageFlags;
-pub use ash::vk::types::ImageViewCreateFlags as ImageViewCreateFlags;
-pub use ash::vk::types::ImageViewCreateInfo as ImageViewCreateInfo;
-pub use ash::vk::types::ImageViewType as ImageViewType;
-pub use ash::vk::types::MemoryAllocateInfo as MemoryAllocateInfo;
-pub use ash::vk::types::MemoryPropertyFlags as MemoryPropertyFlags;
-pub use ash::vk::types::SampleCountFlags as SampleCountFlags;
-pub use ash::vk::types::SharingMode as SharingMode;
-pub use ash::vk::types::StructureType as StructureType;
 
 // -----------
 // LOW LEVEL TYPES
@@ -55,12 +28,173 @@ fn find_memory_type(context: &VulkanContext, type_filter: u32, properties: Memor
     0
 }
 
+
+pub fn immediate_buffer<F>(context: &VulkanContext, f: F)
+    where
+        F: FnOnce(&GrindCommandBuffer)
+{
+    // TODO: Should be TRANSIENT
+    let pool = GrindCommandPool::new(context);
+    let buffers = pool.allocate_buffers(context, 1);
+
+    // Call the function
+    buffers[0].begin(context);
+    f(&buffers[0]);
+    buffers[0].end(context);
+    
+    // Now submit the command
+    let submit = SubmitInfo {
+        s_type: StructureType::SubmitInfo,
+        p_next: ptr::null(),
+        wait_semaphore_count: 0,
+        p_wait_semaphores: ptr::null(),
+        p_wait_dst_stage_mask: ptr::null(),
+        command_buffer_count: 1,
+        p_command_buffers: &buffers[0].buffer,
+        signal_semaphore_count: 0,
+        p_signal_semaphores: ptr::null()
+    };
+
+    unsafe {
+        context.device.queue_submit(context.present_queue, &[submit], Fence::null());
+        context.device.queue_wait_idle(context.present_queue);
+    }
+
+    pool.free_buffers(context, buffers);
+    pool.destroy(context);
+}
+
+
+
 // ----------
 // HIGH-LEVEL STRUCTS
 // ----------
-pub struct Image {
-    image : vk::types::Image,
-    memory: vk::types::DeviceMemory,
+pub struct GrindCommandBuffer {
+    buffer: CommandBuffer
+}
+
+impl GrindCommandBuffer {
+    pub fn new(buffer: CommandBuffer) -> GrindCommandBuffer {
+        GrindCommandBuffer { buffer }
+    }
+
+    pub fn begin(&self, context: &VulkanContext) {
+        let cmd_create = CommandBufferBeginInfo {
+            s_type: StructureType::CommandBufferBeginInfo,
+            p_next: ptr::null(),
+            flags: CommandBufferUsageFlags::empty(),
+            p_inheritance_info: ptr::null()
+        };
+
+        unsafe { context.device.begin_command_buffer(self.buffer, &cmd_create).unwrap() };
+    }
+
+    pub fn end(&self, context: &VulkanContext) {
+        unsafe { context.device.end_command_buffer(self.buffer).unwrap() };
+    }
+
+    pub fn pipeline_barrier(&self, context: &VulkanContext, src_stage_mask: PipelineStageFlags, 
+                            dst_stage_mask: PipelineStageFlags, dependency_flags: DependencyFlags,
+                            memory_barriers: &[MemoryBarrier], buffer_memory_barriers: &[BufferMemoryBarrier],
+                            image_memory_barriers: &[ImageMemoryBarrier]) {
+        unsafe {
+            context.device.cmd_pipeline_barrier(
+            self.buffer, src_stage_mask, dst_stage_mask,
+            dependency_flags, memory_barriers, buffer_memory_barriers,
+            image_memory_barriers)
+        };
+    }
+
+    pub fn update_image_layout(&self, context: &VulkanContext, image: &GrindImage, old_layout: ImageLayout,
+                               new_layout: ImageLayout, src_stage: PipelineStageFlags,
+                               dst_stage: PipelineStageFlags, src_access: AccessFlags,
+                               dst_access: AccessFlags, base_mip_level: u32, mip_levels: u32 ) {
+        let subresource_range = ImageSubresourceRange {
+            aspect_mask: IMAGE_ASPECT_COLOR_BIT,
+            base_mip_level: base_mip_level,
+            level_count: mip_levels,
+            base_array_layer: 0,
+            layer_count: 1
+        };
+
+        let barrier = ImageMemoryBarrier {
+            s_type: StructureType::ImageMemoryBarrier,
+            p_next: ptr::null(),
+            src_access_mask: src_access,
+            dst_access_mask: dst_access,
+            old_layout: old_layout,
+            new_layout: new_layout,
+            src_queue_family_index: VK_QUEUE_FAMILY_IGNORED,
+            dst_queue_family_index: VK_QUEUE_FAMILY_IGNORED,
+            image: image.image,
+            subresource_range: subresource_range
+        };
+
+        self.pipeline_barrier(
+            context, src_stage, dst_stage,
+            DependencyFlags::empty(), &[], &[], &[barrier]);
+    }
+
+    pub fn clear_color_image(&self, context: &VulkanContext, image: GrindImage, layout: ImageLayout, clear_color: &ClearColorValue, ranges: &[ImageSubresourceRange]) {
+        unsafe { context.device.cmd_clear_color_image(self.buffer, image.image, layout, clear_color, ranges) };
+    }
+}
+
+
+pub struct GrindCommandPool {
+    pool: CommandPool
+}
+
+impl GrindCommandPool {
+    pub fn new(context: &VulkanContext) -> GrindCommandPool {
+        let commandpool_create = CommandPoolCreateInfo {
+            s_type: StructureType::CommandPoolCreateInfo,
+            p_next: ptr::null(),
+            flags: CommandPoolCreateFlags::empty(),
+            queue_family_index: context.queue_family_index as u32
+        };
+        let pool = unsafe { context.device.create_command_pool(&commandpool_create, None).unwrap() };
+
+        GrindCommandPool { pool }
+    }
+
+    pub fn allocate_buffers(&self, context: &VulkanContext, count: u32) -> Vec<GrindCommandBuffer> {
+        let commandbuffers_create = CommandBufferAllocateInfo {
+            s_type: StructureType::CommandBufferAllocateInfo,
+            p_next: ptr::null(),
+            command_pool: self.pool,
+            level: CommandBufferLevel::Primary,
+            command_buffer_count: count
+        };
+
+        let buffers = unsafe { context.device.allocate_command_buffers(&commandbuffers_create).unwrap() };
+        let mut new_buffers = Vec::new();
+        for buffer in buffers.into_iter() {
+            new_buffers.push(GrindCommandBuffer::new(buffer));
+        }
+
+        new_buffers
+    }
+
+    pub fn free_buffers(&self, context: &VulkanContext, buffers: Vec<GrindCommandBuffer>) {
+        let mut vk_buffers = Vec::new();
+
+        for buffer in buffers.into_iter() {
+            vk_buffers.push(buffer.buffer);
+        }
+
+        unsafe { context.device.free_command_buffers(self.pool, &vk_buffers) };
+    }
+
+    pub fn destroy(&self, context: &VulkanContext) {
+        unsafe { context.device.destroy_command_pool(self.pool, None) };
+    }
+
+}
+
+pub struct GrindImage {
+    pub image : Image,
+    memory: DeviceMemory,
     image_format: Format,
     width: u32,
     height: u32,
@@ -68,12 +202,12 @@ pub struct Image {
     mip_levels: u32
 }
 
-impl Image {
+impl GrindImage {
     pub fn new(context: &VulkanContext, image_type: ImageType, image_format: Format,
                width: u32, height: u32, depth: u32, mip_levels: u32, layers: u32,
                samples: SampleCountFlags, sharing_mode: SharingMode, tiling: ImageTiling,
                usage: ImageUsageFlags, layout: ImageLayout, queue_families: Vec<u32>,
-               memory_properties: MemoryPropertyFlags) -> Image{
+               memory_properties: MemoryPropertyFlags) -> GrindImage {
 
         // Check image can be created
         context.instance.get_physical_device_image_format_properties(
@@ -116,12 +250,12 @@ impl Image {
         // Bind memory to image
         unsafe { context.device.bind_image_memory(image, memory, 0).unwrap() };
 
-        Image { image, memory: memory, image_format, width, height, depth, mip_levels }
+        GrindImage { image, memory: memory, image_format, width, height, depth, mip_levels }
     }
 
     pub fn from_swapchain_image(swapchain_image: vk::types::Image, width: u32,
-                                height: u32, image_format: Format) -> Image {
-        Image {
+                                height: u32, image_format: Format) -> GrindImage {
+        GrindImage {
             image: swapchain_image,
             memory: vk::types::DeviceMemory::null(),
             image_format: image_format,
@@ -131,22 +265,34 @@ impl Image {
             mip_levels: 1
         }           
     }
+
+    pub fn clone(&self) -> GrindImage {
+        GrindImage {
+            image : self.image,
+            memory: self.memory,
+            image_format: self.image_format,
+            width: self.width,
+            height: self.height,
+            depth: self.depth,
+            mip_levels: self.mip_levels
+        }
+    }
 }
 
 
-pub struct ImageView {
-    image: Image,
-    image_view: vk::types::ImageView
+pub struct GrindImageView {
+    pub image: GrindImage,
+    image_view: ImageView
 }
 
-impl ImageView {
-    pub fn new(context: &VulkanContext, image: Image, view_type: ImageViewType,
-               format: Format, subresource_range: ImageSubresourceRange) -> ImageView {
-        ImageView::from_device(&context.device, image, view_type, format, subresource_range)
+impl GrindImageView {
+    pub fn new(context: &VulkanContext, image: GrindImage, view_type: ImageViewType,
+               format: Format, subresource_range: ImageSubresourceRange) -> GrindImageView {
+        GrindImageView::from_device(&context.device, image, view_type, format, subresource_range)
     }
 
-    pub fn from_device(device: &Device, image: Image, view_type: ImageViewType,
-                       format: Format, subresource_range: ImageSubresourceRange) -> ImageView {
+    pub fn from_device(device: &Device, image: GrindImage, view_type: ImageViewType,
+                       format: Format, subresource_range: ImageSubresourceRange) -> GrindImageView {
         let components = ComponentMapping {
             r: ComponentSwizzle::Identity,
             g: ComponentSwizzle::Identity,
@@ -167,6 +313,6 @@ impl ImageView {
 
         let image_view = unsafe { device.create_image_view(&image_view_create, None).unwrap() };
 
-        ImageView { image, image_view }
+        GrindImageView { image, image_view }
     }
 }

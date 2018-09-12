@@ -46,152 +46,41 @@ pub fn is_available() -> bool {
 
 pub struct VulkanDriver {
     context: VulkanContext
-    //renderer: Renderer,
-    //callback: DebugCallback,
 }
 
 impl VulkanDriver {
+    // Create driver from wayland
     pub fn from_wayland(display: *mut c_void, wl_egl_window: &WlEglWindow) -> VulkanDriver {
         VulkanDriver{
             context: VulkanContext::new("TEST".to_string())
         }
-    }
-    /*pub fn from_wayland(display: *mut c_void, wl_egl_window: &WlEglWindow) -> VulkanDriver {
-        // Instance
-        let ideal = InstanceExtensions {
-            khr_surface: true,
-            khr_wayland_surface: true,
-            ext_debug_report: true,
-            ..InstanceExtensions::none()
-        };
-
-        let extensions = {
-            match InstanceExtensions::supported_by_core() {
-                Ok(supported) => supported.intersection(&ideal),
-                Err(_) => InstanceExtensions::none(),
-            }
-        };
-
-        // DEBUG with layer
-        let layer = "VK_LAYER_LUNARG_standard_validation";
-        let layers = vec![&layer];
-        let instance = Instance::new(None, &extensions, layers).expect("Can't create Instance");
-
-        let mut mt = MessageTypes::none();
-        mt.information = false;
-        mt.debug = false;
-        mt.warning = true;
-        mt.error = true;
-        let callback = DebugCallback::new(&instance, mt, |msg| {
-            println!("Debug callback: {:?}", msg.description);
-        }).ok()
-            .unwrap();
-
-        // Physical device
-        let physical_device = PhysicalDevice::enumerate(&instance)
-            .next()
-            .expect("no device available");
-
-        // Surface
-        let surface = unsafe {
-            Surface::from_wayland(
-                instance.clone(),
-                display,
-                wl_egl_window.surface,
-                Unique::new(display).unwrap(),
-            )
-        }.expect("Can't create surface");
-
-        // Queue family
-        let queue_family = {
-            let mut qr = None;
-            for qf in physical_device.queue_families() {
-                if surface.is_supported(qf).unwrap() {
-                    qr = Some(qf);
-                }
-            }
-            if qr.is_none() {
-                panic!("No queue family available");
-            } else {
-                qr.unwrap()
-            }
-        };
-
-        // Logical device
-        let (device, mut queues) = {
-            let device_ext = DeviceExtensions {
-                khr_swapchain: true,
-                ..DeviceExtensions::none()
-            };
-
-            match Device::new(
-                physical_device,
-                physical_device.supported_features(),
-                &device_ext,
-                Some((queue_family, 1.0)),
-            ) {
-                Ok(d) => d,
-                Err(err) => panic!("Couldn't build device: {:?}", err),
-            }
-        };
-
-        // Get queue
-        let queue = queues.next().unwrap();
-
-        // Create swapchain
-        let (mut swapchain, mut images) = {
-            let caps = surface
-                .capabilities(physical_device)
-                .expect("failed to get surface capabilities");
-
-            //let alpha = caps.supported_composite_alpha.iter().next().unwrap();
-
-            // The format must be a Unorm one
-            fn get_best_format(caps: &Capabilities) -> Format {
-                for (format, color_space) in caps.supported_formats.iter() {
-                    if *format == Format::B8G8R8A8Unorm
-                        || *format == Format::R8G8B8A8Unorm
-                            && *color_space == ColorSpace::SrgbNonLinear
-                    {
-                        return *format;
-                    }
-                }
-                panic!("No acceptable format");
-            }
-            let format = get_best_format(&caps);
-
-            let dimensions = [wl_egl_window.width, wl_egl_window.height];
-            let num_images = caps.min_image_count;
-            Swapchain::new(
-                device.clone(),
-                surface.clone(),
-                num_images,
-                format,
-                dimensions,
-                1,
-                caps.supported_usage_flags,
-                SharingMode::Exclusive(0),
-                SurfaceTransform::Identity,
-                CompositeAlpha::Opaque,
-                PresentMode::Fifo,
-                true,
-                None,
-            ).expect("failed to create swapchain")
-        };
-
-        VulkanDriver {
-            callback,
-            renderer: Renderer::new(device, surface, queue, swapchain, images),
-        }
-    }*/
-    
+    }    
 
     pub fn clear(&mut self, colors: [f32; 4]) {
-        //self.renderer.clear(colors);
+        let clear_color = vo::ClearColorValue {
+            float32: colors
+        };
+
+        let ranges = vo::ImageSubresourceRange {
+            aspect_mask: vo::IMAGE_ASPECT_COLOR_BIT,
+            base_mip_level: 0,
+            level_count: 1,
+            base_array_layer: 0,
+            layer_count: 1
+        };
+
+        vo::immediate_buffer(&self.context, |cmd| {
+            cmd.clear_color_image(
+                &self.context,
+                self.context.get_current_image(),
+                vo::ImageLayout::TransferDstOptimal,
+                &clear_color, 
+                &[ranges]);
+        });
     }
 
     pub fn present(&mut self) {
-        //self.renderer.present();
+        self.context.present(&[]);
     }
 
     pub fn new_buffer(&self) -> Buffer {

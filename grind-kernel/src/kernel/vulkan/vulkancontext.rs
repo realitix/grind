@@ -13,12 +13,16 @@ use ash::Instance;
 
 use kernel::vulkan::vulkanobject::IMAGE_ASPECT_COLOR_BIT;
 use kernel::vulkan::vulkanobject::Device;
-use kernel::vulkan::vulkanobject::Image;
+use kernel::vulkan::vulkanobject::GrindImage;
 use kernel::vulkan::vulkanobject::ImageAspectFlags;
-use kernel::vulkan::vulkanobject::ImageView;
+use kernel::vulkan::vulkanobject::GrindImageView;
 use kernel::vulkan::vulkanobject::ImageViewType;
 use kernel::vulkan::vulkanobject::ImageSubresourceRange;
 use kernel::vulkan::vulkanobject::Format;
+use kernel::vulkan::vulkanobject::Fence;
+use kernel::vulkan::vulkanobject::Semaphore;
+
+use kernel::vulkan::vulkanobject as vo;
 
 #[cfg(all(unix, not(target_os = "android")))]
 fn extension_names() -> Vec<*const i8> {
@@ -64,7 +68,8 @@ pub struct VulkanContext {
     pub present_queue: vk::Queue,
     pub swapchain_loader: Swapchain,
     pub swapchain: vk::SwapchainKHR,
-    pub swapchain_image_views: Vec<ImageView>
+    pub swapchain_image_views: Vec<GrindImageView>,
+    pub current_swapchain_image: u32
     /*
     pub present_image_views: Vec<vk::ImageView>,
 
@@ -160,8 +165,7 @@ impl VulkanContext {
         }
     }
 
-    fn create_physical_device<E: EntryV1_0, I: InstanceV1_0>(
-        entry: &E,
+    fn create_physical_device<I: InstanceV1_0>(
         instance: &I,
         surface_loader: &Surface,
         surface: &vk::SurfaceKHR,
@@ -249,7 +253,7 @@ impl VulkanContext {
         swapchain_loader: &Swapchain,
         width: u32,
         height: u32
-    ) -> (vk::SwapchainKHR, Vec<ImageView>) {
+    ) -> (vk::SwapchainKHR, Vec<GrindImageView>) {
         let surface_formats = surface_loader
             .get_physical_device_surface_formats_khr(*physical_device, *surface)
             .unwrap();
@@ -320,13 +324,14 @@ impl VulkanContext {
             .unwrap()
         };
 
-        // Create image views
         let raw_images = swapchain_loader
             .get_swapchain_images_khr(swapchain)
             .unwrap();
-        let mut image_views: Vec<ImageView> = Vec::new();
+
+        // Create image views
+        let mut image_views: Vec<GrindImageView> = Vec::new();
         for raw_image in raw_images.into_iter() {
-            let image = Image::from_swapchain_image(
+            let image = GrindImage::from_swapchain_image(
                 raw_image, surface_resolution.width,
                 surface_resolution.height, surface_format.format);
             let subresource_range = ImageSubresourceRange {
@@ -336,13 +341,27 @@ impl VulkanContext {
                 base_array_layer: 0,
                 layer_count: 1
             };
-            let image_view = ImageView::from_device(
+            let image_view = GrindImageView::from_device(
                 device, image, ImageViewType::Type2d,
                 surface_format.format, subresource_range);
             image_views.push(image_view);
         }
 
         (swapchain, image_views)
+    }
+
+    fn update_swpachain_layout(context: &VulkanContext) {
+        // Update layout to present_src_khr
+        for image_view in context.swapchain_image_views.iter() {
+            let swapchain_image = &image_view.image;
+            vo::immediate_buffer(context, |cmd| {
+                cmd.update_image_layout(
+                    context, swapchain_image, vo::ImageLayout::Undefined,
+                    vo::ImageLayout::PresentSrcKhr, vo::PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                    vo::PIPELINE_STAGE_TOP_OF_PIPE_BIT, vo::AccessFlags::empty(),
+                    vo::ACCESS_MEMORY_READ_BIT, 0, 1);
+            });
+        }
     }
 
     pub fn new(app_name: String) -> VulkanContext {
@@ -352,15 +371,16 @@ impl VulkanContext {
         let surface = VulkanContext::create_surface(&entry, &instance);
         let surface_loader = Surface::new(&entry, &instance).expect("Unable to load the Surface extension");
         let (physical_device, queue_family_index) =
-            VulkanContext::create_physical_device(&entry, &instance, &surface_loader, &surface);
+            VulkanContext::create_physical_device(&instance, &surface_loader, &surface);
         let (device, present_queue) =
             VulkanContext::create_device(&instance, &physical_device, queue_family_index as u32);
         let swapchain_loader = Swapchain::new(&instance, &device).expect("Unable to load swapchain");
         let (swapchain, swapchain_image_views) = VulkanContext::create_swapchain(
             &instance, &physical_device, &device, &surface_loader, &surface,
             &swapchain_loader, 200, 200);
+        let current_swapchain_image = VulkanContext::acquire_next_image(&swapchain_loader, swapchain);
         
-        VulkanContext {
+        let context = VulkanContext {
             entry,
             instance,
             device,
@@ -371,7 +391,46 @@ impl VulkanContext {
             present_queue,
             swapchain_loader,
             swapchain,
-            swapchain_image_views
-        }
+            swapchain_image_views,
+            current_swapchain_image
+        };
+
+        VulkanContext::update_swpachain_layout(&context);
+
+        context
+    }
+
+    // Acquire next swapchain image
+    fn acquire_next_image(swapchain_loader: &Swapchain, swapchain: vk::SwapchainKHR) -> u32 {
+        let index = unsafe {
+            swapchain_loader.acquire_next_image_khr(
+                swapchain, u64::max_value(), Semaphore::null(), Fence::null()).unwrap()
+        };
+
+        index
+    }
+
+    pub fn acquire(&self) -> u32 {
+        VulkanContext::acquire_next_image(&self.swapchain_loader, self.swapchain)
+    }
+
+    pub fn get_current_image(&self) -> GrindImage {
+        self.swapchain_image_views[self.current_swapchain_image as usize].image.clone()
+    }
+
+    pub fn present(&self, semaphores: &[vo::Semaphore]) {
+        let create_info = vo::PresentInfoKHR {
+            s_type: vo::StructureType::PresentInfoKhr,
+            p_next: ptr::null(),
+            wait_semaphore_count: semaphores.len() as u32,
+            p_wait_semaphores: semaphores.as_ptr(),
+            swapchain_count: 1,
+            p_swapchains: &self.swapchain,
+            p_image_indices: &self.current_swapchain_image,
+            p_results: ptr::null_mut()
+        };
+
+        unsafe { self.swapchain_loader.queue_present_khr(self.present_queue, &create_info).unwrap() };
+        self.device.device_wait_idle().unwrap();
     }
 }
