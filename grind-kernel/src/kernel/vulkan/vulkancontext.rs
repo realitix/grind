@@ -117,7 +117,7 @@ impl VulkanContext {
         let debug_info = vk::DebugReportCallbackCreateInfoEXT {
             s_type: vk::StructureType::DebugReportCallbackCreateInfoExt,
             p_next: ptr::null(),
-            flags: vk::DEBUG_REPORT_ERROR_BIT_EXT | vk::DEBUG_REPORT_WARNING_BIT_EXT | vk::DEBUG_REPORT_DEBUG_BIT_EXT
+            flags: vk::DEBUG_REPORT_ERROR_BIT_EXT | vk::DEBUG_REPORT_WARNING_BIT_EXT
                 | vk::DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT,
             pfn_callback: vulkan_debug_callback,
             p_user_data: ptr::null_mut(),
@@ -139,8 +139,6 @@ impl VulkanContext {
             flags: Default::default(),
             display: display as *mut _,
             surface: surface as *mut _
-            //display: &mut display as *mut *const c_void,
-            //surface: &mut surface as *mut *const c_void
         };
         let wayland_surface_loader = vo::WaylandSurface::new(entry, instance).expect("Unable to load wayland surface");
 
@@ -273,12 +271,6 @@ impl VulkanContext {
             .nth(0)
             .expect("Unable to find suitable surface format.");
             
-
-        /*let surface_format = vk::SurfaceFormatKHR {
-            format: vk::Format::B8g8r8Unorm,
-            color_space: vo::ColorSpaceKHR::SrgbNonlinear
-        };*/
-            
         let surface_capabilities = surface_loader
             .get_physical_device_surface_capabilities_khr(*physical_device, *surface)
             .unwrap();
@@ -362,13 +354,13 @@ impl VulkanContext {
         (swapchain, image_views)
     }
 
-    fn update_swapchain_layout(context: &VulkanContext) {
+    fn update_swapchain_layout(&self) {
         // Update layout to present_src_khr
-        for image_view in context.swapchain_image_views.iter() {
+        for image_view in self.swapchain_image_views.iter() {
             let swapchain_image = &image_view.image;
-            vo::immediate_buffer(context, |cmd| {
+            vo::immediate_buffer(self, |cmd| {
                 cmd.update_image_layout(
-                    context, swapchain_image, vo::ImageLayout::Undefined,
+                    self, swapchain_image, vo::ImageLayout::Undefined,
                     vo::ImageLayout::PresentSrcKhr, vo::PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                     vo::PIPELINE_STAGE_TOP_OF_PIPE_BIT, vo::AccessFlags::empty(),
                     vo::ACCESS_MEMORY_READ_BIT, 0, 1);
@@ -393,13 +385,8 @@ impl VulkanContext {
         let (swapchain, swapchain_image_views) = VulkanContext::create_swapchain(
             &physical_device, &device, &surface_loader, &surface,
             &swapchain_loader, 200, 200);
-            
-
-
-        let current_swapchain_image = VulkanContext::acquire_next_image(&swapchain_loader, swapchain);
         
-        
-        let context = VulkanContext {
+        let mut context = VulkanContext {
             entry,
             instance,
             device,
@@ -411,25 +398,22 @@ impl VulkanContext {
             swapchain_loader,
             swapchain,
             swapchain_image_views,
-            current_swapchain_image
+            current_swapchain_image: 0
         };
 
-        VulkanContext::update_swapchain_layout(&context);
+        let signal_semaphore = context.acquire();
+        context.update_swapchain_layout();
         context
     }
 
-    // Acquire next swapchain image
-    fn acquire_next_image(swapchain_loader: &Swapchain, swapchain: vk::SwapchainKHR) -> u32 {
-        let index = unsafe {
-            swapchain_loader.acquire_next_image_khr(
-                swapchain, u64::max_value(), Semaphore::null(), Fence::null()).unwrap()
+    pub fn acquire(&mut self) -> vo::GrindSemaphore {
+        let sem = vo::GrindSemaphore::new(self);
+        self.current_swapchain_image  = unsafe {
+            self.swapchain_loader.acquire_next_image_khr(
+                self.swapchain, u64::max_value(), sem.semaphore, Fence::null()).unwrap()
         };
 
-        index
-    }
-
-    pub fn acquire(&self) -> u32 {
-        VulkanContext::acquire_next_image(&self.swapchain_loader, self.swapchain)
+        sem
     }
 
     pub fn get_current_image(&self) -> GrindImage {

@@ -317,3 +317,21 @@ impl GrindImageView {
         GrindImageView { image, image_view }
     }
 }
+
+
+pub struct GrindSemaphore {
+    pub semaphore: Semaphore
+}
+
+impl GrindSemaphore {
+    pub fn new(context: &VulkanContext) -> GrindSemaphore {
+        let semaphore_create_info = SemaphoreCreateInfo {
+            s_type: StructureType::SemaphoreCreateInfo,
+            p_next: ptr::null(),
+            flags: Default::default(),
+        };
+        let semaphore = unsafe { context.device.create_semaphore(&semaphore_create_info, None).unwrap() };
+
+        GrindSemaphore { semaphore }
+    }
+}
