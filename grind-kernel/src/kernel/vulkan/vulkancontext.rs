@@ -117,8 +117,8 @@ impl VulkanContext {
         let debug_info = vk::DebugReportCallbackCreateInfoEXT {
             s_type: vk::StructureType::DebugReportCallbackCreateInfoExt,
             p_next: ptr::null(),
-            flags: vk::DEBUG_REPORT_ERROR_BIT_EXT | vk::DEBUG_REPORT_WARNING_BIT_EXT
-                | vk::DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | vk::DEBUG_REPORT_INFORMATION_BIT_EXT,
+            flags: vk::DEBUG_REPORT_ERROR_BIT_EXT | vk::DEBUG_REPORT_WARNING_BIT_EXT | vk::DEBUG_REPORT_DEBUG_BIT_EXT
+                | vk::DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT,
             pfn_callback: vulkan_debug_callback,
             p_user_data: ptr::null_mut(),
         };
@@ -137,8 +137,10 @@ impl VulkanContext {
             s_type: vo::StructureType::WaylandSurfaceCreateInfoKhr,
             p_next: ptr::null(),
             flags: Default::default(),
-            display: &mut display,
-            surface: &mut surface
+            display: display as *mut _,
+            surface: surface as *mut _
+            //display: &mut display as *mut *const c_void,
+            //surface: &mut surface as *mut *const c_void
         };
         let wayland_surface_loader = vo::WaylandSurface::new(entry, instance).expect("Unable to load wayland surface");
 
@@ -222,6 +224,7 @@ impl VulkanContext {
             p_queue_priorities: priorities.as_ptr(),
             queue_count: priorities.len() as u32,
         };
+
         let device_create_info = vk::DeviceCreateInfo {
             s_type: vk::StructureType::DeviceCreateInfo,
             p_next: ptr::null(),
@@ -255,11 +258,9 @@ impl VulkanContext {
         width: u32,
         height: u32
     ) -> (vk::SwapchainKHR, Vec<GrindImageView>) {
-        // c'est ici le probleme
         let surface_formats = surface_loader
             .get_physical_device_surface_formats_khr(*physical_device, *surface)
             .unwrap();
-        panic!("TOTO 3");
         let surface_format = surface_formats
             .iter()
             .map(|sfmt| match sfmt.format {
@@ -271,6 +272,12 @@ impl VulkanContext {
             })
             .nth(0)
             .expect("Unable to find suitable surface format.");
+            
+
+        /*let surface_format = vk::SurfaceFormatKHR {
+            format: vk::Format::B8g8r8Unorm,
+            color_space: vo::ColorSpaceKHR::SrgbNonlinear
+        };*/
             
         let surface_capabilities = surface_loader
             .get_physical_device_surface_capabilities_khr(*physical_device, *surface)
