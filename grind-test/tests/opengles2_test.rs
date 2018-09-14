@@ -83,11 +83,16 @@ fn basic_clear() {
 
 
     egl::make_current(egl_display, surface, surface, context);
-    /*
     
-    gl::clear_color(1., 0., 0., 1.);
+    gl::clear_color(1., 1., 0., 1.);
     gl::clear(gl::COLOR_BUFFER_BIT);
     egl::swap_buffers(egl_display, surface);
+
+        use std::thread;
+        use std::time;
+        let toto = time::Duration::from_secs(15);
+        thread::sleep(toto);
+    /*
     let data = gl::read_pixels(0, 0, width, height, gl::RGBA, gl::UNSIGNED_BYTE);
     println!("data size: {}", data.len());
     image::save_buffer(

@@ -310,7 +310,7 @@ impl VulkanContext {
             image_color_space: surface_format.color_space,
             image_format: surface_format.format,
             image_extent: surface_resolution.clone(),
-            image_usage: vk::IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            image_usage: vo::IMAGE_USAGE_COLOR_ATTACHMENT_BIT | vo::IMAGE_USAGE_TRANSFER_DST_BIT,
             image_sharing_mode: vk::SharingMode::Exclusive,
             pre_transform: pre_transform,
             composite_alpha: vk::COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
@@ -361,11 +361,22 @@ impl VulkanContext {
             vo::immediate_buffer(self, |cmd| {
                 cmd.update_image_layout(
                     self, swapchain_image, vo::ImageLayout::Undefined,
-                    vo::ImageLayout::PresentSrcKhr, vo::PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                    vo::PIPELINE_STAGE_TOP_OF_PIPE_BIT, vo::AccessFlags::empty(),
-                    vo::ACCESS_MEMORY_READ_BIT, 0, 1);
+                    vo::ImageLayout::TransferDstOptimal, vo::PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                    vo::PIPELINE_STAGE_TRANSFER_BIT, vo::AccessFlags::empty(),
+                    vo::ACCESS_TRANSFER_WRITE_BIT, 0, 1);
             });
         }
+    }
+
+    fn update_swapchain_image_for_present(&self) {
+        let swapchain_image = &self.swapchain_image_views[self.current_swapchain_image as usize].image;
+        vo::immediate_buffer(self, |cmd| {
+            cmd.update_image_layout(
+                self, swapchain_image, vo::ImageLayout::TransferDstOptimal,
+                vo::ImageLayout::PresentSrcKhr, vo::PIPELINE_STAGE_TRANSFER_BIT,
+                vo::PIPELINE_STAGE_ALL_GRAPHICS_BIT, vo::ACCESS_TRANSFER_WRITE_BIT,
+                vo::ACCESS_MEMORY_READ_BIT, 0, 1);
+        });
     }
 
     pub fn new(display_ptr: *const c_void, surface_ptr: *const c_void) -> VulkanContext {
@@ -421,6 +432,8 @@ impl VulkanContext {
     }
 
     pub fn present(&self, semaphores: &[vo::Semaphore]) {
+        self.update_swapchain_image_for_present();
+        
         let create_info = vo::PresentInfoKHR {
             s_type: vo::StructureType::PresentInfoKhr,
             p_next: ptr::null(),
