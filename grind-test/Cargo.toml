@@ -9,7 +9,7 @@ description = "The Test of GRIND"
 name = "grindtest"
 crate-type = ["lib"]
 
-[dev-dependencies]
+[dependencies]
 egl-rs = { path = "../../egl-rs" }
 opengles2-rs = { path = "../../opengles2-rs" }
 wayland-client = "*"

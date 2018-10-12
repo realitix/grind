@@ -2,6 +2,7 @@ use std::ffi::CStr;
 use std::io::Read;
 use std::mem;
 use std::sync::Arc;
+use std::slice;
 
 use glsltranspiler::{transpile, ShaderType};
 use shaderc::{CompilationArtifact, CompileOptions, Compiler, ShaderKind};
@@ -39,9 +40,27 @@ impl Shader {
     ) {
         let mut result = String::new();
         for i in 0..count {
-            let slice = unsafe { CStr::from_ptr(*string.offset(i as isize)) };
-            let clean_slice = slice.to_str().unwrap();
-            result.push_str(clean_slice);
+            let with_len = !length.is_null();
+            let clean_line;
+
+            if with_len {
+                let mut len_line = unsafe { *length.offset(i as isize) };
+                if len_line == 0 {
+                    continue;
+                }
+                len_line += 1;
+                let data_line = unsafe { *string.offset(i as isize) as *const u8 };
+                let slice_ptr = unsafe { slice::from_raw_parts(data_line, len_line as usize) };
+                let line = unsafe { CStr::from_bytes_with_nul_unchecked(slice_ptr) };
+                clean_line = line.to_str().unwrap();
+            }
+            else {
+                let data_line = unsafe { *string.offset(i as isize) };
+                let line = unsafe { CStr::from_ptr(data_line) };
+                clean_line = line.to_str().unwrap();
+            }
+            
+            result.push_str(clean_line);
             result.push('\n');
         }
 
@@ -101,7 +120,7 @@ impl ShaderProgram {
         match t {
             VERTEX_SHADER => self.vertex_id = Some(shader.id),
             FRAGMENT_SHADER => self.fragment_id = Some(shader.id),
-            _ => {}
+            _ => panic!("Must be a vertex or fragment shader")
         };
     }
 

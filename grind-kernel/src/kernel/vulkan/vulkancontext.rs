@@ -301,6 +301,7 @@ impl VulkanContext {
             .cloned()
             .find(|&mode| mode == vk::PresentModeKHR::Mailbox)
             .unwrap_or(vk::PresentModeKHR::Fifo);
+        let image_usage = vo::IMAGE_USAGE_COLOR_ATTACHMENT_BIT | vo::IMAGE_USAGE_TRANSFER_DST_BIT | vo::IMAGE_USAGE_TRANSFER_SRC_BIT;
         let swapchain_create_info = vk::SwapchainCreateInfoKHR {
             s_type: vk::StructureType::SwapchainCreateInfoKhr,
             p_next: ptr::null(),
@@ -310,7 +311,7 @@ impl VulkanContext {
             image_color_space: surface_format.color_space,
             image_format: surface_format.format,
             image_extent: surface_resolution.clone(),
-            image_usage: vo::IMAGE_USAGE_COLOR_ATTACHMENT_BIT | vo::IMAGE_USAGE_TRANSFER_DST_BIT,
+            image_usage: image_usage,
             image_sharing_mode: vk::SharingMode::Exclusive,
             pre_transform: pre_transform,
             composite_alpha: vk::COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
@@ -355,31 +356,19 @@ impl VulkanContext {
     }
 
     fn update_swapchain_layout(&self) {
-        // Update layout to present_src_khr
         for image_view in self.swapchain_image_views.iter() {
             let swapchain_image = &image_view.image;
             vo::immediate_buffer(self, |cmd| {
-                cmd.update_image_layout(
+                 cmd.update_image_layout(
                     self, swapchain_image, vo::ImageLayout::Undefined,
-                    vo::ImageLayout::TransferDstOptimal, vo::PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-                    vo::PIPELINE_STAGE_TRANSFER_BIT, vo::AccessFlags::empty(),
-                    vo::ACCESS_TRANSFER_WRITE_BIT, 0, 1);
+                    vo::ImageLayout::ColorAttachmentOptimal, vo::PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                    vo::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, vo::AccessFlags::empty(),
+                    vo::ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0, 1);
             });
         }
     }
 
-    fn update_swapchain_image_for_present(&self) {
-        let swapchain_image = &self.swapchain_image_views[self.current_swapchain_image as usize].image;
-        vo::immediate_buffer(self, |cmd| {
-            cmd.update_image_layout(
-                self, swapchain_image, vo::ImageLayout::TransferDstOptimal,
-                vo::ImageLayout::PresentSrcKhr, vo::PIPELINE_STAGE_TRANSFER_BIT,
-                vo::PIPELINE_STAGE_ALL_GRAPHICS_BIT, vo::ACCESS_TRANSFER_WRITE_BIT,
-                vo::ACCESS_MEMORY_READ_BIT, 0, 1);
-        });
-    }
-
-    pub fn new(display_ptr: *const c_void, surface_ptr: *const c_void) -> VulkanContext {
+    pub fn new(display_ptr: *const c_void, surface_ptr: *const c_void, width: u32, height: u32) -> VulkanContext {
         let app_name = "TEST".to_string();
         let entry = Entry::new().unwrap();
         let instance = VulkanContext::create_instance(&entry, app_name);
@@ -395,7 +384,7 @@ impl VulkanContext {
         // ca plante ici maintenant
         let (swapchain, swapchain_image_views) = VulkanContext::create_swapchain(
             &physical_device, &device, &surface_loader, &surface,
-            &swapchain_loader, 200, 200);
+            &swapchain_loader, width, height);
         
         let mut context = VulkanContext {
             entry,
@@ -431,8 +420,21 @@ impl VulkanContext {
         self.swapchain_image_views[self.current_swapchain_image as usize].image.clone()
     }
 
-    pub fn present(&self, semaphores: &[vo::Semaphore]) {
-        self.update_swapchain_image_for_present();
+    pub fn wait_device_idle(&self) {
+        self.device.device_wait_idle().unwrap();
+    }
+
+    pub fn present(&mut self, semaphores: &[vo::Semaphore]) {
+        let swapchain_image = &self.swapchain_image_views[self.current_swapchain_image as usize].image;
+
+        // Pass to present layout
+        vo::immediate_buffer(self, |cmd| {
+            cmd.update_image_layout(
+                self, swapchain_image, vo::ImageLayout::ColorAttachmentOptimal,
+                vo::ImageLayout::PresentSrcKhr, vo::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                vo::PIPELINE_STAGE_ALL_GRAPHICS_BIT, vo::ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                vo::ACCESS_MEMORY_READ_BIT, 0, 1);
+        });
         
         let create_info = vo::PresentInfoKHR {
             s_type: vo::StructureType::PresentInfoKhr,
@@ -446,6 +448,16 @@ impl VulkanContext {
         };
 
         unsafe { self.swapchain_loader.queue_present_khr(self.present_queue, &create_info).unwrap() };
-        self.device.device_wait_idle().unwrap();
+        self.wait_device_idle();
+
+        // Switch back to color buffer
+        vo::immediate_buffer(self, |cmd| {
+            cmd.update_image_layout(
+                self, swapchain_image, 
+                vo::ImageLayout::PresentSrcKhr, vo::ImageLayout::ColorAttachmentOptimal,
+                vo::PIPELINE_STAGE_ALL_GRAPHICS_BIT, vo::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                vo::ACCESS_MEMORY_READ_BIT, vo::ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 
+                0, 1);
+        });
     }
 }

@@ -25,7 +25,6 @@ fn find_memory_type(context: &VulkanContext, type_filter: u32, properties: Memor
             return i as u32;
         }
     }
-
     0
 }
 
@@ -70,6 +69,55 @@ pub fn immediate_buffer<F>(context: &VulkanContext, f: F)
 // ----------
 // HIGH-LEVEL STRUCTS
 // ----------
+pub struct GrindBuffer {
+    buffer: Buffer,
+    memory: DeviceMemory,
+    size: DeviceSize
+}
+
+impl GrindBuffer {
+    pub fn new(context: &VulkanContext, size: DeviceSize, usage: BufferUsageFlags, memory_properties: MemoryPropertyFlags) -> GrindBuffer {
+        // Create buffer
+        let buffer_create = BufferCreateInfo {
+            s_type: StructureType::BufferCreateInfo,
+            p_next: ptr::null(),
+            flags: BufferCreateFlags::empty(),
+            size: size,
+            usage: usage,
+            sharing_mode: SharingMode::Exclusive,
+            queue_family_index_count: 1,
+            p_queue_family_indices: &(context.queue_family_index as u32)
+        };
+        let buffer = unsafe { context.device.create_buffer(&buffer_create, None).unwrap() };
+
+        // Create memory
+        let requirements = context.device.get_buffer_memory_requirements(buffer);
+        let memory_create = MemoryAllocateInfo {
+            s_type: StructureType::MemoryAllocateInfo,
+            p_next: ptr::null(),
+            allocation_size: requirements.size,
+            memory_type_index: find_memory_type(context, requirements.memory_type_bits, memory_properties)
+        };
+        let memory = unsafe { context.device.allocate_memory(&memory_create, None).unwrap() };
+
+        // Bind memory to buffer
+        unsafe { context.device.bind_buffer_memory(buffer, memory, 0).unwrap() };
+
+        GrindBuffer {
+            buffer, memory, size
+        }
+    }
+
+    pub fn bind<F>(&self, context: &VulkanContext, f: F) 
+    where
+        F: FnOnce(*mut c_void)
+    {
+        let data = unsafe { context.device.map_memory(self.memory, 0, self.size, MemoryMapFlags::empty()).unwrap() };
+        f(data);
+        unsafe { context.device.unmap_memory(self.memory) };
+    }
+}
+
 pub struct GrindCommandBuffer {
     buffer: CommandBuffer
 }
@@ -136,8 +184,44 @@ impl GrindCommandBuffer {
             DependencyFlags::empty(), &[], &[], &[barrier]);
     }
 
-    pub fn clear_color_image(&self, context: &VulkanContext, image: GrindImage, layout: ImageLayout, clear_color: &ClearColorValue, ranges: &[ImageSubresourceRange]) {
+    pub fn clear_color_image(&self, context: &VulkanContext, image: &GrindImage, layout: ImageLayout, clear_color: &ClearColorValue, ranges: &[ImageSubresourceRange]) {
         unsafe { context.device.cmd_clear_color_image(self.buffer, image.image, layout, clear_color, ranges) };
+    }
+
+    // Image must be to TransferDstOptimal layout
+    pub fn copy_image_to_buffer(&self, context: &VulkanContext, image: &GrindImage, buffer: &GrindBuffer) {
+        let image_subresource = ImageSubresourceLayers {
+            aspect_mask: IMAGE_ASPECT_COLOR_BIT,
+            mip_level: 0,
+            base_array_layer: 0,
+            layer_count: 1
+        };
+        let image_offset = Offset3D {
+            x: 0, y: 0, z: 0
+        };
+        let image_extent = Extent3D {
+            width: image.width,
+            height: image.height,
+            depth: image.depth
+        };
+        let region = BufferImageCopy {
+            buffer_offset: 0,
+            buffer_row_length: 0,
+            buffer_image_height: 0,
+            image_subresource: image_subresource,
+            image_offset: image_offset,
+            image_extent: image_extent
+        };
+
+        unsafe {
+            context.device.cmd_copy_image_to_buffer(
+                self.buffer,
+                image.image,
+                ImageLayout::TransferSrcOptimal,
+                buffer.buffer,
+                &[region]
+            );
+        }
     }
 }
 

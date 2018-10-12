@@ -2,8 +2,10 @@ extern crate egl;
 extern crate image;
 extern crate opengles2 as gl;
 extern crate wayland_client;
+extern crate grindtest;
 
 use std::path::Path;
+use std::ptr;
 
 use wayland_client::egl::WlEglSurface;
 use wayland_client::protocol::wl_compositor::RequestsTrait as CompositorRequests;
@@ -12,6 +14,27 @@ use wayland_client::protocol::wl_shell::RequestsTrait as ShellRequests;
 use wayland_client::protocol::wl_shell_surface::RequestsTrait as ShellSurfaceRequests;
 use wayland_client::protocol::{wl_compositor, wl_shell, wl_shell_surface, wl_shm};
 use wayland_client::{Display, GlobalManager, Proxy};
+
+use grindtest::ShaderProgram;
+
+fn get_triangle_vbo(program: &ShaderProgram) -> gl::Uint {
+    let vbos = gl::gen_buffers(1);
+    let vbo = vbos[0];
+
+    let vertex_data: Vec<f32> = vec![
+        0.75, 0.75, 0.0,
+        -0.75, -0.75, 0.0,
+        0.75, -0.75, 0.0
+    ];
+
+    gl::bind_buffer(gl::ARRAY_BUFFER, vbo);
+    gl::buffer_data(gl::ARRAY_BUFFER, 4*vertex_data.len() as i64, vertex_data.as_slice().as_ptr() as *const gl::Void, gl::STATIC_DRAW);
+    gl::enable_vertex_attrib_array(program.get_attrib_location(&"vin_position") as u32);
+    gl::vertex_attrib_pointer(program.get_attrib_location(&"vin_position") as u32, 3, gl::FLOAT, gl::FALSE as u8, 0, ptr::null());
+
+    gl::bind_buffer(gl::ARRAY_BUFFER, 0);
+    vbo
+}
 
 #[test]
 fn basic_clear() {
@@ -81,33 +104,36 @@ fn basic_clear() {
         vec![egl::CONTEXT_CLIENT_VERSION, 2, egl::NONE, egl::NONE],
     );
 
-
     egl::make_current(egl_display, surface, surface, context);
-    
+
+    let program = ShaderProgram::new("test.vert", "test.frag");
+    let vbo = get_triangle_vbo(&program);
+
+    // Rendering    
     gl::clear_color(1., 1., 0., 1.);
     gl::clear(gl::COLOR_BUFFER_BIT);
+    gl::use_program(program.program);
+    gl::bind_buffer(gl::ARRAY_BUFFER, vbo);
+    gl::draw_arrays(gl::TRIANGLES, 0, 3);
+
+    // Get image buffer
+    let data = gl::read_pixels(0, 0, width, height, gl::RGBA, gl::UNSIGNED_BYTE);
     egl::swap_buffers(egl_display, surface);
 
-        use std::thread;
-        use std::time;
-        let toto = time::Duration::from_secs(15);
-        thread::sleep(toto);
-    /*
-    let data = gl::read_pixels(0, 0, width, height, gl::RGBA, gl::UNSIGNED_BYTE);
-    println!("data size: {}", data.len());
+    
     image::save_buffer(
         &Path::new("test_image.bmp"),
         &data,
         width as u32,
         height as u32,
         image::RGBA(8),
-    );
+    ).unwrap();
 
     egl::make_current(
         egl_display,
         egl::NO_SURFACE,
         egl::NO_SURFACE,
         egl::NO_CONTEXT,
-    );*/
+    );
     // wayland is deleted by drop
 }
