@@ -1,26 +1,20 @@
-use libc::c_void;
+use std::os::raw::{c_void, c_char};
 use std::default::Default;
 use std::ffi::{CStr, CString};
 use std::ptr;
 use std;
 
-use ash::extensions::{DebugReport, Surface, Swapchain, Win32Surface, XlibSurface};
-use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0, V1_0};
+use ash::extensions::khr::{Surface, Swapchain, Win32Surface, WaylandSurface, XlibSurface};
+use ash::extensions::ext::DebugReport;
+use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
-use ash;
-use ash::Entry;
-use ash::Instance;
+use ash::{Entry, Instance, Device};
 
-use kernel::vulkan::vulkanobject::IMAGE_ASPECT_COLOR_BIT;
-use kernel::vulkan::vulkanobject::Device;
 use kernel::vulkan::vulkanobject::GrindImage;
-use kernel::vulkan::vulkanobject::ImageAspectFlags;
 use kernel::vulkan::vulkanobject::GrindImageView;
 use kernel::vulkan::vulkanobject::ImageViewType;
 use kernel::vulkan::vulkanobject::ImageSubresourceRange;
-use kernel::vulkan::vulkanobject::Format;
 use kernel::vulkan::vulkanobject::Fence;
-use kernel::vulkan::vulkanobject::Semaphore;
 
 use kernel::vulkan::vulkanobject as vo;
 
@@ -28,7 +22,8 @@ use kernel::vulkan::vulkanobject as vo;
 fn extension_names() -> Vec<*const i8> {
     vec![
         Surface::name().as_ptr(),
-        vo::WaylandSurface::name().as_ptr(),
+        XlibSurface::name().as_ptr(),
+        WaylandSurface::name().as_ptr(),
         DebugReport::name().as_ptr(),
     ]
 }
@@ -45,12 +40,12 @@ fn extension_names() -> Vec<*const i8> {
 unsafe extern "system" fn vulkan_debug_callback(
     _: vk::DebugReportFlagsEXT,
     _: vk::DebugReportObjectTypeEXT,
-    _: vk::uint64_t,
-    _: vk::size_t,
-    _: vk::int32_t,
-    _: *const vk::c_char,
-    p_message: *const vk::c_char,
-    _: *mut vk::c_void,
+    _: u64,
+    _: usize,
+    _: i32,
+    _: *const c_char,
+    p_message: *const c_char,
+    _: *mut c_void,
 ) -> u32 {
     println!("{:?}", CStr::from_ptr(p_message));
     1
@@ -58,8 +53,8 @@ unsafe extern "system" fn vulkan_debug_callback(
 
 
 pub struct VulkanContext {
-    pub entry: Entry<V1_0>,
-    pub instance: Instance<V1_0>,
+    pub entry: Entry,
+    pub instance: Instance,
     pub device: Device,
     pub debug_callback: vk::DebugReportCallbackEXT,
     pub surface: vk::SurfaceKHR,
@@ -73,35 +68,25 @@ pub struct VulkanContext {
 }
 
 impl VulkanContext {
-    fn create_instance(entry: &Entry<V1_0>, app_name: String) -> Instance<V1_0> {
+    fn create_instance(entry: &Entry, app_name: String) -> Instance {
         let app_name = CString::new(app_name).unwrap();
-        let raw_name = app_name.as_ptr();
-
         let layer_names = [CString::new("VK_LAYER_LUNARG_standard_validation").unwrap()];
         let layers_names_raw: Vec<*const i8> = layer_names
             .iter()
             .map(|raw_name| raw_name.as_ptr())
             .collect();
         let extension_names_raw = extension_names();
-        let appinfo = vk::ApplicationInfo {
-            p_application_name: raw_name,
-            s_type: vk::StructureType::ApplicationInfo,
-            p_next: ptr::null(),
-            application_version: 0,
-            p_engine_name: raw_name,
-            engine_version: 0,
-            api_version: vk_make_version!(1, 0, 36),
-        };
-        let create_info = vk::InstanceCreateInfo {
-            s_type: vk::StructureType::InstanceCreateInfo,
-            p_next: ptr::null(),
-            flags: Default::default(),
-            p_application_info: &appinfo,
-            pp_enabled_layer_names: layers_names_raw.as_ptr(),
-            enabled_layer_count: layers_names_raw.len() as u32,
-            pp_enabled_extension_names: extension_names_raw.as_ptr(),
-            enabled_extension_count: extension_names_raw.len() as u32,
-        };
+        let appinfo = vo::ApplicationInfo::builder()
+            .application_name(&app_name)
+            .application_version(0)
+            .engine_name(&app_name)
+            .engine_version(0)
+            .api_version(vk_make_version!(1, 0, 36));
+
+        let create_info = vo::InstanceCreateInfo::builder()
+            .application_info(&appinfo)
+            .enabled_layer_names(&layers_names_raw)
+            .enabled_extension_names(&extension_names_raw);
 
         unsafe {
             entry
@@ -110,41 +95,30 @@ impl VulkanContext {
         }
     }
 
-    fn create_debug_callback<E: EntryV1_0, I: InstanceV1_0>(
-        entry: &E,
-        instance: &I,
-    ) -> vk::DebugReportCallbackEXT {
-        let debug_info = vk::DebugReportCallbackCreateInfoEXT {
-            s_type: vk::StructureType::DebugReportCallbackCreateInfoExt,
-            p_next: ptr::null(),
-            flags: vk::DEBUG_REPORT_ERROR_BIT_EXT | vk::DEBUG_REPORT_WARNING_BIT_EXT
-                | vk::DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT,
-            pfn_callback: vulkan_debug_callback,
-            p_user_data: ptr::null_mut(),
-        };
-        let debug_report_loader =
-            DebugReport::new(entry, instance).expect("Unable to load debug report");
+    fn create_debug_callback(entry: &Entry, instance: &Instance) -> vk::DebugReportCallbackEXT {
+        let debug_info = vk::DebugReportCallbackCreateInfoEXT::builder()
+            .flags(vk::DebugReportFlagsEXT::ERROR | vk::DebugReportFlagsEXT::WARNING | vk::DebugReportFlagsEXT::PERFORMANCE_WARNING)
+            .pfn_callback(Some(vulkan_debug_callback));
+        
+        let debug_report_loader = DebugReport::new(entry, instance);
 
         unsafe {
             debug_report_loader
-                .create_debug_report_callback_ext(&debug_info, None)
+                .create_debug_report_callback(&debug_info, None)
                 .expect("Unable to create debug callback")
         }
     }
 
-    fn create_surface<E: EntryV1_0, I: InstanceV1_0>(entry: &E, instance: &I, mut display: *const c_void, mut surface: *const c_void) -> vk::SurfaceKHR {
-        let wayland_create_info = vo::WaylandSurfaceCreateInfoKHR {
-            s_type: vo::StructureType::WaylandSurfaceCreateInfoKhr,
-            p_next: ptr::null(),
-            flags: Default::default(),
-            display: display as *mut _,
-            surface: surface as *mut _
-        };
-        let wayland_surface_loader = vo::WaylandSurface::new(entry, instance).expect("Unable to load wayland surface");
+    fn create_surface(entry: &Entry, instance: &Instance, display: *const c_void, surface: *const c_void) -> vk::SurfaceKHR {
+        let wayland_create_info = vo::WaylandSurfaceCreateInfoKHR::builder()
+            .display(display as *mut _)
+            .surface(surface as *mut _);
+ 
+        let wayland_surface_loader = vo::WaylandSurface::new(entry, instance);
 
         unsafe {
             wayland_surface_loader
-                .create_wayland_surface_khr(&wayland_create_info, None)
+                .create_wayland_surface(&wayland_create_info, None)
                 .expect("Unable to create wayland surface")
         }
 
@@ -171,25 +145,30 @@ impl VulkanContext {
         surface_loader: &Surface,
         surface: &vk::SurfaceKHR,
     ) -> (vk::PhysicalDevice, usize) {
-        let pdevices = instance
+        let pdevices = unsafe {
+            instance
             .enumerate_physical_devices()
-            .expect("Physical device error");
+            .expect("Physical device error")
+        };
         
         pdevices
             .iter()
             .map(|pdevice| {
-                instance
-                    .get_physical_device_queue_family_properties(*pdevice)
+                let properties = unsafe { instance.get_physical_device_queue_family_properties(*pdevice) };
+                properties
                     .iter()
                     .enumerate()
                     .filter_map(|(index, ref info)| {
-                        let supports_graphic_and_surface = info.queue_flags
-                            .subset(vk::QUEUE_GRAPHICS_BIT)
-                            && surface_loader.get_physical_device_surface_support_khr(
+                        let surface_supported = unsafe {
+                            surface_loader.get_physical_device_surface_support(
                                 *pdevice,
                                 index as u32,
                                 *surface,
-                            );
+                            )
+                        };
+                        let supports_graphic_and_surface =
+                            info.queue_flags.contains(vo::QueueFlags::GRAPHICS)
+                            && surface_supported;
                         
                         match supports_graphic_and_surface {
                             true => Some((*pdevice, index)),
@@ -204,7 +183,7 @@ impl VulkanContext {
     }
 
     fn create_device(
-        instance: &Instance<V1_0>,
+        instance: &Instance,
         physical_device: &vk::PhysicalDevice,
         queue_family_index: u32,
     ) -> (Device, vk::Queue) {
@@ -214,27 +193,15 @@ impl VulkanContext {
             ..Default::default()
         };
         let priorities = [1.0];
-        let queue_info = vk::DeviceQueueCreateInfo {
-            s_type: vk::StructureType::DeviceQueueCreateInfo,
-            p_next: ptr::null(),
-            flags: Default::default(),
-            queue_family_index: queue_family_index as u32,
-            p_queue_priorities: priorities.as_ptr(),
-            queue_count: priorities.len() as u32,
-        };
+        let queue_info = [vk::DeviceQueueCreateInfo::builder()
+            .queue_family_index(queue_family_index as u32)
+            .queue_priorities(&priorities)
+            .build()];
 
-        let device_create_info = vk::DeviceCreateInfo {
-            s_type: vk::StructureType::DeviceCreateInfo,
-            p_next: ptr::null(),
-            flags: Default::default(),
-            queue_create_info_count: 1,
-            p_queue_create_infos: &queue_info,
-            enabled_layer_count: 0,
-            pp_enabled_layer_names: ptr::null(),
-            enabled_extension_count: device_extension_names_raw.len() as u32,
-            pp_enabled_extension_names: device_extension_names_raw.as_ptr(),
-            p_enabled_features: &features,
-        };
+        let device_create_info = vk::DeviceCreateInfo::builder()
+            .queue_create_infos(&queue_info)
+            .enabled_extension_names(&device_extension_names_raw)
+            .enabled_features(&features);
 
         let device: Device = unsafe {
             instance
@@ -256,14 +223,16 @@ impl VulkanContext {
         width: u32,
         height: u32
     ) -> (vk::SwapchainKHR, Vec<GrindImageView>) {
-        let surface_formats = surface_loader
-            .get_physical_device_surface_formats_khr(*physical_device, *surface)
-            .unwrap();
+        let surface_formats = unsafe {
+            surface_loader
+            .get_physical_device_surface_formats(*physical_device, *surface)
+            .unwrap()
+        };
         let surface_format = surface_formats
             .iter()
             .map(|sfmt| match sfmt.format {
-                vk::Format::Undefined => vk::SurfaceFormatKHR {
-                    format: vk::Format::B8g8r8Unorm,
+                vo::Format::UNDEFINED => vk::SurfaceFormatKHR {
+                    format: vk::Format::B8G8R8_UNORM,
                     color_space: sfmt.color_space,
                 },
                 _ => sfmt.clone(),
@@ -271,9 +240,11 @@ impl VulkanContext {
             .nth(0)
             .expect("Unable to find suitable surface format.");
             
-        let surface_capabilities = surface_loader
-            .get_physical_device_surface_capabilities_khr(*physical_device, *surface)
-            .unwrap();
+        let surface_capabilities = unsafe {
+            surface_loader
+            .get_physical_device_surface_capabilities(*physical_device, *surface)
+            .unwrap()
+        };
 
         let mut desired_image_count = surface_capabilities.min_image_count + 1;
         if surface_capabilities.max_image_count > 0
@@ -287,51 +258,51 @@ impl VulkanContext {
         };
         let pre_transform = if surface_capabilities
             .supported_transforms
-            .subset(vk::SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+            .contains(vo::SurfaceTransformFlagsKHR::IDENTITY)
         {
-            vk::SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+            vo::SurfaceTransformFlagsKHR::IDENTITY
         } else {
             surface_capabilities.current_transform
         };
-        let present_modes = surface_loader
-            .get_physical_device_surface_present_modes_khr(*physical_device, *surface)
-            .unwrap();
-        let present_mode = present_modes
-            .iter()
-            .cloned()
-            .find(|&mode| mode == vk::PresentModeKHR::Mailbox)
-            .unwrap_or(vk::PresentModeKHR::Fifo);
-        let image_usage = vo::IMAGE_USAGE_COLOR_ATTACHMENT_BIT | vo::IMAGE_USAGE_TRANSFER_DST_BIT | vo::IMAGE_USAGE_TRANSFER_SRC_BIT;
-        let swapchain_create_info = vk::SwapchainCreateInfoKHR {
-            s_type: vk::StructureType::SwapchainCreateInfoKhr,
-            p_next: ptr::null(),
-            flags: Default::default(),
-            surface: *surface,
-            min_image_count: desired_image_count,
-            image_color_space: surface_format.color_space,
-            image_format: surface_format.format,
-            image_extent: surface_resolution.clone(),
-            image_usage: image_usage,
-            image_sharing_mode: vk::SharingMode::Exclusive,
-            pre_transform: pre_transform,
-            composite_alpha: vk::COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-            present_mode: present_mode,
-            clipped: 1,
-            old_swapchain: vk::SwapchainKHR::null(),
-            image_array_layers: 1,
-            p_queue_family_indices: ptr::null(),
-            queue_family_index_count: 0,
-        };
 
-        let swapchain = unsafe {
-            swapchain_loader
-            .create_swapchain_khr(&swapchain_create_info, None)
+        let present_modes = unsafe {
+            surface_loader
+            .get_physical_device_surface_present_modes(*physical_device, *surface)
             .unwrap()
         };
 
-        let raw_images = swapchain_loader
-            .get_swapchain_images_khr(swapchain)
-            .unwrap();
+        let present_mode = present_modes
+            .iter()
+            .cloned()
+            .find(|&mode| mode == vk::PresentModeKHR::MAILBOX)
+            .unwrap_or(vk::PresentModeKHR::FIFO);
+
+        let image_usage = vo::ImageUsageFlags::COLOR_ATTACHMENT | vo::ImageUsageFlags::TRANSFER_DST | vo::ImageUsageFlags::TRANSFER_SRC;
+        let swapchain_create_info = vo::SwapchainCreateInfoKHR::builder()
+            .surface(*surface)
+            .min_image_count(desired_image_count)
+            .image_color_space(surface_format.color_space)
+            .image_format(surface_format.format)
+            .image_extent(surface_resolution.clone())
+            .image_usage(image_usage)
+            .image_sharing_mode(vo::SharingMode::EXCLUSIVE)
+            .pre_transform(pre_transform)
+            .composite_alpha(vo::CompositeAlphaFlagsKHR::OPAQUE)
+            .present_mode(present_mode)
+            .clipped(true)
+            .image_array_layers(1);
+
+        let swapchain = unsafe {
+            swapchain_loader
+            .create_swapchain(&swapchain_create_info, None)
+            .unwrap()
+        };
+
+        let raw_images = unsafe {
+            swapchain_loader
+            .get_swapchain_images(swapchain)
+            .unwrap()
+        };
 
         // Create image views
         let mut image_views: Vec<GrindImageView> = Vec::new();
@@ -340,14 +311,14 @@ impl VulkanContext {
                 raw_image, surface_resolution.width,
                 surface_resolution.height, surface_format.format);
             let subresource_range = ImageSubresourceRange {
-                aspect_mask: IMAGE_ASPECT_COLOR_BIT,
+                aspect_mask: vo::ImageAspectFlags::COLOR,
                 base_mip_level: 0,
                 level_count: 1,
                 base_array_layer: 0,
                 layer_count: 1
             };
             let image_view = GrindImageView::from_device(
-                device, image, ImageViewType::Type2d,
+                device, image, ImageViewType::TYPE_2D,
                 surface_format.format, subresource_range);
             image_views.push(image_view);
         }
@@ -360,10 +331,10 @@ impl VulkanContext {
             let swapchain_image = &image_view.image;
             vo::immediate_buffer(self, |cmd| {
                  cmd.update_image_layout(
-                    self, swapchain_image, vo::ImageLayout::Undefined,
-                    vo::ImageLayout::ColorAttachmentOptimal, vo::PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-                    vo::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, vo::AccessFlags::empty(),
-                    vo::ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0, 1);
+                    self, swapchain_image, vo::ImageLayout::UNDEFINED,
+                    vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL, vo::PipelineStageFlags::ALL_GRAPHICS,
+                    vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT, vo::AccessFlags::empty(),
+                      vo::AccessFlags::COLOR_ATTACHMENT_WRITE, 0, 1);
             });
         }
     }
@@ -374,14 +345,13 @@ impl VulkanContext {
         let instance = VulkanContext::create_instance(&entry, app_name);
         let debug_callback = VulkanContext::create_debug_callback(&entry, &instance);
         let surface = VulkanContext::create_surface(&entry, &instance, display_ptr, surface_ptr);
-        let surface_loader = Surface::new(&entry, &instance).expect("Unable to load the Surface extension");
+        let surface_loader = Surface::new(&entry, &instance);
         let (physical_device, queue_family_index) =
             VulkanContext::create_physical_device(&instance, &surface_loader, &surface);
         let (device, present_queue) =
             VulkanContext::create_device(&instance, &physical_device, queue_family_index as u32);
-        let swapchain_loader = Swapchain::new(&instance, &device).expect("Unable to load swapchain");
+        let swapchain_loader = Swapchain::new(&instance, &device);
         
-        // ca plante ici maintenant
         let (swapchain, swapchain_image_views) = VulkanContext::create_swapchain(
             &physical_device, &device, &surface_loader, &surface,
             &swapchain_loader, width, height);
@@ -409,8 +379,8 @@ impl VulkanContext {
     pub fn acquire(&mut self) -> vo::GrindSemaphore {
         let sem = vo::GrindSemaphore::new(self);
         self.current_swapchain_image  = unsafe {
-            self.swapchain_loader.acquire_next_image_khr(
-                self.swapchain, u64::max_value(), sem.semaphore, Fence::null()).unwrap()
+            self.swapchain_loader.acquire_next_image(
+                self.swapchain, u64::max_value(), sem.semaphore, Fence::null()).unwrap().0
         };
 
         sem
@@ -421,7 +391,7 @@ impl VulkanContext {
     }
 
     pub fn wait_device_idle(&self) {
-        self.device.device_wait_idle().unwrap();
+        unsafe { self.device.device_wait_idle().unwrap() };
     }
 
     pub fn present(&mut self, semaphores: &[vo::Semaphore]) {
@@ -430,33 +400,30 @@ impl VulkanContext {
         // Pass to present layout
         vo::immediate_buffer(self, |cmd| {
             cmd.update_image_layout(
-                self, swapchain_image, vo::ImageLayout::ColorAttachmentOptimal,
-                vo::ImageLayout::PresentSrcKhr, vo::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                vo::PIPELINE_STAGE_ALL_GRAPHICS_BIT, vo::ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                vo::ACCESS_MEMORY_READ_BIT, 0, 1);
+                self, swapchain_image, vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
+                vo::ImageLayout::PRESENT_SRC_KHR, vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+                vo::PipelineStageFlags::ALL_GRAPHICS, vo::AccessFlags::COLOR_ATTACHMENT_WRITE,
+                vo::AccessFlags::MEMORY_READ, 0, 1);
         });
-        
-        let create_info = vo::PresentInfoKHR {
-            s_type: vo::StructureType::PresentInfoKhr,
-            p_next: ptr::null(),
-            wait_semaphore_count: semaphores.len() as u32,
-            p_wait_semaphores: semaphores.as_ptr(),
-            swapchain_count: 1,
-            p_swapchains: &self.swapchain,
-            p_image_indices: &self.current_swapchain_image,
-            p_results: ptr::null_mut()
-        };
 
-        unsafe { self.swapchain_loader.queue_present_khr(self.present_queue, &create_info).unwrap() };
+        let swapchains = [self.swapchain];
+        let indices = [self.current_swapchain_image];
+        
+        let create_info = vo::PresentInfoKHR::builder()
+            .wait_semaphores(semaphores)
+            .swapchains(&swapchains)
+            .image_indices(&indices);
+
+        unsafe { self.swapchain_loader.queue_present(self.present_queue, &create_info).unwrap() };
         self.wait_device_idle();
 
         // Switch back to color buffer
         vo::immediate_buffer(self, |cmd| {
             cmd.update_image_layout(
                 self, swapchain_image, 
-                vo::ImageLayout::PresentSrcKhr, vo::ImageLayout::ColorAttachmentOptimal,
-                vo::PIPELINE_STAGE_ALL_GRAPHICS_BIT, vo::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                vo::ACCESS_MEMORY_READ_BIT, vo::ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 
+                vo::ImageLayout::PRESENT_SRC_KHR, vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
+                vo::PipelineStageFlags::ALL_GRAPHICS, vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+                vo::AccessFlags::MEMORY_READ, vo::AccessFlags::COLOR_ATTACHMENT_WRITE, 
                 0, 1);
         });
     }

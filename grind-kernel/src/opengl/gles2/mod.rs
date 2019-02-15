@@ -8,6 +8,8 @@ use std::vec::Vec;
 
 use kernel::vulkan::buffer::VertexAttributes;
 use kernel::vulkan::VulkanDriver;
+use kernel::vulkan::vulkanobject as vo;
+
 use opengl::gles2::buffer::Buffer;
 use opengl::gles2::shader::{Shader, ShaderProgram};
 use opengl::gles2::util::{get_stride, get_vk_format};
@@ -316,6 +318,8 @@ impl ContextGlES2 {
         _type: GLenum,
         pixels: *mut GLvoid,
     ) {
-        self.kernel.read_pixels(x, y, width, height, pixels);
+        // TODO: Get format from format parameter
+        let format = vo::Format::R8G8B8A8_UNORM;
+        self.kernel.read_pixels(x, y, width, height, format, pixels);
     }
 }

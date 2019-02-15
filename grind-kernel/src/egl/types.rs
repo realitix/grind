@@ -1,5 +1,5 @@
 use khronos::khronos_int32_t;
-use libc::{c_char, c_uint, c_void, int32_t};
+use std::os::raw::{c_char, c_uint, c_void};
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::ptr;
@@ -48,7 +48,7 @@ pub type EGLNativeWindowType = *mut c_void;
 
 pub struct EGLConfigList {
     pub configs: EGLConfig,
-    pub count: int32_t,
+    pub count: i32,
 }
 
 // -------------------------------------------------------------------------------------------------
