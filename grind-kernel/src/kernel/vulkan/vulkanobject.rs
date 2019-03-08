@@ -211,6 +211,88 @@ impl GrindCommandBuffer {
             );
         }
     }
+
+    pub fn copy_image(&self, context: &VulkanContext, src_image: &GrindImage, dst_image: &GrindImage) {
+        let src_subresource = ImageSubresourceLayers::builder()
+            .aspect_mask(ImageAspectFlags::COLOR)
+            .mip_level(0)
+            .base_array_layer(0)
+            .layer_count(1)
+            .build();
+        let dst_subresource = ImageSubresourceLayers::builder()
+            .aspect_mask(ImageAspectFlags::COLOR)
+            .mip_level(0)
+            .base_array_layer(0)
+            .layer_count(1)
+            .build();
+
+        let src_offset = Offset3D {x: 0, y: 0, z: 0};
+        let dst_offset = Offset3D {x: 0, y: 0, z: 0};
+
+        let extent = Extent3D {
+            width: src_image.width,
+            height: src_image.height,
+            depth: 1
+        };
+
+        let image_copy = ImageCopy::builder()
+            .src_subresource(src_subresource)
+            .dst_subresource(dst_subresource)
+            .src_offset(src_offset)
+            .dst_offset(dst_offset)
+            .extent(extent)
+            .build();
+
+        let regions = [image_copy];
+        unsafe {
+            context.device.cmd_copy_image(
+                self.buffer,
+                src_image.image,
+                ImageLayout::TRANSFER_SRC_OPTIMAL,
+                dst_image.image,
+                ImageLayout::TRANSFER_DST_OPTIMAL,
+                &regions
+            );
+        }
+    }
+
+    pub fn blit_image(&self, context: &VulkanContext, src_image: &GrindImage, dst_image: &GrindImage) {
+        let src_subresource = ImageSubresourceLayers::builder()
+            .aspect_mask(ImageAspectFlags::COLOR)
+            .mip_level(0)
+            .base_array_layer(0)
+            .layer_count(1)
+            .build();
+        let dst_subresource = ImageSubresourceLayers::builder()
+            .aspect_mask(ImageAspectFlags::COLOR)
+            .mip_level(0)
+            .base_array_layer(0)
+            .layer_count(1)
+            .build();
+
+        let src_offset = Offset3D {x: src_image.width as i32, y: src_image.height as i32, z: 1};
+        let dst_offset = Offset3D {x: dst_image.width as i32, y: dst_image.height as i32, z: 1};
+
+        let image_blit = ImageBlit::builder()
+            .src_subresource(src_subresource)
+            .dst_subresource(dst_subresource)
+            .src_offsets([Offset3D {x: 0, y: 0, z: 0}, src_offset])
+            .dst_offsets([Offset3D {x: 0, y: 0, z: 0}, dst_offset])
+            .build();
+
+        let regions = [image_blit];
+        unsafe {
+            context.device.cmd_blit_image(
+                self.buffer,
+                src_image.image,
+                ImageLayout::TRANSFER_SRC_OPTIMAL,
+                dst_image.image,
+                ImageLayout::TRANSFER_DST_OPTIMAL,
+                &regions,
+                Filter::NEAREST
+            );
+        }
+    }
 }
 
 
@@ -261,20 +343,20 @@ impl GrindCommandPool {
 
 pub struct GrindImage {
     pub image : Image,
-    memory: DeviceMemory,
-    image_format: Format,
-    width: u32,
-    height: u32,
-    depth: u32,
-    mip_levels: u32
+    pub memory: DeviceMemory,
+    pub image_format: Format,
+    pub width: u32,
+    pub height: u32,
+    pub depth: u32,
+    pub mip_levels: u32
 }
 
 impl GrindImage {
     pub fn new(context: &VulkanContext, image_type: ImageType, image_format: Format,
                width: u32, height: u32, depth: u32, mip_levels: u32, layers: u32,
                samples: SampleCountFlags, sharing_mode: SharingMode, tiling: ImageTiling,
-               usage: ImageUsageFlags, layout: ImageLayout, queue_families: Vec<u32>,
-               memory_properties: MemoryPropertyFlags) -> GrindImage {
+               usage: ImageUsageFlags, memory_properties: MemoryPropertyFlags)
+               -> GrindImage {
 
         // Check image can be created
         unsafe {
@@ -287,7 +369,7 @@ impl GrindImage {
 
         // Create image
         let extent = Extent3D { width, height, depth };
-        let indices = [queue_families.as_ptr() as u32];
+        let indices = [context.queue_family_index as u32];
         let image_create = ImageCreateInfo::builder()
             .image_type(image_type)
             .format(image_format)
@@ -299,25 +381,7 @@ impl GrindImage {
             .usage(usage)
             .sharing_mode(sharing_mode)
             .queue_family_indices(&indices)
-            .initial_layout(layout);
-        
-         /*{
-            s_type: StructureType::ImageCreateInfo,
-            p_next: ptr::null(),
-            flags: ImageCreateFlags::empty(),
-            image_type: image_type,
-            format: image_format,
-            extent: extent,
-            mip_levels: mip_levels,
-            array_layers: layers,
-            samples: samples,
-            tiling: tiling,
-            usage: usage,
-            sharing_mode: sharing_mode,
-            queue_family_index_count: queue_families.len() as u32,
-            p_queue_family_indices: queue_families.as_ptr() as *const u32,
-            initial_layout: layout
-        };*/
+            .initial_layout(ImageLayout::UNDEFINED);
 
         let image = unsafe { context.device.create_image(&image_create, None).unwrap() };
 

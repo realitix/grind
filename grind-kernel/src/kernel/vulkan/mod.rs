@@ -102,7 +102,7 @@ impl VulkanDriver {
         //self.renderer.draw(vs, fs, buffers, attrs);
     }
 
-    pub fn read_pixels(&mut self, x: i32, y: i32, width: i32, height: i32, format: vo::Format, pixels: *mut c_void) {
+    pub fn read_pixels(&mut self, x: i32, y: i32, width: i32, height: i32, desired_format: vo::Format, pixels: *mut c_void) {
         // Wait device to be ready (for GL Front Buffer)
         self.context.wait_device_idle();
 
@@ -112,7 +112,24 @@ impl VulkanDriver {
         let memory_properties = vo::MemoryPropertyFlags::HOST_VISIBLE | vo::MemoryPropertyFlags::HOST_COHERENT;
         let buffer = vo::GrindBuffer::new(&self.context, size as vo::DeviceSize, flags, memory_properties);
 
-        // Copy image in buffer
+        let destination_image = vo::GrindImage::new(
+            &self.context, vo::ImageType::TYPE_2D, desired_format,
+            width as u32, height as u32, 1, 1, 1, vo::SampleCountFlags::TYPE_1,
+            vo::SharingMode::EXCLUSIVE, vo::ImageTiling::OPTIMAL,
+            vo::ImageUsageFlags::TRANSFER_SRC | vo::ImageUsageFlags::TRANSFER_DST,
+            vo::MemoryPropertyFlags::DEVICE_LOCAL);
+
+        // Put image in DST TRANSFERT LAYOUT desired layout
+        vo::immediate_buffer(&self.context, |cmd| {
+            cmd.update_image_layout(
+                &self.context, &destination_image,
+                vo::ImageLayout::UNDEFINED, vo::ImageLayout::TRANSFER_DST_OPTIMAL,
+                vo::PipelineStageFlags::TRANSFER, vo::PipelineStageFlags::TRANSFER,
+                vo::AccessFlags::default(), vo::AccessFlags::TRANSFER_WRITE,
+                0, 1);
+        });
+
+        // Copy image from source to destination
         vo::immediate_buffer(&self.context, |cmd| {
             cmd.update_image_layout(
                 &self.context, &self.context.get_current_image(),
@@ -121,17 +138,41 @@ impl VulkanDriver {
                 vo::AccessFlags::COLOR_ATTACHMENT_WRITE, vo::AccessFlags::TRANSFER_READ,
                 0, 1);
 
-            cmd.copy_image_to_buffer(
-                &self.context,
-                &self.context.get_current_image(),
-                &buffer
-            );
+            if self.context.get_current_image().image_format == destination_image.image_format {
+                cmd.copy_image(&self.context, &self.context.get_current_image(), &destination_image);
+            }
+            else {
+                cmd.blit_image(&self.context, &self.context.get_current_image(), &destination_image);
+            }
 
             cmd.update_image_layout(
                 &self.context, &self.context.get_current_image(),
                 vo::ImageLayout::TRANSFER_SRC_OPTIMAL, vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
                 vo::PipelineStageFlags::TRANSFER, vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
                 vo::AccessFlags::TRANSFER_READ, vo::AccessFlags::COLOR_ATTACHMENT_WRITE,
+                0, 1);
+        });
+
+        // Copy image from destination to buffer
+        vo::immediate_buffer(&self.context, |cmd| {
+            cmd.update_image_layout(
+                &self.context, &destination_image,
+                vo::ImageLayout::TRANSFER_DST_OPTIMAL, vo::ImageLayout::TRANSFER_SRC_OPTIMAL,
+                vo::PipelineStageFlags::TRANSFER, vo::PipelineStageFlags::TRANSFER,
+                vo::AccessFlags::TRANSFER_WRITE, vo::AccessFlags::TRANSFER_READ,
+                0, 1);
+
+            cmd.copy_image_to_buffer(
+                &self.context,
+                &destination_image,
+                &buffer
+            );
+
+            cmd.update_image_layout(
+                &self.context, &destination_image,
+                vo::ImageLayout::TRANSFER_SRC_OPTIMAL, vo::ImageLayout::TRANSFER_DST_OPTIMAL,
+                vo::PipelineStageFlags::TRANSFER, vo::PipelineStageFlags::TRANSFER,
+                vo::AccessFlags::TRANSFER_READ, vo::AccessFlags::TRANSFER_WRITE,
                 0, 1);
         });
 
