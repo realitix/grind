@@ -7,7 +7,6 @@ use vulkano::buffer::cpu_pool::CpuBufferPoolChunk;
 use vulkano::buffer::BufferAccess;
 use vulkano::buffer::CpuBufferPool;
 use vulkano::device::Device;
-use vulkano::format::Format;
 use vulkano::memory::pool::StdMemoryPool;
 use vulkano::pipeline::shader::ShaderInterfaceDef;
 use vulkano::pipeline::vertex::AttributeInfo;
@@ -19,6 +18,9 @@ use vulkano::pipeline::vertex::VertexMemberInfo;
 use vulkano::pipeline::vertex::VertexMemberTy;
 use vulkano::pipeline::vertex::VertexSource;
 use vulkano::SafeDeref;
+use vulkano::format::Format as OldFormat;
+
+use kernel::vulkan::vulkanobject::Format;
 
 #[derive(Clone, Debug)]
 pub struct VertexAttribute {
@@ -34,7 +36,7 @@ impl VertexAttribute {
         VertexAttribute {
             enabled: false,
             buffer_id: 0,
-            format: Format::R8Unorm,
+            format: Format::R8_UNORM,
             stride: 0,
             offset: 0,
         }
@@ -153,9 +155,13 @@ impl VertexAttributes {
             }
 
             let binding = *self.buffers_binding.get(&attribute.buffer_id).unwrap();
-            let info = AttributeInfo {
+            /*let info = AttributeInfo {
                 offset: attribute.offset,
                 format: attribute.format,
+            };*/
+            let info = AttributeInfo {
+                offset: attribute.offset,
+                format: OldFormat::R8Unorm,
             };
 
             attributes.push((*index, binding, info));

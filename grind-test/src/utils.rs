@@ -10,9 +10,6 @@ impl ShaderProgram {
     pub fn new(vertex_source: &str, fragment_source: &str) -> ShaderProgram {
         let program = gl::create_program();
 
-        //let vertex_source = fs::read_to_string(vertex_path).unwrap();
-        //let fragment_source = fs::read_to_string(fragment_path).unwrap();
-
         let vertex_shader = ShaderProgram::get_shader(&vertex_source, gl::VERTEX_SHADER);
         let fragment_shader = ShaderProgram::get_shader(&fragment_source, gl::FRAGMENT_SHADER);
 

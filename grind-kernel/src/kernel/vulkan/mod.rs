@@ -110,9 +110,9 @@ impl VulkanDriver {
         let size = width * height * 4;
         let flags = vo::BufferUsageFlags::TRANSFER_DST;
         let memory_properties = vo::MemoryPropertyFlags::HOST_VISIBLE | vo::MemoryPropertyFlags::HOST_COHERENT;
-        let buffer = vo::GrindBuffer::new(&self.context, size as vo::DeviceSize, flags, memory_properties);
+        let buffer = vo::Buffer::new(&self.context, size as vo::DeviceSize, flags, memory_properties);
 
-        let destination_image = vo::GrindImage::new(
+        let destination_image = vo::Image::new(
             &self.context, vo::ImageType::TYPE_2D, desired_format,
             width as u32, height as u32, 1, 1, 1, vo::SampleCountFlags::TYPE_1,
             vo::SharingMode::EXCLUSIVE, vo::ImageTiling::OPTIMAL,

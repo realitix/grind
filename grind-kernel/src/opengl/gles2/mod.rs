@@ -12,6 +12,7 @@ use kernel::vulkan::vulkanobject as vo;
 
 use opengl::gles2::buffer::Buffer;
 use opengl::gles2::shader::{Shader, ShaderProgram};
+use opengl::gles2::util::{get_stride, get_vk_format};
 use opengl::types::*;
 
 pub struct ContextGlES2 {
@@ -251,7 +252,7 @@ impl ContextGlES2 {
 
         let offset = ptr as *const _ as usize;
 
-        /*Arc::get_mut(&mut self.vertex_attributes)
+        Arc::get_mut(&mut self.vertex_attributes)
             .unwrap()
             .set_attribute(
                 index,
@@ -259,7 +260,7 @@ impl ContextGlES2 {
                 get_vk_format(size, _type),
                 vk_stride,
                 offset,
-            );*/
+            );
     }
 
     pub fn use_program(&mut self, program_id: GLuint) {

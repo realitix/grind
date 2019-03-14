@@ -10,8 +10,6 @@ use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
 use ash::{Entry, Instance, Device};
 
-use kernel::vulkan::vulkanobject::GrindImage;
-use kernel::vulkan::vulkanobject::GrindImageView;
 use kernel::vulkan::vulkanobject::ImageViewType;
 use kernel::vulkan::vulkanobject::ImageSubresourceRange;
 use kernel::vulkan::vulkanobject::Fence;
@@ -63,7 +61,7 @@ pub struct VulkanContext {
     pub present_queue: vk::Queue,
     pub swapchain_loader: Swapchain,
     pub swapchain: vk::SwapchainKHR,
-    pub swapchain_image_views: Vec<GrindImageView>,
+    pub swapchain_image_views: Vec<vo::ImageView>,
     pub current_swapchain_image: u32
 }
 
@@ -76,14 +74,14 @@ impl VulkanContext {
             .map(|raw_name| raw_name.as_ptr())
             .collect();
         let extension_names_raw = extension_names();
-        let appinfo = vo::ApplicationInfo::builder()
+        let appinfo = vk::ApplicationInfo::builder()
             .application_name(&app_name)
             .application_version(0)
             .engine_name(&app_name)
             .engine_version(0)
             .api_version(vk_make_version!(1, 0, 36));
 
-        let create_info = vo::InstanceCreateInfo::builder()
+        let create_info = vk::InstanceCreateInfo::builder()
             .application_info(&appinfo)
             .enabled_layer_names(&layers_names_raw)
             .enabled_extension_names(&extension_names_raw);
@@ -110,11 +108,11 @@ impl VulkanContext {
     }
 
     fn create_surface(entry: &Entry, instance: &Instance, display: *const c_void, surface: *const c_void) -> vk::SurfaceKHR {
-        let wayland_create_info = vo::WaylandSurfaceCreateInfoKHR::builder()
+        let wayland_create_info = vk::WaylandSurfaceCreateInfoKHR::builder()
             .display(display as *mut _)
             .surface(surface as *mut _);
  
-        let wayland_surface_loader = vo::WaylandSurface::new(entry, instance);
+        let wayland_surface_loader = WaylandSurface::new(entry, instance);
 
         unsafe {
             wayland_surface_loader
@@ -167,7 +165,7 @@ impl VulkanContext {
                             )
                         };
                         let supports_graphic_and_surface =
-                            info.queue_flags.contains(vo::QueueFlags::GRAPHICS)
+                            info.queue_flags.contains(vk::QueueFlags::GRAPHICS)
                             && surface_supported;
                         
                         match supports_graphic_and_surface {
@@ -222,7 +220,7 @@ impl VulkanContext {
         swapchain_loader: &Swapchain,
         width: u32,
         height: u32
-    ) -> (vk::SwapchainKHR, Vec<GrindImageView>) {
+    ) -> (vk::SwapchainKHR, Vec<vo::ImageView>) {
         let surface_formats = unsafe {
             surface_loader
             .get_physical_device_surface_formats(*physical_device, *surface)
@@ -258,9 +256,9 @@ impl VulkanContext {
         };
         let pre_transform = if surface_capabilities
             .supported_transforms
-            .contains(vo::SurfaceTransformFlagsKHR::IDENTITY)
+            .contains(vk::SurfaceTransformFlagsKHR::IDENTITY)
         {
-            vo::SurfaceTransformFlagsKHR::IDENTITY
+            vk::SurfaceTransformFlagsKHR::IDENTITY
         } else {
             surface_capabilities.current_transform
         };
@@ -278,7 +276,7 @@ impl VulkanContext {
             .unwrap_or(vk::PresentModeKHR::FIFO);
 
         let image_usage = vo::ImageUsageFlags::COLOR_ATTACHMENT | vo::ImageUsageFlags::TRANSFER_DST | vo::ImageUsageFlags::TRANSFER_SRC;
-        let swapchain_create_info = vo::SwapchainCreateInfoKHR::builder()
+        let swapchain_create_info = vk::SwapchainCreateInfoKHR::builder()
             .surface(*surface)
             .min_image_count(desired_image_count)
             .image_color_space(surface_format.color_space)
@@ -287,7 +285,7 @@ impl VulkanContext {
             .image_usage(image_usage)
             .image_sharing_mode(vo::SharingMode::EXCLUSIVE)
             .pre_transform(pre_transform)
-            .composite_alpha(vo::CompositeAlphaFlagsKHR::OPAQUE)
+            .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
             .present_mode(present_mode)
             .clipped(true)
             .image_array_layers(1);
@@ -305,9 +303,9 @@ impl VulkanContext {
         };
 
         // Create image views
-        let mut image_views: Vec<GrindImageView> = Vec::new();
+        let mut image_views: Vec<vo::ImageView> = Vec::new();
         for raw_image in raw_images.into_iter() {
-            let image = GrindImage::from_swapchain_image(
+            let image = vo::Image::from_swapchain_image(
                 raw_image, surface_resolution.width,
                 surface_resolution.height, surface_format.format);
             let subresource_range = ImageSubresourceRange {
@@ -317,7 +315,7 @@ impl VulkanContext {
                 base_array_layer: 0,
                 layer_count: 1
             };
-            let image_view = GrindImageView::from_device(
+            let image_view = vo::ImageView::from_device(
                 device, image, ImageViewType::TYPE_2D,
                 surface_format.format, subresource_range);
             image_views.push(image_view);
@@ -376,8 +374,8 @@ impl VulkanContext {
         context
     }
 
-    pub fn acquire(&mut self) -> vo::GrindSemaphore {
-        let sem = vo::GrindSemaphore::new(self);
+    pub fn acquire(&mut self) -> vo::Semaphore {
+        let sem = vo::Semaphore::new(self);
         self.current_swapchain_image  = unsafe {
             self.swapchain_loader.acquire_next_image(
                 self.swapchain, u64::max_value(), sem.semaphore, Fence::null()).unwrap().0
@@ -386,7 +384,7 @@ impl VulkanContext {
         sem
     }
 
-    pub fn get_current_image(&self) -> GrindImage {
+    pub fn get_current_image(&self) -> vo::Image {
         self.swapchain_image_views[self.current_swapchain_image as usize].image.clone()
     }
 
@@ -394,7 +392,7 @@ impl VulkanContext {
         unsafe { self.device.device_wait_idle().unwrap() };
     }
 
-    pub fn present(&mut self, semaphores: &[vo::Semaphore]) {
+    pub fn present(&mut self, semaphores: &[vk::Semaphore]) {
         let swapchain_image = &self.swapchain_image_views[self.current_swapchain_image as usize].image;
 
         // Pass to present layout
@@ -409,7 +407,7 @@ impl VulkanContext {
         let swapchains = [self.swapchain];
         let indices = [self.current_swapchain_image];
         
-        let create_info = vo::PresentInfoKHR::builder()
+        let create_info = vk::PresentInfoKHR::builder()
             .wait_semaphores(semaphores)
             .swapchains(&swapchains)
             .image_indices(&indices);
