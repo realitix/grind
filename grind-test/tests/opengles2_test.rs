@@ -4,7 +4,7 @@ extern crate opengles2 as gl;
 extern crate wayland_client;
 extern crate grindtest;
 
-use std::path::Path;
+
 use std::ptr;
 
 use wayland_client::egl::WlEglSurface;
@@ -15,9 +15,9 @@ use wayland_client::protocol::wl_shell_surface::RequestsTrait as ShellSurfaceReq
 use wayland_client::protocol::{wl_compositor, wl_shell, wl_shell_surface, wl_shm};
 use wayland_client::{Display, GlobalManager, Proxy};
 
-use grindtest::ShaderProgram;
+use grindtest::utils;
 
-fn get_triangle_vbo(program: &ShaderProgram) -> gl::Uint {
+fn get_triangle_vbo(program: &utils::ShaderProgram) -> gl::Uint {
     let vbos = gl::gen_buffers(1);
     let vbo = vbos[0];
 
@@ -36,8 +36,10 @@ fn get_triangle_vbo(program: &ShaderProgram) -> gl::Uint {
     vbo
 }
 
-#[test]
-fn basic_clear() {
+fn with_gles2<F>(f:F)
+    where
+        F: FnOnce(i32, i32)
+{
     let width = 300;
     let height = 300;
 
@@ -105,35 +107,33 @@ fn basic_clear() {
     );
 
     egl::make_current(egl_display, surface, surface, context);
-
-    let program = ShaderProgram::new("test.vert", "test.frag");
-    let vbo = get_triangle_vbo(&program);
-
-    // Rendering    
-    gl::clear_color(1., 1., 0., 1.);
-    gl::clear(gl::COLOR_BUFFER_BIT);
-    gl::use_program(program.program);
-    gl::bind_buffer(gl::ARRAY_BUFFER, vbo);
-    gl::draw_arrays(gl::TRIANGLES, 0, 3);
-
-    // Get image buffer
-    let data = gl::read_pixels(0, 0, width, height, gl::RGBA, gl::UNSIGNED_BYTE);
-    egl::swap_buffers(egl_display, surface);
-
     
-    image::save_buffer(
-        &Path::new("test_image.bmp"),
-        &data,
-        width as u32,
-        height as u32,
-        image::RGBA(8),
-    ).unwrap();
+    f(width, height);
 
+    egl::swap_buffers(egl_display, surface);
     egl::make_current(
         egl_display,
         egl::NO_SURFACE,
         egl::NO_SURFACE,
         egl::NO_CONTEXT,
     );
-    // wayland is deleted by drop
+}
+
+
+#[test]
+fn basic_clear() {
+    with_gles2(|width, height| {
+        let program = utils::ShaderProgram::new(include_str!("../test.vert"), include_str!("../test.frag"));
+        let vbo = get_triangle_vbo(&program);
+
+        // Rendering    
+        gl::clear_color(1., 1., 0., 1.);
+        gl::clear(gl::COLOR_BUFFER_BIT);
+        gl::use_program(program.program);
+        gl::bind_buffer(gl::ARRAY_BUFFER, vbo);
+        gl::draw_arrays(gl::TRIANGLES, 0, 3);
+
+        // Get image buffer
+        utils::assert_gl(width, height, include_bytes!("opengles2/output/test_image.png"));
+    });
 }
