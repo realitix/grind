@@ -1,4 +1,5 @@
 use std::ptr;
+use std::ffi::CStr;
 use std::os::raw::{c_void};
 
 use ash::vk;
@@ -41,6 +42,24 @@ pub use ash::vk::{
     ImageViewType,
     ComponentMapping,
     ComponentSwizzle,
+    ShaderStageFlags,
+    VertexInputBindingDescription,
+    VertexInputAttributeDescription,
+    PrimitiveTopology,
+    Viewport,
+    Rect2D,
+    PolygonMode,
+    CullModeFlags,
+    FrontFace,
+    CompareOp,
+    StencilOpState,
+    LogicOp,
+    PipelineColorBlendAttachmentState,
+    DescriptorSetLayoutBinding,
+    DynamicState,
+    AttachmentDescription,
+    SubpassDescription,
+    SubpassDependency
 };
 
 
@@ -509,15 +528,250 @@ impl Semaphore {
 /// After being created, it must be inserted in a pipeline stage.
 /// The real Vulkan module can be accessed by the 'module' property.
 pub struct ShaderModule {
-    module: vk::ShaderModule
+    module: vk::ShaderModule,
+}
+
+impl ShaderModule {
+    pub fn new(context: &VulkanContext, code: &[u32]) -> ShaderModule {
+        let shader_create = vk::ShaderModuleCreateInfo::builder()
+            .code(code)
+            .build();
+
+        let module = unsafe { context.device.create_shader_module(&shader_create, None).unwrap() };
+
+        ShaderModule {module}
+    }
+}
+
+
+/// A descriptor set layout object is defined by an array of zero or more
+/// descriptor bindings. Each individual descriptor binding is specified by /// a descriptor type, a count (array size) of the number of descriptors in
+/// the binding, a set of shader stages that can access the binding,
+/// and (if using immutable samplers) an array of sampler descriptors.
+pub struct DescriptorSetLayout {
+    layout: vk::DescriptorSetLayout
+}
+
+impl DescriptorSetLayout {
+    pub fn new(context: &VulkanContext, bindings: Vec<DescriptorSetLayoutBinding>) -> DescriptorSetLayout{
+        let create = vk::DescriptorSetLayoutCreateInfo::builder().bindings(&bindings).build();
+        let layout = unsafe { context.device.create_descriptor_set_layout(&create, None).unwrap() };
+
+        DescriptorSetLayout { layout }
+    }
+}
+
+pub struct RenderPass {
+    pub renderpass: vk::RenderPass
+}
+
+impl RenderPass {
+    pub fn new(context: &VulkanContext, attachments: Vec<AttachmentDescription>, subpasses: Vec<SubpassDescription>, dependencies: Vec<SubpassDependency>) -> RenderPass {
+        let create = vk::RenderPassCreateInfo::builder()
+            .attachments(&attachments)
+            .subpasses(&subpasses)
+            .dependencies(&dependencies)
+            .build();
+
+        let renderpass = unsafe { context.device.create_render_pass(&create, None).unwrap() };
+
+        RenderPass { renderpass }
+    }
+}
+
+/// Access to descriptor sets from a pipeline is accomplished through a
+/// pipeline layout. Zero or more descriptor set layouts and zero or more
+/// push constant ranges are combined to form a pipeline layout object which
+/// describes the complete set of resources that can be accessed by a 
+/// pipeline. The pipeline layout represents a sequence of descriptorsets
+/// with each having a specific layout. This sequence of layouts isused to 
+/// determine the interface between shader stages and shader resources. 
+/// Each pipeline is created using a pipeline layout.
+pub struct PipelineLayout {
+    layout: vk::PipelineLayout
+}
+
+impl PipelineLayout {
+    pub fn new(context: &VulkanContext, descriptors: Vec<DescriptorSetLayout>) -> PipelineLayout {
+        let mut vk_descriptor_set_layouts = Vec::new();
+
+        for descriptor in descriptors {
+            vk_descriptor_set_layouts.push(descriptor.layout);
+        }
+
+        let create = vk::PipelineLayoutCreateInfo::builder()
+            .set_layouts(&vk_descriptor_set_layouts).build();
+
+        let layout = unsafe { context.device.create_pipeline_layout(&create, None).unwrap() };
+
+        PipelineLayout { layout }
+    }
+}
+
+pub struct PipelineShaderStage {
+    pub module: ShaderModule,
+    pub stage: ShaderStageFlags
+}
+
+pub struct PipelineVertexInputState {
+    pub bindings: Vec<VertexInputBindingDescription>,
+    pub attributes: Vec<VertexInputAttributeDescription>
+}
+
+pub struct PipelineInputAssemblyState {
+    pub topology: PrimitiveTopology
+}
+
+pub struct PipelineViewportState {
+    pub viewports: Vec<Viewport>,
+    pub scissors: Vec<Rect2D>
+}
+
+pub struct PipelineRasterizationState {
+    pub polygon_mode: PolygonMode,
+    pub line_width: f32,
+    pub cull_mode: CullModeFlags,
+    pub front_face: FrontFace,
+    pub depth_clamp_enable: bool,
+    pub depth_bias_constant: f32,
+    pub depth_bias_clamp: f32,
+    pub depth_bias_slope: f32
+}
+
+pub struct PipelineMultisampleState {
+    pub shading_enable: bool,
+    pub samples: SampleCountFlags,
+    pub min_sample_shading: f32
+}
+
+pub struct PipelineDepthStencilState {
+    pub depth_test_enable: bool,
+    pub depth_write_enable: bool,
+    pub depth_bounds_test_enable: bool,
+    pub depth_compare: CompareOp,
+    pub stencil_test_enable: bool,
+    pub front: StencilOpState,
+    pub back: StencilOpState,
+    pub min: f32,
+    pub max: f32
+}
+
+pub struct PipelineColorBlendState {
+    pub op_enable: bool,
+    pub op: LogicOp,
+    pub attachments: Vec<PipelineColorBlendAttachmentState>,
+    pub constants: [f32; 4]
+}
+
+pub struct PipelineDynamicState {
+    pub states: Vec<DynamicState>
 }
 
 pub struct Pipeline {
-
+    pipeline: vk::Pipeline,
+    layout: PipelineLayout
 }
 
 impl Pipeline {
-    pub fn new(context: &VulkanContext) -> Pipeline {
-        Pipeline {}
+    pub fn new(context: &VulkanContext, stages: Vec<PipelineShaderStage>, vertex_input: PipelineVertexInputState, input_assembly: PipelineInputAssemblyState, viewport_state: PipelineViewportState, rasterization: PipelineRasterizationState, multisample: PipelineMultisampleState, depth: PipelineDepthStencilState, blend: PipelineColorBlendState, dynamic: PipelineDynamicState, layout: PipelineLayout, render_pass: RenderPass) -> Pipeline {
+        let create_stages = {
+            let mut r = Vec::new();
+            let main_str = CStr::from_bytes_with_nul(b"main\0").unwrap();
+            for stage in stages {
+                let create_stage = vk::PipelineShaderStageCreateInfo::builder()
+                    .stage(stage.stage)
+                    .module(stage.module.module)
+                    .name(&main_str)
+                    .build();
+                r.push(create_stage);
+            }
+            r
+        };
+        
+        let create_vertex_input = vk::PipelineVertexInputStateCreateInfo::builder()
+            .vertex_binding_descriptions(&vertex_input.bindings)
+            .vertex_attribute_descriptions(&vertex_input.attributes)
+            .build();
+
+        let create_input_assembly = vk::PipelineInputAssemblyStateCreateInfo::builder()
+            .topology(input_assembly.topology)
+            .primitive_restart_enable(false)
+            .build();
+
+        let create_viewport = vk::PipelineViewportStateCreateInfo::builder()
+            .viewports(&viewport_state.viewports)
+            .scissors(&viewport_state.scissors);
+
+        let dbe = {
+            if rasterization.depth_bias_constant != 0. || rasterization.depth_bias_clamp != 0. || rasterization.depth_bias_slope != 0. {
+                true
+            }
+            else {
+                false
+            }
+        };
+
+        let create_rasterization = vk::PipelineRasterizationStateCreateInfo::builder()
+            .depth_clamp_enable(rasterization.depth_clamp_enable)
+            .rasterizer_discard_enable(false)
+            .polygon_mode(rasterization.polygon_mode)
+            .line_width(rasterization.line_width)
+            .cull_mode(rasterization.cull_mode)
+            .front_face(rasterization.front_face)
+            .depth_bias_constant_factor(rasterization.depth_bias_constant)
+            .depth_bias_clamp(rasterization.depth_bias_clamp)
+            .depth_bias_slope_factor(rasterization.depth_bias_slope)
+            .depth_bias_enable(dbe)
+            .build();
+
+        let create_multisample = vk::PipelineMultisampleStateCreateInfo::builder()
+            .sample_shading_enable(multisample.shading_enable)
+            .rasterization_samples(multisample.samples)
+            .min_sample_shading(multisample.min_sample_shading)
+            .alpha_to_coverage_enable(false)
+            .alpha_to_one_enable(false)
+            .build();
+
+        let create_depth = vk::PipelineDepthStencilStateCreateInfo::builder()
+            .depth_test_enable(depth.depth_test_enable)
+            .depth_write_enable(depth.depth_test_enable)
+            .depth_compare_op(depth.depth_compare)
+            .depth_bounds_test_enable(depth.depth_bounds_test_enable)
+            .stencil_test_enable(depth.stencil_test_enable)
+            .front(depth.front)
+            .back(depth.back)
+            .min_depth_bounds(depth.min)
+            .max_depth_bounds(depth.max)
+            .build();
+
+        let create_blend = vk::PipelineColorBlendStateCreateInfo::builder()
+            .logic_op_enable(blend.op_enable)
+            .logic_op(blend.op)
+            .attachments(&blend.attachments)
+            .blend_constants(blend.constants)
+            .build();
+
+        let create_dynamic = vk::PipelineDynamicStateCreateInfo::builder()
+            .dynamic_states(&dynamic.states)
+            .build();
+
+        let create_pipeline = vk::GraphicsPipelineCreateInfo::builder()
+            .stages(&create_stages)
+            .vertex_input_state(&create_vertex_input)
+            .input_assembly_state(&create_input_assembly)
+            .viewport_state(&create_viewport)
+            .rasterization_state(&create_rasterization)
+            .multisample_state(&create_multisample)
+            .depth_stencil_state(&create_depth)
+            .color_blend_state(&create_blend)
+            .dynamic_state(&create_dynamic)
+            .layout(layout.layout)
+            .render_pass(render_pass.renderpass)
+            .build();
+        
+        let create_pipelines = [create_pipeline];
+        let pipeline = unsafe { context.device.create_graphics_pipelines(vk::PipelineCache::null(), &create_pipelines, None).unwrap()[0] };
+
+        Pipeline { pipeline, layout }
     }
 }
