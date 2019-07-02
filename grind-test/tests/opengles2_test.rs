@@ -6,7 +6,7 @@ extern crate grindtest;
 
 
 use std::ptr;
-
+use std::{thread, time};
 use wayland_client::egl::WlEglSurface;
 use wayland_client::protocol::wl_compositor::RequestsTrait as CompositorRequests;
 use wayland_client::protocol::wl_display::RequestsTrait as DisplayRequests;
@@ -132,6 +132,8 @@ fn basic_clear() {
         gl::use_program(program.program);
         gl::bind_buffer(gl::ARRAY_BUFFER, vbo);
         gl::draw_arrays(gl::TRIANGLES, 0, 3);
+
+        thread::sleep(time::Duration::from_secs(10));
 
         // Get image buffer
         utils::assert_gl(width, height, include_bytes!("opengles2/output/test_image.png"));

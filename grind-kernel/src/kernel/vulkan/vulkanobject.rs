@@ -59,7 +59,17 @@ pub use ash::vk::{
     DynamicState,
     AttachmentDescription,
     SubpassDescription,
-    SubpassDependency
+    SubpassDependency,
+    VertexInputRate,
+    Offset2D,
+    Extent2D,
+    StencilOp,
+    AttachmentLoadOp,
+    AttachmentStoreOp,
+    PipelineBindPoint,
+    AttachmentReference,
+    ClearValue,
+    SubpassContents
 };
 
 
@@ -181,6 +191,23 @@ impl CommandBuffer {
 
     pub fn end(&self, context: &VulkanContext) {
         unsafe { context.device.end_command_buffer(self.buffer).unwrap() };
+    }
+
+    pub fn begin_render_pass(&self, context: &VulkanContext, render_pass: RenderPass, framebuffer: Framebuffer, render_area: Rect2D, clears: Vec<ClearValue>, subpass_contents: SubpassContents) {
+        let create = vk::RenderPassBeginInfo::builder()
+            .render_pass(render_pass.renderpass)
+            .framebuffer(framebuffer.framebuffer)
+            .render_area(render_area)
+            .clear_values(&clears)
+            .build();
+        
+        unsafe {
+            context.device.cmd_begin_render_pass(self.buffer, &create, subpass_contents)
+        };
+    }
+
+    pub fn end_render_pass(&self, context: &VulkanContext) {
+        unsafe { context.device.cmd_end_render_pass(self.buffer) };
     }
 
     pub fn pipeline_barrier(&self, context: &VulkanContext, src_stage_mask: vk::PipelineStageFlags, 
@@ -390,6 +417,31 @@ impl CommandPool {
         unsafe { context.device.destroy_command_pool(self.pool, None) };
     }
 
+}
+
+pub struct Framebuffer {
+    pub framebuffer: vk::Framebuffer
+}
+
+impl Framebuffer {
+    pub fn new(context: &VulkanContext, render_pass: RenderPass, attachments: Vec<ImageView>, width: u32, height: u32, layers: u32) -> Framebuffer{
+        let mut vk_image_views = Vec::new();
+        for attachment in attachments {
+            vk_image_views.push(attachment.image_view);
+        }
+
+        let create = vk::FramebufferCreateInfo::builder()
+            .render_pass(render_pass.renderpass)
+            .attachments(&vk_image_views)
+            .width(width)
+            .height(height)
+            .layers(layers)
+            .build();
+
+        let framebuffer = unsafe { context.device.create_framebuffer(&create, None).unwrap() };
+
+        Framebuffer { framebuffer }
+    }
 }
 
 pub struct Image {

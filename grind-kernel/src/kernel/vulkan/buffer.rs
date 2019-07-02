@@ -18,17 +18,16 @@ use vulkano::pipeline::vertex::VertexMemberInfo;
 use vulkano::pipeline::vertex::VertexMemberTy;
 use vulkano::pipeline::vertex::VertexSource;
 use vulkano::SafeDeref;
-use vulkano::format::Format as OldFormat;
 
-use kernel::vulkan::vulkanobject::Format;
+use kernel::vulkan::vulkanobject as vo;
 
 #[derive(Clone, Debug)]
 pub struct VertexAttribute {
     pub enabled: bool,
     pub buffer_id: u32,
-    pub format: Format,
-    pub stride: usize,
-    pub offset: usize,
+    pub format: vo::Format,
+    pub stride: u32,
+    pub offset: u32,
 }
 
 impl VertexAttribute {
@@ -36,13 +35,13 @@ impl VertexAttribute {
         VertexAttribute {
             enabled: false,
             buffer_id: 0,
-            format: Format::R8_UNORM,
+            format: vo::Format::R8_UNORM,
             stride: 0,
             offset: 0,
         }
     }
 
-    pub fn update(&mut self, buffer_id: u32, format: Format, stride: usize, offset: usize) {
+    pub fn update(&mut self, buffer_id: u32, format: vo::Format, stride: u32, offset: u32) {
         self.buffer_id = buffer_id;
         self.format = format;
         self.stride = stride;
@@ -86,9 +85,9 @@ impl VertexAttributes {
         &mut self,
         index: u32,
         buffer_id: u32,
-        format: Format,
-        stride: usize,
-        offset: usize,
+        format: vo::Format,
+        stride: u32,
+        offset: u32,
     ) {
         self.check_index(index);
         self.attributes
@@ -128,8 +127,7 @@ impl VertexAttributes {
         mem::replace(&mut self.binding_buffers, binding_buffers);
     }
 
-    // return (binding, stride, inputrate)
-    pub fn get_buffers_definition(&self) -> Vec<(u32, usize, InputRate)> {
+    pub fn get_vertex_input_binding_description(&self) -> Vec<vo::VertexInputBindingDescription> {
         let mut buffers = Vec::new();
         let mut buffer_cache = Vec::new();
 
@@ -139,14 +137,19 @@ impl VertexAttributes {
             }
 
             let binding = *self.buffers_binding.get(&attribute.buffer_id).unwrap();
-            buffers.push((binding, attribute.stride, InputRate::Vertex));
+            //buffers.push((binding, attribute.stride, InputRate::Vertex));
+            buffers.push(vo::VertexInputBindingDescription {
+                binding: binding,
+                stride: attribute.stride,
+                input_rate: vo::VertexInputRate::VERTEX,
+            });
             buffer_cache.push(attribute.buffer_id);
         }
 
         buffers
     }
 
-    pub fn get_attributes_definition(&self) -> Vec<(u32, u32, AttributeInfo)> {
+    pub fn get_vertex_input_attribute_description(&self) -> Vec<vo::VertexInputAttributeDescription> {
         let mut attributes = Vec::new();
 
         for (index, attribute) in self.attributes.iter() {
@@ -155,33 +158,30 @@ impl VertexAttributes {
             }
 
             let binding = *self.buffers_binding.get(&attribute.buffer_id).unwrap();
-            /*let info = AttributeInfo {
-                offset: attribute.offset,
-                format: attribute.format,
-            };*/
-            let info = AttributeInfo {
-                offset: attribute.offset,
-                format: OldFormat::R8Unorm,
-            };
-
-            attributes.push((*index, binding, info));
+            attributes.push(vo::VertexInputAttributeDescription {
+                location: *index,
+                binding: binding,
+                format: vo::Format::R8_UNORM,
+                offset: attribute.offset
+            });
         }
 
         attributes
     }
 }
 
-pub struct GrindBufferDefinition {
+pub struct BufferDefinition {
     attributes: Arc<VertexAttributes>,
 }
 
-impl GrindBufferDefinition {
-    pub fn new(mut attributes: Arc<VertexAttributes>) -> GrindBufferDefinition {
+impl BufferDefinition {
+    pub fn new(mut attributes: Arc<VertexAttributes>) -> BufferDefinition {
         Arc::make_mut(&mut attributes).generate_buffers_binding_map();
-        GrindBufferDefinition { attributes }
+        BufferDefinition { attributes }
     }
 }
 
+/*
 unsafe impl<I> VertexDefinition<I> for GrindBufferDefinition
 where
     I: ShaderInterfaceDef,
@@ -230,7 +230,7 @@ unsafe impl<T> VertexSource<Vec<T>> for GrindBufferDefinition {
         panic!("bufferless drawing should not be supplied with buffers")
     }
 }
-
+*/
 pub struct Buffer {
     //inner: CpuBufferPool<u8>,
     //pub chunk: Option<CpuBufferPoolChunk<u8, Arc<StdMemoryPool>>>,

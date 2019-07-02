@@ -88,8 +88,8 @@ impl VulkanDriver {
         Buffer::new()
     }
 
-    pub fn new_shader(&self, spirv: &[u8], shader_type: GraphicsShaderType) -> Shader {
-        Shader::new(spirv, shader_type)
+    pub fn new_shader(&self, spirv: &[u32], shader_type: vo::ShaderStageFlags) -> Shader {
+        Shader::new(&self.context, spirv, shader_type)
     }
 
     pub fn draw(
@@ -99,7 +99,144 @@ impl VulkanDriver {
         buffers: HashMap<u32, Arc<Buffer>>,
         attrs: Arc<VertexAttributes>,
     ) {
-        //self.renderer.draw(vs, fs, buffers, attrs);
+        // PIPELINE CREATION
+
+        // Stages
+        let vertex_stage = vo::PipelineShaderStage {
+            module: *vs.as_ref().module.as_ref(),
+            stage: vs.as_ref().shader_stage
+        };
+
+        let fragment_stage = vo::PipelineShaderStage {
+            module: *fs.as_ref().module.as_ref(),
+            stage: fs.as_ref().shader_stage
+        };
+        let stages = vec![vertex_stage, fragment_stage];
+
+        // Vertex input
+        let vertex_input = vo::PipelineVertexInputState{
+            bindings: attrs.get_vertex_input_binding_description(),
+            attributes: attrs.get_vertex_input_attribute_description()
+        };
+
+        // Input assembly
+        let input_assembly = vo::PipelineInputAssemblyState {topology: vo::PrimitiveTopology::TRIANGLE_LIST};
+
+        let viewports = vec![vo::Viewport {
+            x: 0.,
+            y: 300.,
+            width: 300.,
+            height: -300.,
+            min_depth: 0.,
+            max_depth: 1.
+        }];
+
+        let scissors = vec![vo::Rect2D {
+            offset: vo::Offset2D { x: 0, y: 0 },
+            extent: vo::Extent2D { width: 300, height: 300},
+        }];
+        
+        let viewport_state = vo::PipelineViewportState {
+            viewports: viewports,
+            scissors: scissors
+        };
+
+        let rasterization = vo::PipelineRasterizationState {
+            polygon_mode: vo::PolygonMode::FILL,
+            line_width: 1.,
+            cull_mode: vo::CullModeFlags::FRONT,
+            front_face: vo::FrontFace::COUNTER_CLOCKWISE,
+            depth_clamp_enable: false,
+            depth_bias_constant: 0.,
+            depth_bias_clamp: 0.,
+            depth_bias_slope: 0.
+        };
+
+        let multisample = vo::PipelineMultisampleState {
+            shading_enable: false,
+            samples: vo::SampleCountFlags::TYPE_1,
+            min_sample_shading: 1.
+        };
+
+        // Depth stencil
+        let front_stencil = vo::StencilOpState {
+            fail_op: vo::StencilOp::KEEP,
+            pass_op: vo::StencilOp::KEEP,
+            depth_fail_op: vo::StencilOp::KEEP,
+            compare_op: vo::CompareOp::EQUAL,
+            compare_mask: 1,
+            write_mask: 1,
+            reference: 1,
+        };
+        let back_stencil = vo::StencilOpState {
+            fail_op: vo::StencilOp::KEEP,
+            pass_op: vo::StencilOp::KEEP,
+            depth_fail_op: vo::StencilOp::KEEP,
+            compare_op: vo::CompareOp::EQUAL,
+            compare_mask: 1,
+            write_mask: 1,
+            reference: 1,
+        };
+        let depth = vo::PipelineDepthStencilState {
+            depth_test_enable: false,
+            depth_write_enable: false,
+            depth_bounds_test_enable: false,
+            depth_compare: vo::CompareOp::EQUAL,
+            stencil_test_enable: false,
+            front: front_stencil,
+            back: back_stencil,
+            min: 0.,
+            max: 1.
+        };
+
+        let blend = vo::PipelineColorBlendState {
+            op_enable: false,
+            op: vo::LogicOp::AND,
+            attachments: Vec::new(),
+            constants: [0., 0., 0., 0.]
+        };
+
+        let dynamic = vo::PipelineDynamicState {
+            states: Vec::new()
+        };
+
+        let layout = vo::PipelineLayout::new(&self.context, Vec::new());
+
+        let attachment = vo::AttachmentDescription::builder()
+            .format(self.context.swapchain_format)
+            .samples(vo::SampleCountFlags::TYPE_1)
+            .load_op(vo::AttachmentLoadOp::LOAD)
+            .store_op(vo::AttachmentStoreOp::STORE)
+            .build();
+        let attachment_reference = vo::AttachmentReference {
+            attachment: 0,
+            layout: vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL
+        };
+        let subpass = vo::SubpassDescription::builder()
+            .pipeline_bind_point(vo::PipelineBindPoint::GRAPHICS)
+            .color_attachments(&[attachment_reference])
+            .build();
+        let render_pass = vo::RenderPass::new(&self.context, vec![attachment], vec![subpass], Vec::new());
+
+        let pipeline = vo::Pipeline::new(
+            &self.context, stages, vertex_input, input_assembly,
+            viewport_state, rasterization, multisample, depth,
+            blend, dynamic, layout, render_pass);
+
+        let image_view = self.context.swapchain_image_views[self.context.current_swapchain_image as usize];
+        let framebuffer = vo::Framebuffer::new(&self.context, render_pass, vec![image_view], 300, 300, 1);
+
+        vo::immediate_buffer(&self.context, |cb| {
+            let render_area = vo::Rect2D {
+                offset: vo::Offset2D { x: 0, y: 0},
+                extent: vo::Extent2D { width: 300, height: 300}
+            };
+
+            let clear_value = vo::ClearValue {
+                color: vo::ClearColorValue { float32: [1.0, 0., 0., 1.]}
+            };
+            cb.begin_render_pass(&self.context, render_pass, framebuffer, render_area, vec![clear_value], vo::SubpassContents::INLINE)
+        });
     }
 
     pub fn read_pixels(&mut self, x: i32, y: i32, width: i32, height: i32, desired_format: vo::Format, pixels: *mut c_void) {

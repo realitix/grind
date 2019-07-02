@@ -21,7 +21,7 @@ lazy_static! {
         m
     };
 
-    static ref FORMAT_SIZE_MAPPING: HashMap<gl::GLenum, usize> = {
+    static ref FORMAT_SIZE_MAPPING: HashMap<gl::GLenum, u32> = {
         let mut m = HashMap::new();
         m.insert(gl::FLOAT, 4);
         // TODO complete format with GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT, GL_UNSIGNED_SHORT, GL_FIXED
@@ -41,7 +41,7 @@ pub fn get_type_vk_format(format: gl::GLenum, _type: gl::GLenum) -> vo::Format {
         .expect("Unknow format")
 }
 
-pub fn get_stride(size: gl::GLint, _type: gl::GLenum) -> usize {
+pub fn get_stride(size: gl::GLint, _type: gl::GLenum) -> u32 {
     let format_size = *FORMAT_SIZE_MAPPING.get(&_type).expect("Unknow format");
-    size as usize * format_size
+    size as u32 * format_size
 }

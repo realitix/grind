@@ -38,9 +38,9 @@ use vulkano::sync;
 use vulkano::sync::GpuFuture;
 
 use kernel::vulkan::buffer::Buffer;
-use kernel::vulkan::buffer::GrindBufferDefinition;
+use kernel::vulkan::buffer::BufferDefinition;
 use kernel::vulkan::buffer::VertexAttributes;
-use kernel::vulkan::shader::EmptySpecializationConstants;
+//use kernel::vulkan::shader::EmptySpecializationConstants;
 use kernel::vulkan::shader::Shader;
 
 struct RenderContainer {

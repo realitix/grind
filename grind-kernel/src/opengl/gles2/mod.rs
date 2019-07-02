@@ -247,10 +247,10 @@ impl ContextGlES2 {
     ) {
         let vk_stride = match stride {
             0 => util::get_stride(size, _type),
-            x => x as usize,
+            x => x as u32,
         };
 
-        let offset = ptr as *const _ as usize;
+        let offset = ptr as *const _ as u32;
 
         Arc::get_mut(&mut self.vertex_attributes)
             .unwrap()

@@ -62,6 +62,7 @@ pub struct VulkanContext {
     pub swapchain_loader: Swapchain,
     pub swapchain: vk::SwapchainKHR,
     pub swapchain_image_views: Vec<vo::ImageView>,
+    pub swapchain_format: vo::Format,
     pub current_swapchain_image: u32
 }
 
@@ -220,7 +221,7 @@ impl VulkanContext {
         swapchain_loader: &Swapchain,
         width: u32,
         height: u32
-    ) -> (vk::SwapchainKHR, Vec<vo::ImageView>) {
+    ) -> (vk::SwapchainKHR, Vec<vo::ImageView>, vo::Format) {
         let surface_formats = unsafe {
             surface_loader
             .get_physical_device_surface_formats(*physical_device, *surface)
@@ -321,7 +322,7 @@ impl VulkanContext {
             image_views.push(image_view);
         }
 
-        (swapchain, image_views)
+        (swapchain, image_views, surface_format.format)
     }
 
     fn update_swapchain_layout(&self) {
@@ -350,7 +351,7 @@ impl VulkanContext {
             VulkanContext::create_device(&instance, &physical_device, queue_family_index as u32);
         let swapchain_loader = Swapchain::new(&instance, &device);
         
-        let (swapchain, swapchain_image_views) = VulkanContext::create_swapchain(
+        let (swapchain, swapchain_image_views, swapchain_format) = VulkanContext::create_swapchain(
             &physical_device, &device, &surface_loader, &surface,
             &swapchain_loader, width, height);
         
@@ -366,6 +367,7 @@ impl VulkanContext {
             swapchain_loader,
             swapchain,
             swapchain_image_views,
+            swapchain_format,
             current_swapchain_image: 0
         };
 

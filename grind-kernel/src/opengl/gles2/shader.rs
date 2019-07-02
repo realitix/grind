@@ -11,6 +11,7 @@ use vulkano::pipeline::shader::GraphicsShaderType;
 
 use kernel::vulkan::shader::Shader as VulkanShader;
 use kernel::vulkan::VulkanDriver;
+use kernel::vulkan::vulkanobject as vo;
 use opengl::types::*;
 
 pub struct Shader {
@@ -155,8 +156,8 @@ impl ShaderProgram {
                 .unwrap(),
         );
         self.vertex_shader = Some(Arc::new(kernel.new_shader(
-            vertex_spirv.as_ref().unwrap().as_binary_u8(),
-            GraphicsShaderType::Vertex,
+            vertex_spirv.as_ref().unwrap().as_binary(),
+            vo::ShaderStageFlags::VERTEX
         )));
         self.vertex_reflection = Some(reflect(vertex_spirv.as_ref().unwrap().as_binary_u8()));
 
@@ -173,8 +174,8 @@ impl ShaderProgram {
                 .unwrap(),
         );
         self.fragment_shader = Some(Arc::new(kernel.new_shader(
-            fragment_spirv.as_ref().unwrap().as_binary_u8(),
-            GraphicsShaderType::Fragment,
+            fragment_spirv.as_ref().unwrap().as_binary(),
+            vo::ShaderStageFlags::FRAGMENT
         )));
         self.fragment_reflection = Some(reflect(fragment_spirv.as_ref().unwrap().as_binary_u8()));
 
