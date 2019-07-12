@@ -109,6 +109,7 @@ pub fn gen_buffers(n: GLsizei, buffers: *mut GLuint) {
 }
 
 pub fn bind_buffer(target: GLenum, buffer: GLuint) {
+    println!("toto1");
     with_gl(|gl| {
         gl.bind_buffer(target, buffer);
     });
@@ -154,6 +155,7 @@ pub fn use_program(program: GLuint) {
 }
 
 pub fn draw_arrays(mode: GLenum, first: GLint, count: GLsizei) {
+    println!("TEST");
     with_gl(|gl| {
         gl.draw_arrays(mode, first, count);
     });

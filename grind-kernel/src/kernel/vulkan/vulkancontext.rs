@@ -2,6 +2,7 @@ use std::os::raw::{c_void, c_char};
 use std::default::Default;
 use std::ffi::{CStr, CString};
 use std::ptr;
+use std::sync::Arc;
 use std;
 
 use ash::extensions::khr::{Surface, Swapchain, Win32Surface, WaylandSurface, XlibSurface};
@@ -61,7 +62,7 @@ pub struct VulkanContext {
     pub present_queue: vk::Queue,
     pub swapchain_loader: Swapchain,
     pub swapchain: vk::SwapchainKHR,
-    pub swapchain_image_views: Vec<vo::ImageView>,
+    pub swapchain_image_views: Vec<Arc<vo::ImageView>>,
     pub swapchain_format: vo::Format,
     pub current_swapchain_image: u32
 }
@@ -221,7 +222,7 @@ impl VulkanContext {
         swapchain_loader: &Swapchain,
         width: u32,
         height: u32
-    ) -> (vk::SwapchainKHR, Vec<vo::ImageView>, vo::Format) {
+    ) -> (vk::SwapchainKHR, Vec<Arc<vo::ImageView>>, vo::Format) {
         let surface_formats = unsafe {
             surface_loader
             .get_physical_device_surface_formats(*physical_device, *surface)
@@ -304,7 +305,7 @@ impl VulkanContext {
         };
 
         // Create image views
-        let mut image_views: Vec<vo::ImageView> = Vec::new();
+        let mut image_views = Vec::new();
         for raw_image in raw_images.into_iter() {
             let image = vo::Image::from_swapchain_image(
                 raw_image, surface_resolution.width,
@@ -319,7 +320,7 @@ impl VulkanContext {
             let image_view = vo::ImageView::from_device(
                 device, image, ImageViewType::TYPE_2D,
                 surface_format.format, subresource_range);
-            image_views.push(image_view);
+            image_views.push(Arc::new(image_view));
         }
 
         (swapchain, image_views, surface_format.format)

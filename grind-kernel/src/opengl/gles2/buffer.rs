@@ -21,13 +21,15 @@ impl Buffer {
 
     pub fn buffer_data(
         &mut self,
+        kernel: &VulkanDriver,
         target: GLenum,
         size: GLsizeiptr,
         data: *const GLvoid,
         usage: GLenum,
     ) {
-        let buf = unsafe { slice::from_raw_parts::<u8>(data as *const u8, size as usize) };
-        Arc::get_mut(&mut self.inner).unwrap().set_data(buf);
+        let data_ptr = unsafe { slice::from_raw_parts::<u8>(data as *const u8, size as usize) };
+        kernel.set_buffer_data(Arc::get_mut(&mut self.inner).unwrap(), data_ptr);
+        //Arc::get_mut(&mut self.inner).unwrap().set_data(buf);
     }
 
     pub fn get_buffer(&self) -> Arc<VulkanBuffer> {

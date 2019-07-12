@@ -88,6 +88,10 @@ impl VulkanDriver {
         Buffer::new()
     }
 
+    pub fn set_buffer_data(&self, buffer: &mut Buffer, data: &[u8]) {
+        buffer.set_data(&self.context, data);
+    }
+
     pub fn new_shader(&self, spirv: &[u32], shader_type: vo::ShaderStageFlags) -> Shader {
         Shader::new(&self.context, spirv, shader_type)
     }
@@ -103,12 +107,12 @@ impl VulkanDriver {
 
         // Stages
         let vertex_stage = vo::PipelineShaderStage {
-            module: *vs.as_ref().module.as_ref(),
+            module: vs.module.clone(),
             stage: vs.as_ref().shader_stage
         };
 
         let fragment_stage = vo::PipelineShaderStage {
-            module: *fs.as_ref().module.as_ref(),
+            module: fs.module.clone(),
             stage: fs.as_ref().shader_stage
         };
         let stages = vec![vertex_stage, fragment_stage];
@@ -126,7 +130,7 @@ impl VulkanDriver {
             x: 0.,
             y: 300.,
             width: 300.,
-            height: -300.,
+            height: 300.,
             min_depth: 0.,
             max_depth: 1.
         }];
@@ -221,10 +225,16 @@ impl VulkanDriver {
         let pipeline = vo::Pipeline::new(
             &self.context, stages, vertex_input, input_assembly,
             viewport_state, rasterization, multisample, depth,
-            blend, dynamic, layout, render_pass);
+            blend, dynamic, layout, &render_pass);
 
-        let image_view = self.context.swapchain_image_views[self.context.current_swapchain_image as usize];
-        let framebuffer = vo::Framebuffer::new(&self.context, render_pass, vec![image_view], 300, 300, 1);
+        let image_view = self.context.swapchain_image_views[self.context.current_swapchain_image as usize].clone();
+        let framebuffer = vo::Framebuffer::new(&self.context, &render_pass, vec![image_view], 300, 300, 1);
+
+        // Buffer hashmap to vec
+        let mut buffers_vec = Vec::new();
+        for (k, v) in buffers.iter() {
+            buffers_vec.push(v.buffer.as_ref().unwrap());
+        }
 
         vo::immediate_buffer(&self.context, |cb| {
             let render_area = vo::Rect2D {
@@ -235,8 +245,14 @@ impl VulkanDriver {
             let clear_value = vo::ClearValue {
                 color: vo::ClearColorValue { float32: [1.0, 0., 0., 1.]}
             };
-            cb.begin_render_pass(&self.context, render_pass, framebuffer, render_area, vec![clear_value], vo::SubpassContents::INLINE)
+            cb.begin_render_pass(&self.context, &render_pass, framebuffer, render_area, vec![clear_value], vo::SubpassContents::INLINE);
+            cb.bind_pipeline(&self.context, &pipeline);
+            cb.bind_vertex_buffers(&self.context, 0, &buffers_vec);
+            cb.draw(&self.context, 3, 1, 0, 0);
+            cb.end_render_pass(&self.context);
         });
+
+        println!("RUST ICI");
     }
 
     pub fn read_pixels(&mut self, x: i32, y: i32, width: i32, height: i32, desired_format: vo::Format, pixels: *mut c_void) {

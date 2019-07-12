@@ -215,7 +215,7 @@ impl ContextGlES2 {
 
         current_buffer
             .unwrap()
-            .buffer_data(target, size, data, usage);
+            .buffer_data(&self.kernel, target, size, data, usage);
     }
 
     pub fn enable_vertex_attrib_array(&mut self, index: GLuint) {

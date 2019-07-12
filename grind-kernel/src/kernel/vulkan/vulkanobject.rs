@@ -1,6 +1,7 @@
 use std::ptr;
 use std::ffi::CStr;
 use std::os::raw::{c_void};
+use std::sync::Arc;
 
 use ash::vk;
 use ash::Device;
@@ -118,8 +119,8 @@ pub fn immediate_buffer<F>(context: &VulkanContext, f: F)
     };
 
     unsafe {
-        context.device.queue_submit(context.present_queue, &[submit], Fence::null());
-        context.device.queue_wait_idle(context.present_queue);
+        context.device.queue_submit(context.present_queue, &[submit], Fence::null()).unwrap();
+        context.device.queue_wait_idle(context.present_queue).unwrap();
     }
 
     pool.free_buffers(context, buffers);
@@ -134,7 +135,8 @@ pub fn immediate_buffer<F>(context: &VulkanContext, f: F)
 pub struct Buffer {
     buffer: vk::Buffer,
     memory: DeviceMemory,
-    size: DeviceSize
+    size: DeviceSize,
+    alive: bool
 }
 
 impl Buffer {
@@ -161,8 +163,15 @@ impl Buffer {
         unsafe { context.device.bind_buffer_memory(buffer, memory, 0).unwrap() };
 
         Buffer {
-            buffer, memory, size
+            buffer, memory, size, alive: true
         }
+    }
+
+    pub fn destroy(&mut self, context: &VulkanContext) {
+        unsafe {
+            context.device.destroy_buffer(self.buffer, None)
+        };
+        self.alive = false;
     }
 
     pub fn bind<F>(&self, context: &VulkanContext, f: F) 
@@ -193,7 +202,7 @@ impl CommandBuffer {
         unsafe { context.device.end_command_buffer(self.buffer).unwrap() };
     }
 
-    pub fn begin_render_pass(&self, context: &VulkanContext, render_pass: RenderPass, framebuffer: Framebuffer, render_area: Rect2D, clears: Vec<ClearValue>, subpass_contents: SubpassContents) {
+    pub fn begin_render_pass(&self, context: &VulkanContext, render_pass: &RenderPass, framebuffer: Framebuffer, render_area: Rect2D, clears: Vec<ClearValue>, subpass_contents: SubpassContents) {
         let create = vk::RenderPassBeginInfo::builder()
             .render_pass(render_pass.renderpass)
             .framebuffer(framebuffer.framebuffer)
@@ -208,6 +217,34 @@ impl CommandBuffer {
 
     pub fn end_render_pass(&self, context: &VulkanContext) {
         unsafe { context.device.cmd_end_render_pass(self.buffer) };
+    }
+
+    pub fn bind_pipeline(&self, context: &VulkanContext, pipeline: &Pipeline) {
+        unsafe {
+            context.device.cmd_bind_pipeline(self.buffer, vk::PipelineBindPoint::GRAPHICS, pipeline.pipeline)
+        };
+    }
+
+    pub fn bind_vertex_buffers(&self, context: &VulkanContext, first_binding: u32, buffers: &Vec<&Buffer>) {
+        let mut vk_buffers = Vec::new();
+        for b in buffers {
+            vk_buffers.push(b.buffer);
+        }
+
+        let mut vk_offsets = Vec::new();
+        for _ in 0..buffers.len() {
+            vk_offsets.push(0);
+        }
+
+        unsafe {
+            context.device.cmd_bind_vertex_buffers(self.buffer, first_binding, &vk_buffers, &vk_offsets);
+        };
+    }
+
+    pub fn draw(&self, context: &VulkanContext, vertex_count: u32, instance_count: u32, first_vertex: u32, first_instance: u32) {
+        unsafe {
+            context.device.cmd_draw(self.buffer, vertex_count, instance_count, first_vertex, first_instance);
+        };
     }
 
     pub fn pipeline_barrier(&self, context: &VulkanContext, src_stage_mask: vk::PipelineStageFlags, 
@@ -424,7 +461,7 @@ pub struct Framebuffer {
 }
 
 impl Framebuffer {
-    pub fn new(context: &VulkanContext, render_pass: RenderPass, attachments: Vec<ImageView>, width: u32, height: u32, layers: u32) -> Framebuffer{
+    pub fn new(context: &VulkanContext, render_pass: &RenderPass, attachments: Vec<Arc<ImageView>>, width: u32, height: u32, layers: u32) -> Framebuffer{
         let mut vk_image_views = Vec::new();
         for attachment in attachments {
             vk_image_views.push(attachment.image_view);
@@ -661,7 +698,7 @@ impl PipelineLayout {
 }
 
 pub struct PipelineShaderStage {
-    pub module: ShaderModule,
+    pub module: Arc<ShaderModule>,
     pub stage: ShaderStageFlags
 }
 
@@ -725,7 +762,7 @@ pub struct Pipeline {
 }
 
 impl Pipeline {
-    pub fn new(context: &VulkanContext, stages: Vec<PipelineShaderStage>, vertex_input: PipelineVertexInputState, input_assembly: PipelineInputAssemblyState, viewport_state: PipelineViewportState, rasterization: PipelineRasterizationState, multisample: PipelineMultisampleState, depth: PipelineDepthStencilState, blend: PipelineColorBlendState, dynamic: PipelineDynamicState, layout: PipelineLayout, render_pass: RenderPass) -> Pipeline {
+    pub fn new(context: &VulkanContext, stages: Vec<PipelineShaderStage>, vertex_input: PipelineVertexInputState, input_assembly: PipelineInputAssemblyState, viewport_state: PipelineViewportState, rasterization: PipelineRasterizationState, multisample: PipelineMultisampleState, depth: PipelineDepthStencilState, blend: PipelineColorBlendState, dynamic: PipelineDynamicState, layout: PipelineLayout, render_pass: &RenderPass) -> Pipeline {
         let create_stages = {
             let mut r = Vec::new();
             let main_str = CStr::from_bytes_with_nul(b"main\0").unwrap();

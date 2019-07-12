@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::mem;
+use std::ptr;
+use std::slice;
 use std::sync::Arc;
 use std::vec::IntoIter;
 
@@ -20,6 +22,7 @@ use vulkano::pipeline::vertex::VertexSource;
 use vulkano::SafeDeref;
 
 use kernel::vulkan::vulkanobject as vo;
+use kernel::vulkan::vulkancontext::VulkanContext;
 
 #[derive(Clone, Debug)]
 pub struct VertexAttribute {
@@ -232,6 +235,8 @@ unsafe impl<T> VertexSource<Vec<T>> for GrindBufferDefinition {
 }
 */
 pub struct Buffer {
+    pub buffer: Option<vo::Buffer>,
+    pub size: usize
     //inner: CpuBufferPool<u8>,
     //pub chunk: Option<CpuBufferPoolChunk<u8, Arc<StdMemoryPool>>>,
 }
@@ -239,12 +244,29 @@ pub struct Buffer {
 impl Buffer {
     pub fn new(/*device: Arc<Device>*/) -> Buffer {
         Buffer {
-            //inner: CpuBufferPool::vertex_buffer(device),
-            //chunk: None,
+            buffer: None,
+            size: 0
         }
     }
 
-    pub fn set_data(&mut self, data: &[u8]) {
+    pub fn set_data(&mut self, context: &VulkanContext, data: &[u8]) {
+        let data_size = data.len();
+        if data_size != self.size {
+            // Destroy buffer
+            if self.buffer.is_some() {
+                self.buffer.as_mut().unwrap().destroy(context);
+            }
+
+            // And recreate it
+            let new_buffer = vo::Buffer::new(context, data_size as u64, vo::BufferUsageFlags::VERTEX_BUFFER, vo::MemoryPropertyFlags::HOST_VISIBLE);
+            mem::replace(self.buffer.as_mut().unwrap(), new_buffer);
+        }
+
+        self.buffer.as_ref().unwrap().bind(context, |dst| {
+            unsafe {
+                ptr::copy(data.as_ptr(), dst as *mut u8, data_size)
+            };
+        });
         //self.chunk = Some(self.inner.chunk(data.iter().cloned()).unwrap());
     }
 }
