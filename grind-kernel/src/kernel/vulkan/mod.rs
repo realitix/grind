@@ -101,7 +101,7 @@ impl VulkanDriver {
         vs: Arc<Shader>,
         fs: Arc<Shader>,
         buffers: HashMap<u32, Arc<Buffer>>,
-        attrs: Arc<VertexAttributes>,
+        mut attrs: Arc<VertexAttributes>,
     ) {
         // PIPELINE CREATION
 
@@ -118,7 +118,8 @@ impl VulkanDriver {
         let stages = vec![vertex_stage, fragment_stage];
 
         // Vertex input
-        let vertex_input = vo::PipelineVertexInputState{
+        Arc::make_mut(&mut attrs).generate_buffers_binding_map();
+        let vertex_input = vo::PipelineVertexInputState {
             bindings: attrs.get_vertex_input_binding_description(),
             attributes: attrs.get_vertex_input_attribute_description()
         };
@@ -193,10 +194,14 @@ impl VulkanDriver {
             max: 1.
         };
 
+        let attachment_blend = vo::PipelineColorBlendAttachmentState::builder()
+            .blend_enable(false)
+            .build();
+
         let blend = vo::PipelineColorBlendState {
             op_enable: false,
             op: vo::LogicOp::AND,
-            attachments: Vec::new(),
+            attachments: vec![attachment_blend],
             constants: [0., 0., 0., 0.]
         };
 
@@ -211,6 +216,8 @@ impl VulkanDriver {
             .samples(vo::SampleCountFlags::TYPE_1)
             .load_op(vo::AttachmentLoadOp::LOAD)
             .store_op(vo::AttachmentStoreOp::STORE)
+            //.initial_layout()
+            .final_layout(vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
             .build();
         let attachment_reference = vo::AttachmentReference {
             attachment: 0,
@@ -251,8 +258,6 @@ impl VulkanDriver {
             cb.draw(&self.context, 3, 1, 0, 0);
             cb.end_render_pass(&self.context);
         });
-
-        println!("RUST ICI");
     }
 
     pub fn read_pixels(&mut self, x: i32, y: i32, width: i32, height: i32, desired_format: vo::Format, pixels: *mut c_void) {

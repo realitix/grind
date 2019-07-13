@@ -258,8 +258,8 @@ impl Buffer {
             }
 
             // And recreate it
-            let new_buffer = vo::Buffer::new(context, data_size as u64, vo::BufferUsageFlags::VERTEX_BUFFER, vo::MemoryPropertyFlags::HOST_VISIBLE);
-            mem::replace(self.buffer.as_mut().unwrap(), new_buffer);
+            let new_buffer = Some(vo::Buffer::new(context, data_size as u64, vo::BufferUsageFlags::VERTEX_BUFFER, vo::MemoryPropertyFlags::HOST_VISIBLE));
+            mem::replace(&mut self.buffer, new_buffer);
         }
 
         self.buffer.as_ref().unwrap().bind(context, |dst| {

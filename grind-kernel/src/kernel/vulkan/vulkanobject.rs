@@ -840,10 +840,6 @@ impl Pipeline {
             .blend_constants(blend.constants)
             .build();
 
-        let create_dynamic = vk::PipelineDynamicStateCreateInfo::builder()
-            .dynamic_states(&dynamic.states)
-            .build();
-
         let create_pipeline = vk::GraphicsPipelineCreateInfo::builder()
             .stages(&create_stages)
             .vertex_input_state(&create_vertex_input)
@@ -853,7 +849,6 @@ impl Pipeline {
             .multisample_state(&create_multisample)
             .depth_stencil_state(&create_depth)
             .color_blend_state(&create_blend)
-            .dynamic_state(&create_dynamic)
             .layout(layout.layout)
             .render_pass(render_pass.renderpass)
             .build();
