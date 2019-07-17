@@ -1,7 +1,7 @@
-# grind-kernel
+# Grind
 
-Grind kernel is the heart of grind.
-
+Grind provides OpenGL libraries. Behind the scene, Vulkan is used.
+This module is not ready, I'm working on it.
 
 ## How to Launch tests
 
