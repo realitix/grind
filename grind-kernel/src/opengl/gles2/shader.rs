@@ -145,6 +145,7 @@ impl ShaderProgram {
 
         // vertex
         //println!("{:?}", vertex_shader.unwrap().source_transpiled.as_ref());
+        //println!("{:?}", fragment_shader.unwrap().source_transpiled.as_ref());
         let vertex_spirv = Some(
             compiler
                 .compile_into_spirv(

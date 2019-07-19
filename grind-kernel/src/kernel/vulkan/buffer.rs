@@ -164,7 +164,7 @@ impl VertexAttributes {
             attributes.push(vo::VertexInputAttributeDescription {
                 location: *index,
                 binding: binding,
-                format: vo::Format::R8_UNORM,
+                format: attribute.format,
                 offset: attribute.offset
             });
         }
@@ -251,6 +251,7 @@ impl Buffer {
 
     pub fn set_data(&mut self, context: &VulkanContext, data: &[u8]) {
         let data_size = data.len();
+
         if data_size != self.size {
             // Destroy buffer
             if self.buffer.is_some() {
@@ -258,7 +259,7 @@ impl Buffer {
             }
 
             // And recreate it
-            let new_buffer = Some(vo::Buffer::new(context, data_size as u64, vo::BufferUsageFlags::VERTEX_BUFFER, vo::MemoryPropertyFlags::HOST_VISIBLE));
+            let new_buffer = Some(vo::Buffer::new(context, data_size as u64, vo::BufferUsageFlags::VERTEX_BUFFER, vo::MemoryPropertyFlags::HOST_VISIBLE | vo::MemoryPropertyFlags::HOST_COHERENT));
             mem::replace(&mut self.buffer, new_buffer);
         }
 

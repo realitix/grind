@@ -70,7 +70,8 @@ pub use ash::vk::{
     PipelineBindPoint,
     AttachmentReference,
     ClearValue,
-    SubpassContents
+    SubpassContents,
+    ColorComponentFlags
 };
 
 

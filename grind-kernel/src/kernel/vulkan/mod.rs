@@ -123,6 +123,9 @@ impl VulkanDriver {
             attributes: attrs.get_vertex_input_attribute_description()
         };
 
+        println!("{:?}", attrs.get_vertex_input_binding_description());
+        println!("{:?}", attrs.get_vertex_input_attribute_description());
+
         // Input assembly
         let input_assembly = vo::PipelineInputAssemblyState {topology: vo::PrimitiveTopology::TRIANGLE_LIST};
 
@@ -148,7 +151,7 @@ impl VulkanDriver {
         let rasterization = vo::PipelineRasterizationState {
             polygon_mode: vo::PolygonMode::FILL,
             line_width: 1.,
-            cull_mode: vo::CullModeFlags::FRONT,
+            cull_mode: vo::CullModeFlags::NONE,
             front_face: vo::FrontFace::COUNTER_CLOCKWISE,
             depth_clamp_enable: false,
             depth_bias_constant: 0.,
@@ -195,6 +198,7 @@ impl VulkanDriver {
 
         let attachment_blend = vo::PipelineColorBlendAttachmentState::builder()
             .blend_enable(false)
+            .color_write_mask(vo::ColorComponentFlags::R | vo::ColorComponentFlags::G | vo::ColorComponentFlags::B | vo::ColorComponentFlags::A)
             .build();
 
         let blend = vo::PipelineColorBlendState {
@@ -213,7 +217,7 @@ impl VulkanDriver {
         let attachment = vo::AttachmentDescription::builder()
             .format(self.context.swapchain_format)
             .samples(vo::SampleCountFlags::TYPE_1)
-            .load_op(vo::AttachmentLoadOp::LOAD)
+            .load_op(vo::AttachmentLoadOp::CLEAR)
             .store_op(vo::AttachmentStoreOp::STORE)
             .initial_layout(vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
             .final_layout(vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
@@ -233,12 +237,12 @@ impl VulkanDriver {
             viewport_state, rasterization, multisample, depth,
             blend, dynamic, layout, &render_pass);
 
-        let image_view = self.context.swapchain_image_views[self.context.current_swapchain_image as usize].clone();
+        let image_view = self.context.get_current_image_view();
         let framebuffer = vo::Framebuffer::new(&self.context, &render_pass, vec![image_view], 300, 300, 1);
 
         // Buffer hashmap to vec
         let mut buffers_vec = Vec::new();
-        for (k, v) in buffers.iter() {
+        for (_, v) in buffers.iter() {
             buffers_vec.push(v.buffer.as_ref().unwrap());
         }
 
@@ -249,7 +253,7 @@ impl VulkanDriver {
             };
 
             let clear_value = vo::ClearValue {
-                color: vo::ClearColorValue { float32: [1.0, 0., 0., 1.]}
+                color: vo::ClearColorValue { float32: [1.0, 1., 1.0, 1.]}
             };
             cb.begin_render_pass(&render_pass, framebuffer, render_area, vec![clear_value], vo::SubpassContents::INLINE);
             cb.bind_pipeline(&pipeline);

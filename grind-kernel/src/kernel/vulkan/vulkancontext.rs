@@ -387,6 +387,10 @@ impl VulkanContext {
         sem
     }
 
+    pub fn get_current_image_view(&self) -> Arc<vo::ImageView> {
+        self.swapchain_image_views[self.current_swapchain_image as usize].clone()
+    }
+
     pub fn get_current_image(&self) -> vo::Image {
         self.swapchain_image_views[self.current_swapchain_image as usize].image.clone()
     }
