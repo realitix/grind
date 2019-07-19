@@ -94,16 +94,14 @@ fn find_memory_type(context: &VulkanContext, type_filter: u32, properties: Memor
 
 pub fn immediate_buffer<F>(context: &VulkanContext, f: F)
     where
-        F: FnOnce(&CommandBuffer)
+        F: FnOnce(&CommandBufferRegister)
 {
     // TODO: Should be TRANSIENT
     let pool = CommandPool::new(context);
     let buffers = pool.allocate_buffers(context, 1);
 
     // Call the function
-    buffers[0].begin(context);
-    f(&buffers[0]);
-    buffers[0].end(context);
+    buffers[0].register(context, f);
     
     // Now submit the command
     let submit = SubmitInfo {
@@ -193,6 +191,15 @@ impl CommandBuffer {
         CommandBuffer { buffer }
     }
 
+    pub fn register<F>(&self, context: &VulkanContext, f: F)
+    where
+        F: FnOnce(&CommandBufferRegister) {
+        self.begin(context);
+        let cbr = CommandBufferRegister::new(context, &self);
+        f(&cbr);
+        self.end(context);
+    }
+
     pub fn begin(&self, context: &VulkanContext) {
         let cmd_create = vk::CommandBufferBeginInfo::builder();
         unsafe { context.device.begin_command_buffer(self.buffer, &cmd_create).unwrap() };
@@ -202,7 +209,21 @@ impl CommandBuffer {
         unsafe { context.device.end_command_buffer(self.buffer).unwrap() };
     }
 
-    pub fn begin_render_pass(&self, context: &VulkanContext, render_pass: &RenderPass, framebuffer: Framebuffer, render_area: Rect2D, clears: Vec<ClearValue>, subpass_contents: SubpassContents) {
+}
+
+pub struct CommandBufferRegister<'a> {
+    command_buffer: &'a CommandBuffer,
+    context: &'a VulkanContext
+}
+
+impl<'a> CommandBufferRegister<'a> {
+    pub fn new(context: &'a VulkanContext, command_buffer: &'a CommandBuffer) -> CommandBufferRegister<'a> {
+        CommandBufferRegister {
+            context, command_buffer
+        }
+    }
+
+    pub fn begin_render_pass(&self, render_pass: &RenderPass, framebuffer: Framebuffer, render_area: Rect2D, clears: Vec<ClearValue>, subpass_contents: SubpassContents) {
         let create = vk::RenderPassBeginInfo::builder()
             .render_pass(render_pass.renderpass)
             .framebuffer(framebuffer.framebuffer)
@@ -211,21 +232,21 @@ impl CommandBuffer {
             .build();
         
         unsafe {
-            context.device.cmd_begin_render_pass(self.buffer, &create, subpass_contents)
+            self.context.device.cmd_begin_render_pass(self.command_buffer.buffer, &create, subpass_contents)
         };
     }
 
-    pub fn end_render_pass(&self, context: &VulkanContext) {
-        unsafe { context.device.cmd_end_render_pass(self.buffer) };
+    pub fn end_render_pass(&self) {
+        unsafe { self.context.device.cmd_end_render_pass(self.command_buffer.buffer) };
     }
 
-    pub fn bind_pipeline(&self, context: &VulkanContext, pipeline: &Pipeline) {
+    pub fn bind_pipeline(&self, pipeline: &Pipeline) {
         unsafe {
-            context.device.cmd_bind_pipeline(self.buffer, vk::PipelineBindPoint::GRAPHICS, pipeline.pipeline)
+            self.context.device.cmd_bind_pipeline(self.command_buffer.buffer, vk::PipelineBindPoint::GRAPHICS, pipeline.pipeline)
         };
     }
 
-    pub fn bind_vertex_buffers(&self, context: &VulkanContext, first_binding: u32, buffers: &Vec<&Buffer>) {
+    pub fn bind_vertex_buffers(&self, first_binding: u32, buffers: &Vec<&Buffer>) {
         let mut vk_buffers = Vec::new();
         for b in buffers {
             vk_buffers.push(b.buffer);
@@ -237,29 +258,29 @@ impl CommandBuffer {
         }
 
         unsafe {
-            context.device.cmd_bind_vertex_buffers(self.buffer, first_binding, &vk_buffers, &vk_offsets);
+            self.context.device.cmd_bind_vertex_buffers(self.command_buffer.buffer, first_binding, &vk_buffers, &vk_offsets);
         };
     }
 
-    pub fn draw(&self, context: &VulkanContext, vertex_count: u32, instance_count: u32, first_vertex: u32, first_instance: u32) {
+    pub fn draw(&self, vertex_count: u32, instance_count: u32, first_vertex: u32, first_instance: u32) {
         unsafe {
-            context.device.cmd_draw(self.buffer, vertex_count, instance_count, first_vertex, first_instance);
+            self.context.device.cmd_draw(self.command_buffer.buffer, vertex_count, instance_count, first_vertex, first_instance);
         };
     }
 
-    pub fn pipeline_barrier(&self, context: &VulkanContext, src_stage_mask: vk::PipelineStageFlags, 
+    pub fn pipeline_barrier(&self, src_stage_mask: vk::PipelineStageFlags, 
                             dst_stage_mask: vk::PipelineStageFlags, dependency_flags: DependencyFlags,
                             memory_barriers: &[MemoryBarrier], buffer_memory_barriers: &[BufferMemoryBarrier],
                             image_memory_barriers: &[vk::ImageMemoryBarrier]) {
         unsafe {
-            context.device.cmd_pipeline_barrier(
-            self.buffer, src_stage_mask, dst_stage_mask,
-            dependency_flags, memory_barriers, buffer_memory_barriers,
-            image_memory_barriers)
+            self.context.device.cmd_pipeline_barrier(
+                self.command_buffer.buffer, src_stage_mask, dst_stage_mask,
+                dependency_flags, memory_barriers, buffer_memory_barriers,
+                image_memory_barriers)
         };
     }
 
-    pub fn update_image_layout(&self, context: &VulkanContext, image: &Image, old_layout: ImageLayout,
+    pub fn update_image_layout(&self, image: &Image, old_layout: ImageLayout,
                                new_layout: ImageLayout, src_stage: PipelineStageFlags,
                                dst_stage: PipelineStageFlags, src_access: AccessFlags,
                                dst_access: AccessFlags, base_mip_level: u32, mip_levels: u32 ) {
@@ -283,16 +304,16 @@ impl CommandBuffer {
             .build();
 
         self.pipeline_barrier(
-            context, src_stage, dst_stage,
+            src_stage, dst_stage,
             DependencyFlags::empty(), &[], &[], &[barrier]);
     }
 
-    pub fn clear_color_image(&self, context: &VulkanContext, image: &Image, layout: ImageLayout, clear_color: &ClearColorValue, ranges: &[ImageSubresourceRange]) {
-        unsafe { context.device.cmd_clear_color_image(self.buffer, image.image, layout, clear_color, ranges) };
+    pub fn clear_color_image(&self, image: &Image, layout: ImageLayout, clear_color: &ClearColorValue, ranges: &[ImageSubresourceRange]) {
+        unsafe { self.context.device.cmd_clear_color_image(self.command_buffer.buffer, image.image, layout, clear_color, ranges) };
     }
 
     // Image must be to TransferDstOptimal layout
-    pub fn copy_image_to_buffer(&self, context: &VulkanContext, image: &Image, buffer: &Buffer) {
+    pub fn copy_image_to_buffer(&self, image: &Image, buffer: &Buffer) {
         let image_subresource = ImageSubresourceLayers {
             aspect_mask: ImageAspectFlags::COLOR,
             mip_level: 0,
@@ -317,8 +338,8 @@ impl CommandBuffer {
         };
 
         unsafe {
-            context.device.cmd_copy_image_to_buffer(
-                self.buffer,
+            self.context.device.cmd_copy_image_to_buffer(
+                self.command_buffer.buffer,
                 image.image,
                 ImageLayout::TRANSFER_SRC_OPTIMAL,
                 buffer.buffer,
@@ -327,7 +348,7 @@ impl CommandBuffer {
         }
     }
 
-    pub fn copy_image(&self, context: &VulkanContext, src_image: &Image, dst_image: &Image) {
+    pub fn copy_image(&self, src_image: &Image, dst_image: &Image) {
         let src_subresource = ImageSubresourceLayers::builder()
             .aspect_mask(ImageAspectFlags::COLOR)
             .mip_level(0)
@@ -360,8 +381,8 @@ impl CommandBuffer {
 
         let regions = [image_copy];
         unsafe {
-            context.device.cmd_copy_image(
-                self.buffer,
+            self.context.device.cmd_copy_image(
+                self.command_buffer.buffer,
                 src_image.image,
                 ImageLayout::TRANSFER_SRC_OPTIMAL,
                 dst_image.image,
@@ -371,7 +392,7 @@ impl CommandBuffer {
         }
     }
 
-    pub fn blit_image(&self, context: &VulkanContext, src_image: &Image, dst_image: &Image) {
+    pub fn blit_image(&self, src_image: &Image, dst_image: &Image) {
         let src_subresource = ImageSubresourceLayers::builder()
             .aspect_mask(ImageAspectFlags::COLOR)
             .mip_level(0)
@@ -397,8 +418,8 @@ impl CommandBuffer {
 
         let regions = [image_blit];
         unsafe {
-            context.device.cmd_blit_image(
-                self.buffer,
+            self.context.device.cmd_blit_image(
+                self.command_buffer.buffer,
                 src_image.image,
                 ImageLayout::TRANSFER_SRC_OPTIMAL,
                 dst_image.image,

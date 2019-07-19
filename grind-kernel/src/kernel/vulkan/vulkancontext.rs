@@ -331,7 +331,7 @@ impl VulkanContext {
             let swapchain_image = &image_view.image;
             vo::immediate_buffer(self, |cmd| {
                  cmd.update_image_layout(
-                    self, swapchain_image, vo::ImageLayout::UNDEFINED,
+                    swapchain_image, vo::ImageLayout::UNDEFINED,
                     vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL, vo::PipelineStageFlags::ALL_GRAPHICS,
                     vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT, vo::AccessFlags::empty(),
                       vo::AccessFlags::COLOR_ATTACHMENT_WRITE, 0, 1);
@@ -372,8 +372,8 @@ impl VulkanContext {
             current_swapchain_image: 0
         };
 
-        let signal_semaphore = context.acquire();
         context.update_swapchain_layout();
+        let signal_semaphore = context.acquire();
         context
     }
 
@@ -401,7 +401,7 @@ impl VulkanContext {
         // Pass to present layout
         vo::immediate_buffer(self, |cmd| {
             cmd.update_image_layout(
-                self, swapchain_image, vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
+                swapchain_image, vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
                 vo::ImageLayout::PRESENT_SRC_KHR, vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
                 vo::PipelineStageFlags::ALL_GRAPHICS, vo::AccessFlags::COLOR_ATTACHMENT_WRITE,
                 vo::AccessFlags::MEMORY_READ, 0, 1);
@@ -421,7 +421,7 @@ impl VulkanContext {
         // Switch back to color buffer
         vo::immediate_buffer(self, |cmd| {
             cmd.update_image_layout(
-                self, swapchain_image, 
+                swapchain_image, 
                 vo::ImageLayout::PRESENT_SRC_KHR, vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
                 vo::PipelineStageFlags::ALL_GRAPHICS, vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
                 vo::AccessFlags::MEMORY_READ, vo::AccessFlags::COLOR_ATTACHMENT_WRITE, 

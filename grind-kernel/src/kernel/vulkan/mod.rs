@@ -37,9 +37,9 @@ pub struct VulkanDriver {
 impl VulkanDriver {
     // Create driver from wayland
     pub fn from_wayland(display: *mut c_void, wl_egl_window: &WlEglWindow) -> VulkanDriver {
-        VulkanDriver {
+        VulkanDriver { 
             context: VulkanContext::new(display, wl_egl_window.surface, wl_egl_window.width, wl_egl_window.height)
-        }
+         }
     }    
 
     pub fn clear(&mut self, colors: [f32; 4]) {
@@ -57,21 +57,20 @@ impl VulkanDriver {
 
         vo::immediate_buffer(&self.context, |cmd| {
             cmd.update_image_layout(
-                &self.context, &self.context.get_current_image(),
+                &self.context.get_current_image(),
                 vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL, vo::ImageLayout::TRANSFER_DST_OPTIMAL,
                 vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT, vo::PipelineStageFlags::TRANSFER,
                 vo::AccessFlags::COLOR_ATTACHMENT_WRITE, vo::AccessFlags::TRANSFER_WRITE,
                 0, 1);
 
             cmd.clear_color_image(
-                &self.context,
                 &self.context.get_current_image(),
                 vo::ImageLayout::TRANSFER_DST_OPTIMAL,
                 &clear_color, 
                 &[ranges]);
 
             cmd.update_image_layout(
-                &self.context, &self.context.get_current_image(),
+                &self.context.get_current_image(),
                 vo::ImageLayout::TRANSFER_DST_OPTIMAL, vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
                 vo::PipelineStageFlags::TRANSFER, vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
                 vo::AccessFlags::TRANSFER_WRITE, vo::AccessFlags::COLOR_ATTACHMENT_WRITE,
@@ -129,7 +128,7 @@ impl VulkanDriver {
 
         let viewports = vec![vo::Viewport {
             x: 0.,
-            y: 300.,
+            y: 0.,
             width: 300.,
             height: 300.,
             min_depth: 0.,
@@ -216,7 +215,7 @@ impl VulkanDriver {
             .samples(vo::SampleCountFlags::TYPE_1)
             .load_op(vo::AttachmentLoadOp::LOAD)
             .store_op(vo::AttachmentStoreOp::STORE)
-            //.initial_layout()
+            .initial_layout(vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
             .final_layout(vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
             .build();
         let attachment_reference = vo::AttachmentReference {
@@ -252,11 +251,11 @@ impl VulkanDriver {
             let clear_value = vo::ClearValue {
                 color: vo::ClearColorValue { float32: [1.0, 0., 0., 1.]}
             };
-            cb.begin_render_pass(&self.context, &render_pass, framebuffer, render_area, vec![clear_value], vo::SubpassContents::INLINE);
-            cb.bind_pipeline(&self.context, &pipeline);
-            cb.bind_vertex_buffers(&self.context, 0, &buffers_vec);
-            cb.draw(&self.context, 3, 1, 0, 0);
-            cb.end_render_pass(&self.context);
+            cb.begin_render_pass(&render_pass, framebuffer, render_area, vec![clear_value], vo::SubpassContents::INLINE);
+            cb.bind_pipeline(&pipeline);
+            cb.bind_vertex_buffers(0, &buffers_vec);
+            cb.draw(3, 1, 0, 0);
+            cb.end_render_pass();
         });
     }
 
@@ -280,7 +279,7 @@ impl VulkanDriver {
         // Put image in DST TRANSFERT LAYOUT desired layout
         vo::immediate_buffer(&self.context, |cmd| {
             cmd.update_image_layout(
-                &self.context, &destination_image,
+                &destination_image,
                 vo::ImageLayout::UNDEFINED, vo::ImageLayout::TRANSFER_DST_OPTIMAL,
                 vo::PipelineStageFlags::TRANSFER, vo::PipelineStageFlags::TRANSFER,
                 vo::AccessFlags::default(), vo::AccessFlags::TRANSFER_WRITE,
@@ -290,21 +289,21 @@ impl VulkanDriver {
         // Copy image from source to destination
         vo::immediate_buffer(&self.context, |cmd| {
             cmd.update_image_layout(
-                &self.context, &self.context.get_current_image(),
+                &self.context.get_current_image(),
                 vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL, vo::ImageLayout::TRANSFER_SRC_OPTIMAL,
                 vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT, vo::PipelineStageFlags::TRANSFER,
                 vo::AccessFlags::COLOR_ATTACHMENT_WRITE, vo::AccessFlags::TRANSFER_READ,
                 0, 1);
 
             if self.context.get_current_image().image_format == destination_image.image_format {
-                cmd.copy_image(&self.context, &self.context.get_current_image(), &destination_image);
+                cmd.copy_image(&self.context.get_current_image(), &destination_image);
             }
             else {
-                cmd.blit_image(&self.context, &self.context.get_current_image(), &destination_image);
+                cmd.blit_image(&self.context.get_current_image(), &destination_image);
             }
 
             cmd.update_image_layout(
-                &self.context, &self.context.get_current_image(),
+                &self.context.get_current_image(),
                 vo::ImageLayout::TRANSFER_SRC_OPTIMAL, vo::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
                 vo::PipelineStageFlags::TRANSFER, vo::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
                 vo::AccessFlags::TRANSFER_READ, vo::AccessFlags::COLOR_ATTACHMENT_WRITE,
@@ -314,20 +313,19 @@ impl VulkanDriver {
         // Copy image from destination to buffer
         vo::immediate_buffer(&self.context, |cmd| {
             cmd.update_image_layout(
-                &self.context, &destination_image,
+                &destination_image,
                 vo::ImageLayout::TRANSFER_DST_OPTIMAL, vo::ImageLayout::TRANSFER_SRC_OPTIMAL,
                 vo::PipelineStageFlags::TRANSFER, vo::PipelineStageFlags::TRANSFER,
                 vo::AccessFlags::TRANSFER_WRITE, vo::AccessFlags::TRANSFER_READ,
                 0, 1);
 
             cmd.copy_image_to_buffer(
-                &self.context,
                 &destination_image,
                 &buffer
             );
 
             cmd.update_image_layout(
-                &self.context, &destination_image,
+                &destination_image,
                 vo::ImageLayout::TRANSFER_SRC_OPTIMAL, vo::ImageLayout::TRANSFER_DST_OPTIMAL,
                 vo::PipelineStageFlags::TRANSFER, vo::PipelineStageFlags::TRANSFER,
                 vo::AccessFlags::TRANSFER_READ, vo::AccessFlags::TRANSFER_WRITE,
