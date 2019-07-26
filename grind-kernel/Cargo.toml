@@ -1,7 +1,7 @@
 [package]
 name = "grind-kernel"
 version = "0.1.0"
-authors = ["Jean-Sebastien BEVILACQUA <realitix@gmail.com>", "Robert KING"]
+authors = ["Jean-Sebastien BEVILACQUA <realitix@gmail.com>"]
 publish = false
 description = "The Kernel of GRIND"
 
@@ -14,7 +14,6 @@ khronos = "*"
 libc = "*"
 lazy_static = "*"
 ash = "0.27.1"
-vulkano = { path = "../../vulkano/vulkano" }
 glsltranspiler = { path = "../glsl-transpiler" }
 spirvparser = { path = "../spirv-parser" }
 shaderc = { git = "https://github.com/google/shaderc-rs.git" }

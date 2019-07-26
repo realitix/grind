@@ -9,9 +9,6 @@ extern crate libc;
 extern crate lazy_static;
 
 #[macro_use]
-extern crate vulkano;
-
-#[macro_use]
 extern crate ash;
 
 extern crate glsltranspiler;

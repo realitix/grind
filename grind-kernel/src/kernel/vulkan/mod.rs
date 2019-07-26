@@ -1,6 +1,5 @@
 pub mod buffer;
 mod vulkancontext;
-mod renderer;
 pub mod shader;
 pub mod vulkanobject;
 
@@ -11,23 +10,20 @@ use std::sync::Arc;
 use std::slice;
 
 
-use vulkano::instance::{layers_list, Instance, InstanceExtensions};
-use vulkano::pipeline::shader::GraphicsShaderType;
-
-
 use egl::platform::wayland::WlEglWindow;
 use kernel::vulkan::buffer::Buffer;
 use kernel::vulkan::buffer::VertexAttributes;
-use kernel::vulkan::renderer::Renderer;
 use kernel::vulkan::shader::Shader;
 use kernel::vulkan::vulkancontext::VulkanContext;
 use kernel::vulkan::vulkanobject as vo;
 
+
 pub fn is_available() -> bool {
-    match Instance::new(None, &InstanceExtensions::none(), None) {
+    /*match Instance::new(None, &InstanceExtensions::none(), None) {
         Ok(i) => true,
         Err(err) => false,
-    }
+    }*/
+    true
 }
 
 pub struct VulkanDriver {

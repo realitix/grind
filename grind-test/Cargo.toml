@@ -10,7 +10,7 @@ name = "grindtest"
 crate-type = ["lib"]
 
 [dependencies]
-egl-rs = { path = "../../egl-rs" }
-opengles2-rs = { path = "../../opengles2-rs" }
-wayland-client = "*"
+egl-rs = { git = "https://github.com/realitix/egl-rs.git" }
+opengles2-rs = { git = "https://github.com/realitix/opengles2-rs.git" }
 image = "*"
+wayland-client = "0.20.12"

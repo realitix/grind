@@ -7,7 +7,6 @@ use std::slice;
 use glsltranspiler::{transpile, ShaderType};
 use shaderc::{CompilationArtifact, CompileOptions, Compiler, ShaderKind};
 use spirvparser::{reflect, SpirvReflection};
-use vulkano::pipeline::shader::GraphicsShaderType;
 
 use kernel::vulkan::shader::Shader as VulkanShader;
 use kernel::vulkan::VulkanDriver;

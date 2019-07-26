@@ -5,22 +5,6 @@ use std::slice;
 use std::sync::Arc;
 use std::vec::IntoIter;
 
-use vulkano::buffer::cpu_pool::CpuBufferPoolChunk;
-use vulkano::buffer::BufferAccess;
-use vulkano::buffer::CpuBufferPool;
-use vulkano::device::Device;
-use vulkano::memory::pool::StdMemoryPool;
-use vulkano::pipeline::shader::ShaderInterfaceDef;
-use vulkano::pipeline::vertex::AttributeInfo;
-use vulkano::pipeline::vertex::IncompatibleVertexDefinitionError;
-use vulkano::pipeline::vertex::InputRate;
-use vulkano::pipeline::vertex::Vertex;
-use vulkano::pipeline::vertex::VertexDefinition;
-use vulkano::pipeline::vertex::VertexMemberInfo;
-use vulkano::pipeline::vertex::VertexMemberTy;
-use vulkano::pipeline::vertex::VertexSource;
-use vulkano::SafeDeref;
-
 use kernel::vulkan::vulkanobject as vo;
 use kernel::vulkan::vulkancontext::VulkanContext;
 
@@ -184,65 +168,14 @@ impl BufferDefinition {
     }
 }
 
-/*
-unsafe impl<I> VertexDefinition<I> for GrindBufferDefinition
-where
-    I: ShaderInterfaceDef,
-{
-    type BuffersIter = IntoIter<(u32, usize, InputRate)>;
-    type AttribsIter = IntoIter<(u32, u32, AttributeInfo)>;
 
-    fn definition(
-        &self,
-        interface: &I,
-    ) -> Result<(Self::BuffersIter, Self::AttribsIter), IncompatibleVertexDefinitionError> {
-        Ok((
-            self.attributes.get_buffers_definition().into_iter(),
-            self.attributes.get_attributes_definition().into_iter(),
-        ))
-    }
-}
-
-unsafe impl VertexSource<HashMap<u32, Arc<Buffer>>> for GrindBufferDefinition {
-    fn decode(
-        &self,
-        mut source: HashMap<u32, Arc<Buffer>>,
-    ) -> (Vec<Box<BufferAccess + Send + Sync>>, usize, usize) {
-        let bindings = &self.attributes.binding_buffers;
-        let mut result = Vec::new();
-        let mut len = 0;
-
-        /*for i in 0..bindings.len() {
-            let buffer_id = bindings.get(&(i as u32)).unwrap();
-            let buffer = source.get(buffer_id).unwrap();
-            let chunk =
-                Box::new(buffer.chunk.as_ref().unwrap().clone()) as Box<BufferAccess + Send + Sync>;
-            result.push(chunk);
-            len = buffer.chunk.as_ref().unwrap().size();
-        }*/
-
-        let mut len = 36 / 4; // float
-        len = len / 3; // vec3
-
-        (result, len, 1)
-    }
-}
-
-unsafe impl<T> VertexSource<Vec<T>> for GrindBufferDefinition {
-    fn decode(&self, _: Vec<T>) -> (Vec<Box<BufferAccess + Sync + Send + 'static>>, usize, usize) {
-        panic!("bufferless drawing should not be supplied with buffers")
-    }
-}
-*/
 pub struct Buffer {
     pub buffer: Option<vo::Buffer>,
     pub size: usize
-    //inner: CpuBufferPool<u8>,
-    //pub chunk: Option<CpuBufferPoolChunk<u8, Arc<StdMemoryPool>>>,
 }
 
 impl Buffer {
-    pub fn new(/*device: Arc<Device>*/) -> Buffer {
+    pub fn new() -> Buffer {
         Buffer {
             buffer: None,
             size: 0
@@ -268,6 +201,5 @@ impl Buffer {
                 ptr::copy(data.as_ptr(), dst as *mut u8, data_size)
             };
         });
-        //self.chunk = Some(self.inner.chunk(data.iter().cloned()).unwrap());
     }
 }
